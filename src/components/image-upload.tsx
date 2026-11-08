@@ -3,7 +3,6 @@
 import { useState, useRef, ChangeEvent, DragEvent } from "react";
 import Image from "next/image";
 import { UploadCloud, X, RefreshCw, AlertCircle, CheckCircle2, Image as ImageIcon } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 
 interface ImageUploadProps {
   value?: string;
@@ -27,8 +26,6 @@ export default function ImageUpload({
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  const supabase = createClient();
 
   const handleFile = async (file: File) => {
     setError(null);
@@ -58,32 +55,29 @@ export default function ImageUpload({
     try {
       setUploading(true);
 
-      const ext = file.name.split(".").pop() || "jpg";
-      const cleanFileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${ext}`;
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("bucket", bucket);
+      formData.append("folder", folder);
 
-      const { data, error: uploadErr } = await supabase.storage
-        .from(bucket)
-        .upload(cleanFileName, file, {
-          cacheControl: "3600",
-          upsert: true,
-        });
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
 
-      if (uploadErr) {
-        throw uploadErr;
+      const json = await res.json();
+
+      if (!res.ok || json.error) {
+        throw new Error(json.error || "Upload failed");
       }
 
-      // Get public URL
-      const {
-        data: { publicUrl },
-      } = supabase.storage.from(bucket).getPublicUrl(cleanFileName);
-
-      onChange(publicUrl);
+      onChange(json.url);
     } catch (err: any) {
       console.error("Storage upload error:", err);
       setError(
         isRtl
-          ? `فشل رفع الصورة: ${err.message || "تأكد من صلاحيات المدير وسعة التخزين"}`
-          : `Failed to upload image: ${err.message || "Check admin permissions"}`
+          ? `فشل رفع الصورة: ${err.message || "تأكد من اختيار صورة صحيحة"}`
+          : `Failed to upload image: ${err.message || "Upload failed"}`
       );
     } finally {
       setUploading(false);
