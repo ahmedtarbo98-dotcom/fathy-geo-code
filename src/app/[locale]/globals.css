@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 216 100% 98%; /* #F5F9FF */
+    --foreground: 222 66% 12%; /* #0B1F4B */
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 66% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 66% 12%;
+
+    --primary: 214 76% 48%; /* #1E6FD9 */
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 214 32% 91%;
+    --secondary-foreground: 222 47% 11%;
+
+    --muted: 214 32% 93%;
+    --muted-foreground: 215 16% 47%;
+
+    --accent: 185 81% 43%; /* #14B8C4 */
+    --accent-foreground: 222 66% 12%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 214 32% 90%;
+    --input: 214 32% 90%;
+    --ring: 214 76% 48%;
+
+    --radius: 0.75rem;
+
+    --brand-navy: #0B1F4B;
+    --brand-blue: #1E6FD9;
+    --brand-cyan: #14B8C4;
+    --brand-light: #F5F9FF;
+  }
+
+  .dark {
+    --background: 224 71% 4%; /* #050B17 */
+    --foreground: 210 40% 98%;
+
+    --card: 224 60% 8%; /* #0B162B */
+    --card-foreground: 210 40% 98%;
+
+    --popover: 224 60% 8%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 214 85% 55%; /* #257CEE */
+    --primary-foreground: 210 40% 98%;
+
+    --secondary: 222 47% 14%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 223 47% 11%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 185 81% 43%; /* #14B8C4 */
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 223 47% 16%;
+    --input: 223 47% 16%;
+    --ring: 185 81% 43%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground transition-colors duration-300;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* Custom geospatial contour pattern & mesh background */
+.geo-contour-bg {
+  background-image: radial-gradient(circle at 50% 50%, rgba(20, 184, 196, 0.08) 0%, transparent 60%),
+    linear-gradient(to right, rgba(30, 111, 217, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(30, 111, 217, 0.05) 1px, transparent 1px);
+  background-size: 100% 100%, 40px 40px, 40px 40px;
+}
+
+.dark .geo-contour-bg {
+  background-image: radial-gradient(circle at 50% 50%, rgba(20, 184, 196, 0.12) 0%, transparent 70%),
+    linear-gradient(to right, rgba(20, 184, 196, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(20, 184, 196, 0.04) 1px, transparent 1px);
+  background-size: 100% 100%, 40px 40px, 40px 40px;
+}
+
+/* Glassmorphism utility */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dark .glass-panel {
+  background: rgba(11, 22, 43, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(30, 111, 217, 0.2);
+}
+
+/* Glowing text and borders */
+.text-glow-cyan {
+  text-shadow: 0 0 20px rgba(20, 184, 196, 0.5);
+}
+
+.glow-box-blue {
+  box-shadow: 0 0 30px -5px rgba(30, 111, 217, 0.3);
+}
+
+/* Topographic line background overlay */
+.topographic-lines {
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 50 Q 25 25 50 50 T 90 50' stroke='rgba(30, 111, 217, 0.06)' fill='none' stroke-width='1'/%3E%3Cpath d='M0 80 Q 30 60 60 80 T 100 80' stroke='rgba(20, 184, 196, 0.05)' fill='none' stroke-width='1'/%3E%3Cpath d='M20 20 Q 45 40 70 20 T 100 20' stroke='rgba(30, 111, 217, 0.04)' fill='none' stroke-width='1'/%3E%3C/svg%3E");
+}
+
+/* Smooth selection styling */
+::selection {
+  background-color: #14B8C4;
+  color: #060E21;
+}

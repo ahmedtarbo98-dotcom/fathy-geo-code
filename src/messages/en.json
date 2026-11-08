@@ -1,0 +1,302 @@
+{
+  "Brand": {
+    "name": "FATHY GEO CODE",
+    "tagline": "GIS & Remote Sensing Educational Hub",
+    "owner": "Eng. Ahmed Fathy",
+    "ownerTitle": "Spatial Data Analyst & GIS Specialist"
+  },
+  "Nav": {
+    "home": "Home",
+    "courses": "Courses",
+    "about": "About",
+    "contact": "Contact",
+    "myCourses": "My Courses",
+    "login": "Sign In",
+    "register": "Sign Up",
+    "admin": "Admin Dashboard",
+    "logout": "Sign Out",
+    "dashboard": "Dashboard",
+    "language": "Language",
+    "theme": "Theme"
+  },
+  "Hero": {
+    "badge": "Premier Educational Hub in Geomatics & Spatial Technologies",
+    "titlePart1": "Master GIS & Remote Sensing",
+    "titlePart2": "From Fundamentals to Professional Mastery",
+    "description": "An advanced practical learning platform guided by Eng. Ahmed Fathy. Comprehensive, industry-aligned courses in ArcGIS Pro, Google Earth Engine, Spatial Modeling, and Digital Surveying.",
+    "ctaCourses": "Explore Courses",
+    "ctaProjects": "Request Spatial Project",
+    "activeLearners": "+1,500 Engineers & Students",
+    "youtubeChannel": "FATHY GEO CODE on YouTube"
+  },
+  "Stats": {
+    "students": "Students & Learners",
+    "courses": "Courses & Workshops",
+    "hours": "Training Hours",
+    "projects": "Completed Projects",
+    "satisfaction": "Satisfaction Rate"
+  },
+  "Topics": {
+    "badge": "Specialization Tracks",
+    "title": "What You'll Learn",
+    "subtitle": "Integrated learning paths designed to bridge academic theory and real-world industrial practice.",
+    "gis": {
+      "title": "Geographic Information Systems (GIS)",
+      "desc": "Spatial data management, georeferencing, topological & network analysis, and building robust enterprise Geodatabases."
+    },
+    "remoteSensing": {
+      "title": "Remote Sensing & Satellite Imagery",
+      "desc": "Processing Landsat/Sentinel imagery, spectral indices (NDVI, NDWI), and supervised/unsupervised machine learning classification."
+    },
+    "surveying": {
+      "title": "Engineering & Digital Surveying",
+      "desc": "Coordinate reference systems, map projections, datum transformations, DEM/DTM digital elevation modeling and contouring."
+    },
+    "spatialModeling": {
+      "title": "Spatial Modeling & Suitability",
+      "desc": "Multi-Criteria Evaluation (MCE) modeling, environmental hazard assessment, ModelBuilder automation, and ArcGIS Spatial Analyst."
+    },
+    "gee": {
+      "title": "Google Earth Engine (GEE)",
+      "desc": "Cloud-based planetary-scale geospatial big data analytics, custom JavaScript/Python scripting, and environmental change detection."
+    },
+    "arcgisPro": {
+      "title": "ArcGIS Pro Mastery",
+      "desc": "Mastering modern Esri toolsets, advanced cartographic styling, 3D spatial scenes, layout automation, and production publishing."
+    }
+  },
+  "FeaturedCourses": {
+    "badge": "Featured Courses",
+    "title": "Top-Rated Training Paths",
+    "subtitle": "Start mastering practical geospatial skills with hands-on real-world projects today.",
+    "viewAll": "View All Courses",
+    "free": "Free",
+    "paid": "Paid",
+    "lessons": "Lessons",
+    "duration": "Hours",
+    "level": "Level",
+    "enrollNow": "Enroll Now",
+    "details": "Details"
+  },
+  "Instructor": {
+    "badge": "About The Instructor",
+    "name": "Eng. Ahmed Fathy",
+    "title": "Spatial Data Analyst & Remote Sensing Specialist",
+    "bio": "Holder of a Bachelor of Arts in Geomatics and GIS Program. A dedicated Spatial Data Analyst specializing in advanced GIS analytics, satellite remote sensing workflows, and cartographic design with ArcGIS Pro and Google Earth Engine.",
+    "whatsappHire": "Hire Me / Execute Your Project on WhatsApp",
+    "experience": "Extensive hands-on experience across academic, commercial, and engineering spatial modeling projects."
+  },
+  "YouTubeSection": {
+    "badge": "Free Content & Community",
+    "title": "Practical Tutorials on YouTube",
+    "subtitle": "The FATHY GEO CODE channel delivers practical tutorials, tips, and geospatial walkthroughs for engineers and learners worldwide.",
+    "subscribe": "Subscribe on YouTube",
+    "watchVideo": "Watch Video",
+    "channelSubscribers": "A thriving community of spatial thinkers"
+  },
+  "Testimonials": {
+    "badge": "Student Reviews",
+    "title": "What Our Students Say",
+    "subtitle": "Hear directly from GIS practitioners, researchers, and engineers who accelerated their careers."
+  },
+  "CTA": {
+    "title": "Ready to Elevate Your Geospatial Career?",
+    "subtitle": "Join FATHY GEO CODE today and gain the actionable, industry-tested skills that set you apart.",
+    "browseCourses": "Explore Courses Now",
+    "contact": "Contact For Inquiries"
+  },
+  "Footer": {
+    "description": "The premier educational hub for GIS, remote sensing, and modern geomatics technologies, directed by Eng. Ahmed Fathy.",
+    "quickLinks": "Quick Links",
+    "courses": "Courses",
+    "about": "About",
+    "contact": "Contact",
+    "legal": "Legal & Terms",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Use",
+    "verifyCertificate": "Verify Certificate",
+    "copyright": "All Rights Reserved. FATHY GEO CODE © {year}"
+  },
+  "Auth": {
+    "loginTitle": "Sign In",
+    "loginSubtitle": "Welcome back to FATHY GEO CODE Learning Hub",
+    "registerTitle": "Create Your Account",
+    "registerSubtitle": "Join an elite community of GIS and spatial data analysts",
+    "forgotTitle": "Forgot Password",
+    "forgotSubtitle": "Enter your email address and we'll send you a reset link",
+    "fullName": "Full Name",
+    "fullNamePlaceholder": "e.g. Eng. Ahmed Fathy",
+    "email": "Email Address",
+    "emailPlaceholder": "name@example.com",
+    "password": "Password",
+    "passwordPlaceholder": "••••••••",
+    "confirmPassword": "Confirm Password",
+    "forgotPasswordLink": "Forgot password?",
+    "signInButton": "Sign In to Platform",
+    "signUpButton": "Create Account & Start Learning",
+    "sendResetLink": "Send Reset Link",
+    "backToLogin": "Back to Sign In",
+    "orContinueWith": "Or continue with",
+    "googleSignIn": "Continue with Google",
+    "noAccount": "Don't have an account yet?",
+    "alreadyHaveAccount": "Already have an account?",
+    "registerNow": "Register Now Free",
+    "loginNow": "Sign In",
+    "loading": "Processing...",
+    "loginSuccess": "Successfully signed in",
+    "registerSuccess": "Account created successfully! Check your inbox if confirmation is required.",
+    "resetSentSuccess": "Password reset instructions sent to your email address.",
+    "passwordsDoNotMatch": "Passwords do not match",
+    "termsNotice": "By registering, you agree to the Terms of Use and Privacy Policy of FATHY GEO CODE"
+  },
+  "CoursesPage": {
+    "title": "Course Directory",
+    "subtitle": "Explore specialized training programs in GIS, remote sensing, and digital geomatics",
+    "searchPlaceholder": "Search by keyword or tool (e.g. ArcGIS Pro, Remote Sensing...)",
+    "filterType": "Course Type",
+    "allTypes": "All",
+    "freeOnly": "Free",
+    "paidOnly": "Paid",
+    "filterCategory": "Category",
+    "allCategories": "All Categories",
+    "filterLevel": "Level",
+    "allLevels": "All Levels",
+    "noCoursesFound": "No courses match your current search and filter criteria.",
+    "resetFilters": "Reset Filters"
+  },
+  "CourseDetails": {
+    "enrollFree": "Enroll for Free",
+    "requestAccess": "Request Access (WhatsApp)",
+    "continueCourse": "Continue Course",
+    "loginToEnroll": "Sign In to Enroll",
+    "courseContent": "Curriculum & Syllabus",
+    "sectionsCount": "{count} Sections",
+    "lessonsCount": "{count} Lessons",
+    "totalDuration": "{hours} Training Hours",
+    "whatYouWillLearn": "What You'll Learn in This Course",
+    "requirements": "Prerequisites & Requirements",
+    "instructorTitle": "About the Instructor",
+    "previewAvailable": "Free Preview",
+    "requestModalTitle": "Request Access to Course",
+    "requestModalDesc": "Your request will be recorded and our team will connect with you via WhatsApp to activate your access.",
+    "sendRequestBtn": "Submit Request & Connect on WhatsApp"
+  },
+  "AboutPage": {
+    "badge": "Professional & Academic Bio",
+    "title": "Eng. Ahmed Fathy",
+    "subtitle": "Spatial Data Analyst, GIS & Remote Sensing Specialist",
+    "bioLead": "Holder of a Bachelor of Arts in Geomatics and GIS Program. Dedicated Spatial Data Analyst with expertise in planetary-scale satellite data processing, spatial modeling, and cartography.",
+    "bioDetails": "Eng. Ahmed Fathy conducts advanced spatial analysis for environmental planning, civil projects, and satellite change detection leveraging modern Esri tools (ArcGIS Pro) and Google Earth Engine. He also leads practical technical training through FATHY GEO CODE.",
+    "hireBtn": "Hire Me / Execute Your Spatial Project on WhatsApp",
+    "skillsTitle": "Technical Stack & Expertise",
+    "credentialsTitle": "Core Qualifications & Tools"
+  },
+  "ContactPage": {
+    "badge": "Direct Inquiries",
+    "title": "Get in Touch",
+    "subtitle": "Whether you have questions about our training courses or need consultation for a commercial GIS project, we'd love to hear from you.",
+    "name": "Full Name",
+    "namePlaceholder": "Your Name",
+    "email": "Email Address",
+    "phone": "Phone / WhatsApp",
+    "subject": "Subject",
+    "subjectPlaceholder": "e.g. Spatial Modeling Course Inquiry",
+    "message": "Message / Project Details",
+    "messagePlaceholder": "Write your detailed message here...",
+    "submit": "Send Message",
+    "successMessage": "Your message has been sent successfully! We will respond promptly.",
+    "officialChannels": "Official Communication Channels"
+  },
+  "Legal": {
+    "lastUpdated": "Last Updated: November 2026",
+    "privacyTitle": "Privacy Policy",
+    "termsTitle": "Terms of Use & Intellectual Property"
+  },
+  "Dashboard": {
+    "welcomeTitle": "Welcome back, {name}",
+    "welcomeSubtitle": "Continue your learning journey and elevate your GIS and remote sensing skills",
+    "continueWatching": "Continue Where You Left Off",
+    "resumeLesson": "Resume Lesson",
+    "enrolledCourses": "Enrolled Courses",
+    "completedCourses": "Completed Courses",
+    "certificatesEarned": "Certificates Earned",
+    "trainingHours": "Training Hours Completed",
+    "allTab": "All Courses",
+    "inProgressTab": "In Progress",
+    "completedTab": "Completed",
+    "noCourses": "You haven't enrolled in any courses yet.",
+    "exploreCourses": "Explore Available Courses",
+    "progressLabel": "Progress: {percent}%"
+  },
+  "Player": {
+    "courseProgress": "Course Progress",
+    "markCompleted": "Mark as Completed",
+    "isCompleted": "Completed ✓",
+    "nextLesson": "Next Lesson",
+    "prevLesson": "Previous Lesson",
+    "tabOverview": "Lesson Overview",
+    "tabResources": "Datasets & Resources",
+    "tabNotes": "Personal Notes",
+    "downloadFile": "Download Exercise File",
+    "openExternalLink": "Open Reference Link",
+    "noResources": "No downloadable files attached to this lesson.",
+    "notesPlaceholder": "Type your private notes and key takeaways while watching this lesson...",
+    "saveNotes": "Save Notes",
+    "notesSaved": "Notes saved successfully",
+    "certificateUnlockedTitle": "Congratulations! You completed 100% of the course",
+    "claimCertificate": "View & Download Official Certificate",
+    "quizRequired": "Passing the assessment quiz with 70%+ is required to unlock your certificate",
+    "takeQuiz": "Take Assessment Quiz Now",
+    "watermarkNotice": "Licensed content protected by dynamic watermarking"
+  },
+  "Profile": {
+    "title": "Account Settings & Profile",
+    "subtitle": "Manage your personal information, interface language, and account security",
+    "personalInfo": "Personal Information",
+    "fullName": "Full Name",
+    "email": "Registered Email Address",
+    "language": "Platform Language",
+    "saveProfile": "Save Changes",
+    "changePassword": "Change Password",
+    "newPassword": "New Password",
+    "confirmNewPassword": "Confirm New Password",
+    "updatePasswordBtn": "Update Password",
+    "savedSuccess": "Profile updated successfully!",
+    "passwordUpdated": "Password changed successfully!"
+  },
+  "Certificates": {
+    "title": "My Certificates",
+    "subtitle": "View official verified completion credentials with unique QR verification",
+    "noCertificates": "You haven't earned any certificates yet. Complete 100% of course lessons to issue your certificate.",
+    "viewCertificate": "View Certificate",
+    "downloadPDF": "Download PDF",
+    "issuedTo": "Granted to:",
+    "issuedDate": "Issue Date:",
+    "verifyOnline": "Verify Online"
+  },
+  "Admin": {
+    "dashboardTitle": "Admin Control Center",
+    "portalBadge": "Executive Command Portal",
+    "returnToSite": "Back to Public Site",
+    "overview": "Overview",
+    "courses": "Courses Management",
+    "curriculum": "Curriculum Builder",
+    "quizzes": "Quizzes & Questions",
+    "students": "Students Management",
+    "requests": "Enrollment Requests",
+    "certificates": "Issued Certificates",
+    "content": "Site Content & CMS",
+    "messages": "Inquiries Inbox",
+    "analytics": "Analytics & Metrics",
+    "settings": "System Settings",
+    "totalStudents": "Total Students",
+    "activeEnrollments": "Active Enrollments",
+    "publishedCourses": "Published Courses",
+    "completionRate": "Average Completion",
+    "pendingRequests": "Pending Review",
+    "approve": "Approve & Activate",
+    "reject": "Reject Request",
+    "addNewCourse": "Add New Course",
+    "saveChanges": "Save Changes"
+  }
+}
