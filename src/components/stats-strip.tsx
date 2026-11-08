@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useTranslations } from "next-intl";
+import { createClient } from "@/lib/supabase/client";
 import { Users, BookOpen, Clock, Briefcase, Award } from "lucide-react";
 
 interface StatItem {
@@ -15,6 +16,60 @@ export default function StatsStrip({ currentLocale }: { currentLocale: string })
   const t = useTranslations("Stats");
   const [inView, setInView] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const supabase = createClient();
+
+  const [liveStats, setLiveStats] = useState({
+    students: 1,
+    courses: 1,
+    hours: 10,
+    projects: 15,
+    satisfaction: 99,
+  });
+
+  useEffect(() => {
+    async function fetchPlatformStats() {
+      try {
+        // 1. Check for admin override in site_settings
+        const { data: settingsRow } = await supabase
+          .from("site_settings")
+          .select("value")
+          .eq("key", "platform_stats")
+          .single();
+
+        let override = settingsRow?.value;
+
+        // 2. Fetch real counts from DB
+        const [{ count: studentCount }, { count: courseCount }, { data: lessonsData }] =
+          await Promise.all([
+            supabase.from("profiles").select("*", { count: "exact", head: true }),
+            supabase
+              .from("courses")
+              .select("*", { count: "exact", head: true })
+              .eq("status", "published"),
+            supabase.from("lessons").select("duration_seconds"),
+          ]);
+
+        const totalHours = Math.max(
+          1,
+          Math.round(
+            (lessonsData || []).reduce((acc, curr) => acc + (curr.duration_seconds || 0), 0) / 3600
+          )
+        );
+
+        setLiveStats({
+          students: override?.students || (studentCount && studentCount > 0 ? studentCount : 1),
+          courses: override?.courses || (courseCount && courseCount > 0 ? courseCount : 1),
+          hours: override?.hours || (totalHours > 0 ? totalHours : 10),
+          projects: override?.projects || 15,
+          satisfaction: override?.satisfaction || 99,
+        });
+      } catch (err) {
+        console.error("Stats strip fetch error:", err);
+      }
+    }
+
+    fetchPlatformStats();
+  }, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -34,11 +89,11 @@ export default function StatsStrip({ currentLocale }: { currentLocale: string })
   }, []);
 
   const stats: StatItem[] = [
-    { icon: Users, target: 1500, suffix: "+", labelKey: "students" },
-    { icon: BookOpen, target: 14, suffix: "+", labelKey: "courses" },
-    { icon: Clock, target: 160, suffix: "+", labelKey: "hours" },
-    { icon: Briefcase, target: 45, suffix: "+", labelKey: "projects" },
-    { icon: Award, target: 99, suffix: "%", labelKey: "satisfaction" },
+    { icon: Users, target: liveStats.students, suffix: "+", labelKey: "students" },
+    { icon: BookOpen, target: liveStats.courses, suffix: "+", labelKey: "courses" },
+    { icon: Clock, target: liveStats.hours, suffix: "+", labelKey: "hours" },
+    { icon: Briefcase, target: liveStats.projects, suffix: "+", labelKey: "projects" },
+    { icon: Award, target: liveStats.satisfaction, suffix: "%", labelKey: "satisfaction" },
   ];
 
   return (

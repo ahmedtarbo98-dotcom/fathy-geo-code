@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import { getCourseBySlug, LessonData } from "@/lib/data/courses";
+import { createClient } from "@/lib/supabase/client";
 import VideoPlayer from "@/components/video-player";
 import {
   CheckCircle2,
@@ -65,8 +66,53 @@ export default function CoursePlayerPage({
   const [notesSaved, setNotesSaved] = useState(false);
   const [showCertificateModal, setShowCertificateModal] = useState(false);
 
+  const [videoTokenData, setVideoTokenData] = useState({
+    videoId: "dQw4w9WgXcQ",
+    email: "student@fathygeocode.com",
+    userId: "STUDENT",
+  });
+  const [lessonResourcesList, setLessonResourcesList] = useState<any[]>([]);
+  const supabase = createClient();
+
   const currentLesson = allLessons[currentLessonIndex] || allLessons[0];
   const isCurrentCompleted = !!completedLessons[currentLesson?.id];
+
+  // Fetch real protected video & watermark
+  useEffect(() => {
+    if (!currentLesson?.id) return;
+
+    // 1. Fetch token and video
+    fetch("/api/video/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lessonId: currentLesson.id }),
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.videoId) {
+          setVideoTokenData({
+            videoId: data.videoId,
+            email: data.watermark?.email || "student@fathygeocode.com",
+            userId: data.watermark?.userId || "STUDENT",
+          });
+        }
+      })
+      .catch((err) => console.error("Video token error:", err));
+
+    // 2. Fetch live resources from DB
+    supabase
+      .from("lesson_resources")
+      .select("*")
+      .eq("lesson_id", currentLesson.id)
+      .order("order_index", { ascending: true })
+      .then(({ data }) => {
+        if (data && data.length > 0) {
+          setLessonResourcesList(data);
+        } else {
+          setLessonResourcesList([]);
+        }
+      });
+  }, [currentLesson?.id]);
 
   // Calculate percentage
   const completedCount = Object.values(completedLessons).filter(Boolean).length;
@@ -167,9 +213,9 @@ export default function CoursePlayerPage({
             {/* The Protected Video Player Abstraction */}
             <VideoPlayer
               provider="youtube"
-              videoId="dQw4w9WgXcQ"
-              userEmail="student@fathygeocode.com"
-              userId="FGC-98214"
+              videoId={videoTokenData.videoId}
+              userEmail={videoTokenData.email}
+              userId={videoTokenData.userId}
               isProtected={true}
               onComplete={() => toggleComplete(currentLesson?.id)}
             />
@@ -288,11 +334,13 @@ export default function CoursePlayerPage({
 
                 {activeTab === "resources" && (
                   <div className="space-y-3">
-                    {sampleResources.map((res, rIdx) => {
-                      const resTitle = locale === "ar" ? res.title_ar : res.title_en;
+                    {(lessonResourcesList.length > 0 ? lessonResourcesList : sampleResources).map((res, rIdx) => {
+                      const resTitle = locale === "ar" ? res.title_ar : (res.title_en || res.title_ar);
+                      const resourceUrl = res.external_url || res.url;
+
                       return (
                         <div
-                          key={rIdx}
+                          key={res.id || rIdx}
                           className="flex items-center justify-between p-3.5 rounded-xl border border-border bg-background/60 hover:bg-muted/40 transition-colors"
                         >
                           <div className="flex items-center gap-3">
@@ -307,19 +355,31 @@ export default function CoursePlayerPage({
                               <div className="text-xs sm:text-sm font-bold text-foreground">
                                 {resTitle}
                               </div>
-                              <div className="text-[11px] text-muted-foreground">
-                                {res.size || "External Resource"}
+                              <div className="text-[11px] text-muted-foreground font-mono">
+                                {resourceUrl ? resourceUrl.slice(0, 40) + "..." : (res.size || "GIS Resource")}
                               </div>
                             </div>
                           </div>
 
-                          <button
-                            onClick={() => alert(locale === "ar" ? "بدء تنزيل الملف التدريبي..." : "Downloading exercise files...")}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-secondary hover:bg-brand-blue hover:text-white transition-colors"
-                          >
-                            <Download className="w-3.5 h-3.5" />
-                            <span>{t("downloadFile")}</span>
-                          </button>
+                          {resourceUrl ? (
+                            <a
+                              href={resourceUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-blue text-white hover:bg-brand-blue/90 shadow-sm transition-colors"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                              <span>{locale === "ar" ? "فتح الرابط / تحميل" : "Open / Download"}</span>
+                            </a>
+                          ) : (
+                            <button
+                              onClick={() => alert(locale === "ar" ? "بدء تنزيل الملف التدريبي..." : "Downloading exercise files...")}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-secondary hover:bg-brand-blue hover:text-white transition-colors"
+                            >
+                              <Download className="w-3.5 h-3.5" />
+                              <span>{t("downloadFile")}</span>
+                            </button>
+                          )}
                         </div>
                       );
                     })}

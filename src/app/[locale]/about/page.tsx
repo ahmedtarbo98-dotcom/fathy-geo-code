@@ -1,7 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
+import { createClient } from "@/lib/supabase/client";
 import {
   GraduationCap,
   MapPin,
@@ -29,6 +31,27 @@ export default function AboutPage({
   const t = useTranslations("AboutPage");
   const tBrand = useTranslations("Brand");
   const isRtl = locale === "ar";
+  const [avatarUrl, setAvatarUrl] = useState("/logo.jpg");
+  const supabase = createClient();
+
+  useEffect(() => {
+    async function loadInstructorPhoto() {
+      try {
+        const { data } = await supabase
+          .from("site_settings")
+          .select("value")
+          .eq("key", "instructor_profile")
+          .single();
+
+        if (data?.value?.avatar_url) {
+          setAvatarUrl(data.value.avatar_url);
+        }
+      } catch (err) {
+        console.error("About page photo load error:", err);
+      }
+    }
+    loadInstructorPhoto();
+  }, []);
 
   const skills = [
     {
@@ -121,7 +144,7 @@ export default function AboutPage({
               <div className="relative w-56 h-56 sm:w-64 sm:h-64 rounded-3xl overflow-hidden p-1 bg-gradient-to-tr from-brand-navy via-brand-blue to-brand-cyan shadow-2xl">
                 <div className="relative w-full h-full rounded-[22px] overflow-hidden bg-background">
                   <Image
-                    src="/logo.jpg"
+                    src={avatarUrl}
                     alt={tBrand("owner")}
                     fill
                     className="object-cover"

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Link, usePathname } from "@/i18n/routing";
+import { Link, usePathname, useRouter } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { createClient } from "@/lib/supabase/client";
 import {
   LayoutDashboard,
   BookOpen,
@@ -19,10 +20,14 @@ import {
   BarChart3,
   Settings,
   ShieldAlert,
+  ShieldX,
   ArrowUpRight,
   Menu,
   X,
   Sparkles,
+  LogOut,
+  Home,
+  RefreshCw,
 } from "lucide-react";
 
 export default function AdminLayout({
@@ -35,18 +40,133 @@ export default function AdminLayout({
   const t = useTranslations("Admin");
   const tBrand = useTranslations("Brand");
   const pathname = usePathname();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const router = useRouter();
 
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [userEmail, setUserEmail] = useState<string>("");
+  const isRtl = locale === "ar";
+
+  const supabase = createClient();
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function checkAdminAuth() {
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+
+        if (!user) {
+          if (isMounted) setIsAdmin(false);
+          return;
+        }
+
+        setUserEmail(user.email || "");
+
+        // Admin email check or database role check
+        if (user.email === "ahmedtarbo98@gmail.com") {
+          if (isMounted) setIsAdmin(true);
+          return;
+        }
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role, is_blocked")
+          .eq("id", user.id)
+          .single();
+
+        if (profile?.role === "admin" && !profile?.is_blocked) {
+          if (isMounted) setIsAdmin(true);
+        } else {
+          if (isMounted) setIsAdmin(false);
+        }
+      } catch (err) {
+        console.error("Admin layout verification error:", err);
+        if (isMounted) setIsAdmin(false);
+      }
+    }
+
+    checkAdminAuth();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // 1. Loading state
+  if (isAdmin === null) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 space-y-4">
+        <RefreshCw className="w-8 h-8 text-brand-blue animate-spin" />
+        <p className="text-sm text-muted-foreground font-semibold">
+          {isRtl ? "جارٍ التحقق من صلاحيات المدير..." : "Verifying admin access..."}
+        </p>
+      </div>
+    );
+  }
+
+  // 2. 403 Forbidden Shield (If not admin)
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="max-w-md w-full rounded-3xl glass-panel p-8 text-center space-y-6 border border-red-500/30 shadow-2xl">
+          <div className="w-16 h-16 rounded-2xl bg-red-500/10 text-red-500 mx-auto flex items-center justify-center border border-red-500/30">
+            <ShieldX className="w-8 h-8" />
+          </div>
+
+          <div className="space-y-2">
+            <span className="px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-red-500/15 text-red-500">
+              403 Forbidden
+            </span>
+            <h1 className="text-2xl font-extrabold text-foreground">
+              {isRtl ? "وصول محظور" : "Access Denied"}
+            </h1>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {isRtl
+                ? "هذه المنطقة مخصصة حصرياً لمدير النظام (م. أحمد فتحي). حسابك الحالي ليس لديه صلاحيات الوصول إلى لوحة الإدارة."
+                : "This portal is strictly restricted to platform administrators. Your account does not have permission to view this resource."}
+            </p>
+            {userEmail && (
+              <p className="text-xs font-mono text-muted-foreground pt-1">
+                {isRtl ? "الحساب المسجل:" : "Signed in as:"} {userEmail}
+              </p>
+            )}
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+            <Link
+              href="/"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-muted hover:bg-muted/80 text-foreground text-xs font-bold transition-colors"
+            >
+              <Home className="w-4 h-4" />
+              <span>{isRtl ? "العودة للرئيسية" : "Back to Home"}</span>
+            </Link>
+            <Link
+              href="/login"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-brand-blue hover:bg-brand-blue/90 text-white text-xs font-bold shadow-md transition-colors"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>{isRtl ? "تسجيل الدخول كمدير" : "Admin Login"}</span>
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 3. Admin Authorized View
   const navItems = [
     { href: "/admin", label: t("overview"), icon: LayoutDashboard },
     { href: "/admin/courses", label: t("courses"), icon: BookOpen },
     { href: "/admin/curriculum", label: t("curriculum"), icon: Layers },
     { href: "/admin/quizzes", label: t("quizzes"), icon: HelpCircle },
     { href: "/admin/students", label: t("students"), icon: Users },
-    { href: "/admin/requests", label: t("requests"), icon: UserCheck, badge: "2" },
+    { href: "/admin/requests", label: t("requests"), icon: UserCheck, badge: "Live" },
     { href: "/admin/certificates", label: t("certificates"), icon: Award },
     { href: "/admin/content", label: t("content"), icon: FileEdit },
-    { href: "/admin/messages", label: t("messages"), icon: Mail, badge: "3" },
+    { href: "/admin/messages", label: t("messages"), icon: Mail, badge: "Inbox" },
     { href: "/admin/analytics", label: t("analytics"), icon: BarChart3 },
     { href: "/admin/settings", label: t("settings"), icon: Settings },
   ];
@@ -81,7 +201,7 @@ export default function AdminLayout({
           sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0 rtl:translate-x-full rtl:md:translate-x-0"
         }`}
       >
-        <div className="space-y-6 p-5">
+        <div className="space-y-6 p-5 overflow-y-auto">
           {/* Brand & Admin Badge */}
           <div className="space-y-2">
             <Link href="/admin" className="flex items-center gap-3">
@@ -99,10 +219,14 @@ export default function AdminLayout({
                 </span>
               </div>
             </Link>
+            <div className="px-3 py-1.5 rounded-lg bg-brand-cyan/10 border border-brand-cyan/30 text-[11px] font-medium text-brand-cyan flex items-center gap-1.5">
+              <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
+              <span className="truncate">{userEmail || "ahmedtarbo98@gmail.com"}</span>
+            </div>
           </div>
 
-          {/* Navigation Links */}
-          <nav className="space-y-1 overflow-y-auto max-h-[calc(100vh-180px)] pe-1">
+          {/* Nav Items */}
+          <nav className="space-y-1">
             {navItems.map((item) => {
               const isActive =
                 item.href === "/admin"
@@ -118,19 +242,19 @@ export default function AdminLayout({
                   className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
                     isActive
                       ? "bg-brand-blue text-white shadow-md shadow-brand-blue/20"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/60"
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Icon className="w-4 h-4 shrink-0" />
+                    <Icon className="w-4 h-4" />
                     <span>{item.label}</span>
                   </div>
                   {item.badge && (
                     <span
-                      className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded-full ${
                         isActive
                           ? "bg-white/20 text-white"
-                          : "bg-red-500/10 text-red-500"
+                          : "bg-brand-cyan/15 text-brand-cyan"
                       }`}
                     >
                       {item.badge}
@@ -142,48 +266,32 @@ export default function AdminLayout({
           </nav>
         </div>
 
-        {/* Bottom User & Site Switch */}
-        <div className="p-4 border-t border-border/60 space-y-3 bg-muted/20">
-          <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">{tBrand("owner")}</span>
-            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
-              Admin
+        {/* Sidebar Footer */}
+        <div className="p-4 border-t border-border/80 space-y-3">
+          <div className="hidden md:flex items-center justify-between">
+            <span className="text-xs text-muted-foreground font-medium">
+              {locale === "ar" ? "المظهر واللغة" : "Theme & Lang"}
             </span>
+            <div className="flex items-center gap-1.5">
+              <ThemeToggle />
+              <LanguageSwitcher currentLocale={locale} />
+            </div>
           </div>
 
           <Link
             href="/"
-            className="w-full flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-semibold border border-border bg-card hover:bg-muted transition-colors text-foreground"
+            className="flex items-center justify-center gap-2 w-full py-2 rounded-xl text-xs font-bold text-muted-foreground hover:text-foreground hover:bg-muted/60 border border-border/60 transition-colors"
           >
-            <span>{t("returnToSite")}</span>
-            <ArrowUpRight className="w-3.5 h-3.5 rtl:rotate-[-90deg]" />
+            <span>{isRtl ? "معاينة الموقع كزائر" : "View Public Site"}</span>
+            <ArrowUpRight className="w-3.5 h-3.5" />
           </Link>
         </div>
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Topbar (Desktop) */}
-        <header className="hidden md:flex h-16 border-b border-border bg-card/60 backdrop-blur-md items-center justify-between px-8">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-muted-foreground">
-              {t("dashboardTitle")}
-            </span>
-            <span className="text-muted-foreground">•</span>
-            <span className="text-xs text-foreground font-semibold">
-              {tBrand("ownerTitle")}
-            </span>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <LanguageSwitcher currentLocale={locale} />
-            <ThemeToggle />
-          </div>
-        </header>
-
-        {/* Content View */}
-        <main className="flex-1 p-4 sm:p-8 overflow-y-auto">{children}</main>
-      </div>
+      <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <div className="max-w-7xl mx-auto">{children}</div>
+      </main>
     </div>
   );
 }
