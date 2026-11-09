@@ -3,6 +3,7 @@
 import { useState, useRef, ChangeEvent, DragEvent } from "react";
 import Image from "next/image";
 import { UploadCloud, X, RefreshCw, AlertCircle, CheckCircle2, Image as ImageIcon } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
 
 interface ImageUploadProps {
   value?: string;
@@ -60,12 +61,29 @@ export default function ImageUpload({
       formData.append("bucket", bucket);
       formData.append("folder", folder);
 
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const headers: Record<string, string> = {};
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+
       const res = await fetch("/api/upload", {
         method: "POST",
+        headers,
         body: formData,
       });
 
-      const json = await res.json();
+      const text = await res.text();
+      let json: any = {};
+      try {
+        json = JSON.parse(text);
+      } catch {
+        throw new Error(`خطأ في معالجة استجابة الخادم (${res.status})`);
+      }
 
       if (!res.ok || json.error) {
         throw new Error(json.error || "Upload failed");

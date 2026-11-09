@@ -4,15 +4,26 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(request: Request) {
   try {
-    // 1. Verify user authentication
+    // 1. Verify user authentication via cookies or Bearer token
     const supabase = createClient();
-    const {
+    let {
       data: { user },
-      error: userErr,
     } = await supabase.auth.getUser();
 
-    if (userErr || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!user) {
+      const authHeader = request.headers.get("authorization");
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        const token = authHeader.substring(7);
+        const { data: tokenUser } = await supabase.auth.getUser(token);
+        user = tokenUser.user;
+      }
+    }
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "يجب تسجيل الدخول كمدير لرفع الصور (Unauthorized)" },
+        { status: 401 }
+      );
     }
 
     // 2. Parse form data

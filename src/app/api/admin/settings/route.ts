@@ -5,12 +5,20 @@ import { createAdminClient } from "@/lib/supabase/admin";
 export async function POST(request: Request) {
   try {
     const supabase = createClient();
-    const {
+    let {
       data: { user },
-      error: userErr,
     } = await supabase.auth.getUser();
 
-    if (userErr || !user) {
+    if (!user) {
+      const authHeader = request.headers.get("authorization");
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        const token = authHeader.substring(7);
+        const { data: tokenUser } = await supabase.auth.getUser(token);
+        user = tokenUser.user;
+      }
+    }
+
+    if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

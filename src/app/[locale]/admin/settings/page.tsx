@@ -114,13 +114,31 @@ export default function AdminSettingsPage({
         },
       };
 
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+
       const res = await fetch("/api/admin/settings", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify(payload),
       });
 
-      const result = await res.json();
+      const text = await res.text();
+      let result: any = {};
+      try {
+        result = JSON.parse(text);
+      } catch {
+        throw new Error(`خطأ في معالجة استجابة الخادم (${res.status})`);
+      }
+
       if (!res.ok || result.error) {
         throw new Error(result.error || "Failed to save settings");
       }
