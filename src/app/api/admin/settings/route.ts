@@ -1,0 +1,80 @@
+import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+
+export async function POST(request: Request) {
+  try {
+    const supabase = createClient();
+    const {
+      data: { user },
+      error: userErr,
+    } = await supabase.auth.getUser();
+
+    if (userErr || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Verify admin
+    const isAdmin =
+      user.email === "ahmedtarbo98@gmail.com" ||
+      user.email === process.env.ADMIN_EMAIL;
+
+    const adminClient = createAdminClient();
+
+    if (!isAdmin) {
+      const { data: profile } = await adminClient
+        .from("profiles")
+        .select("role, is_blocked")
+        .eq("id", user.id)
+        .single();
+
+      if (profile?.role !== "admin" || profile?.is_blocked) {
+        return NextResponse.json({ error: "Forbidden - Admin access required" }, { status: 403 });
+      }
+    }
+
+    const body = await request.json();
+    const { platform_stats, instructor_profile, site_identity } = body;
+
+    // 1. Update platform_stats
+    if (platform_stats) {
+      const { error: err1 } = await adminClient.from("site_settings").upsert({
+        key: "platform_stats",
+        value: platform_stats,
+        description: "Public platform statistics displayed on the hero stats strip",
+        updated_at: new Date().toISOString(),
+      });
+      if (err1) throw err1;
+    }
+
+    // 2. Update instructor_profile
+    if (instructor_profile) {
+      const { error: err2 } = await adminClient.from("site_settings").upsert({
+        key: "instructor_profile",
+        value: instructor_profile,
+        description: "Instructor and founder profile details for the About page",
+        updated_at: new Date().toISOString(),
+      });
+      if (err2) throw err2;
+    }
+
+    // 3. Update site_identity
+    if (site_identity) {
+      const { error: err3 } = await adminClient.from("site_settings").upsert({
+        key: "site_identity",
+        value: site_identity,
+        description: "Site brand identity and uploaded logo",
+        updated_at: new Date().toISOString(),
+      });
+      if (err3) throw err3;
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    console.error("Save settings API error:", err);
+    return NextResponse.json(
+      { error: err.message || "Failed to save settings" },
+      { status: 500 }
+    );
+  }
+}

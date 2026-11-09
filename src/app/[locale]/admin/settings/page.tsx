@@ -90,23 +90,15 @@ export default function AdminSettingsPage({
     try {
       setSaving(true);
 
-      // 1. Update platform_stats
-      await supabase.from("site_settings").upsert({
-        key: "platform_stats",
-        value: {
+      const payload = {
+        platform_stats: {
           students: parseInt(statsStudents) || 1500,
           courses: parseInt(statsCourses) || 14,
           hours: parseInt(statsHours) || 160,
           projects: parseInt(statsProjects) || 45,
           satisfaction: parseInt(statsSatisfaction) || 99,
         },
-        description: "Public platform statistics displayed on the hero stats strip",
-      });
-
-      // 2. Update instructor profile
-      await supabase.from("site_settings").upsert({
-        key: "instructor_profile",
-        value: {
+        instructor_profile: {
           name_ar: "م. أحمد فتحي",
           name_en: "Eng. Ahmed Fathy",
           title_ar: "محلل بيانات مكانية وأخصائي استشعار عن بعد",
@@ -115,24 +107,29 @@ export default function AdminSettingsPage({
           whatsapp_phone: "201060683463",
           avatar_url: instructorAvatar,
         },
-        description: "Instructor and founder profile details for the About page",
-      });
-
-      // 3. Update site_identity
-      await supabase.from("site_settings").upsert({
-        key: "site_identity",
-        value: {
+        site_identity: {
           site_name: siteName,
           tagline: tagline,
           logo_url: logoUrl,
         },
-        description: "Site brand identity and uploaded logo",
+      };
+
+      const res = await fetch("/api/admin/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
+
+      const result = await res.json();
+      if (!res.ok || result.error) {
+        throw new Error(result.error || "Failed to save settings");
+      }
 
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err: any) {
-      alert(`Save error: ${err.message}`);
+      console.error("Save error:", err);
+      alert(isRtl ? `خطأ أثناء الحفظ: ${err.message}` : `Save error: ${err.message}`);
     } finally {
       setSaving(false);
     }
