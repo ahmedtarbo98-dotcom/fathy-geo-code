@@ -658,16 +658,24 @@ export default function CourseDetailsPage({
                 </div>
 
                 {/* Payment Methods Info Box */}
-                <div className="p-4 rounded-2xl bg-muted/50 border border-border/80 space-y-2 text-xs">
+                <div className="p-4 rounded-2xl bg-muted/50 border border-border/80 space-y-2.5 text-xs">
                   <div className="font-bold text-foreground flex items-center gap-1.5">
-                    <span>طرق الدفع والتحويل المتاحة:</span>
+                    <span>{isRtl ? "طرق الدفع والتحويل المتاحة داخل مصر:" : "Available Payment Methods:"}</span>
                   </div>
-                  <div className="space-y-1 font-mono text-[11px] text-muted-foreground">
-                    <p>• فودافون كاش: <span className="font-bold text-foreground">01060683463</span></p>
-                    <p>• إنستاباي (InstaPay): <span className="font-bold text-foreground">ahmedtarbo98@instapay</span> أو على نفس الرقم</p>
+                  <div className="space-y-1.5 font-mono text-[11px] text-muted-foreground">
+                    <div className="flex items-center justify-between p-2 rounded-xl bg-background border border-border/60">
+                      <span className="font-sans font-bold text-foreground">📱 فودافون كاش (Vodafone Cash):</span>
+                      <span className="font-bold text-emerald-500 font-mono text-xs">01060683463</span>
+                    </div>
+                    <div className="flex items-center justify-between p-2 rounded-xl bg-background border border-border/60">
+                      <span className="font-sans font-bold text-foreground">⚡ إنستاباي (InstaPay):</span>
+                      <span className="font-bold text-brand-cyan font-mono text-xs">01149280661</span>
+                    </div>
                   </div>
-                  <p className="text-[10px] text-brand-cyan pt-1">
-                    * بعد التحويل، اكتب بياناتك بالأسفل واضغط تأكيد لفتح واتساب وإرسال الإشعار وتفعيل الحساب.
+                  <p className="text-[11px] text-muted-foreground pt-1 leading-relaxed">
+                    {isRtl
+                      ? "💡 قم بالتحويل أولاً إلى أحد الرقمين أعلاه، ثم اكتب بياناتك بالأسفل واضغط تأكيد لفتح محادثة واتساب وإرسال إشعار التحويل. ستقوم إدارة المنصة بمراجعة التحويل وتفعيل الدورة على حسابك مباشرة."
+                      : "💡 Transfer the fee via Cash or InstaPay to the numbers above, enter your details below, and confirm to send verification via WhatsApp. Admin will review and activate your access manually."}
                   </p>
                 </div>
 

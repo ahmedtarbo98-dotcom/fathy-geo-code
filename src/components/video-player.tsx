@@ -11,6 +11,7 @@ import {
   Minimize,
   RotateCcw,
   Sparkles,
+  SlidersHorizontal,
 } from "lucide-react";
 
 export type VideoProvider = "youtube" | "bunny" | "vimeo";
@@ -56,6 +57,7 @@ export default function VideoPlayer({
   const [volume, setVolume] = useState(80);
   const [isMuted, setIsMuted] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
+  const [quality, setQuality] = useState("auto");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isReady, setIsReady] = useState(false);
 
@@ -219,6 +221,17 @@ export default function VideoPlayer({
     if (!playerRef.current) return;
     try {
       playerRef.current.setPlaybackRate(rate);
+    } catch {}
+  };
+
+  // 5.1 Playback Quality
+  const handleQualityChange = (newQuality: string) => {
+    setQuality(newQuality);
+    if (!playerRef.current) return;
+    try {
+      if (typeof playerRef.current.setPlaybackQuality === "function") {
+        playerRef.current.setPlaybackQuality(newQuality);
+      }
     } catch {}
   };
 
@@ -438,11 +451,29 @@ export default function VideoPlayer({
               />
             </div>
 
+            {/* Quality Selector */}
+            <div className="flex items-center gap-1">
+              <SlidersHorizontal className="w-3 h-3 text-white/60 hidden sm:inline" />
+              <select
+                value={quality}
+                onChange={(e) => handleQualityChange(e.target.value)}
+                className="bg-black/40 border border-white/20 text-white text-[11px] font-bold rounded-lg px-2 py-1 outline-none hover:bg-black/60 transition-colors cursor-pointer"
+                title="جودة الفيديو"
+              >
+                <option value="auto" className="bg-slate-900">Auto (تلقائي)</option>
+                <option value="hd1080" className="bg-slate-900">1080p HD</option>
+                <option value="hd720" className="bg-slate-900">720p HD</option>
+                <option value="large" className="bg-slate-900">480p</option>
+                <option value="medium" className="bg-slate-900">360p</option>
+              </select>
+            </div>
+
             {/* Playback Speed */}
             <select
               value={playbackRate}
               onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
               className="bg-black/40 border border-white/20 text-white text-[11px] font-bold rounded-lg px-2 py-1 outline-none hover:bg-black/60 transition-colors cursor-pointer"
+              title="سرعة التشغيل"
             >
               <option value="0.75" className="bg-slate-900">0.75x</option>
               <option value="1" className="bg-slate-900">1.0x</option>

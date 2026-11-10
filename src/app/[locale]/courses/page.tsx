@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
-import { getCourses, CourseDetailData } from "@/lib/data/courses";
+import { CourseDetailData } from "@/lib/data/courses";
 import { createClient } from "@/lib/supabase/client";
 import {
   Search,
@@ -17,6 +17,7 @@ import {
   ArrowRight,
   ArrowLeft,
   X,
+  RefreshCw,
 } from "lucide-react";
 
 export default function CoursesPage({
@@ -35,11 +36,13 @@ export default function CoursesPage({
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedLevel, setSelectedLevel] = useState<string>("all");
 
-  const [coursesList, setCoursesList] = useState<CourseDetailData[]>(getCourses());
+  const [coursesList, setCoursesList] = useState<CourseDetailData[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchLiveCourses() {
       try {
+        setLoading(true);
         const { data, error } = await supabase
           .from("courses")
           .select(`
@@ -76,16 +79,16 @@ export default function CoursesPage({
           .eq("status", "published")
           .order("created_at", { ascending: false });
 
-        if (!error && data && data.length > 0) {
+        if (!error && data) {
           const transformed: CourseDetailData[] = data.map((c: any) => ({
             id: c.id,
             slug: c.slug,
             title_ar: c.title_ar,
             title_en: c.title_en,
-            short_description_ar: c.short_description_ar,
-            short_description_en: c.short_description_en,
-            description_ar: c.description_ar,
-            description_en: c.description_en,
+            short_description_ar: c.short_description_ar || c.title_ar,
+            short_description_en: c.short_description_en || c.title_en,
+            description_ar: c.description_ar || "",
+            description_en: c.description_en || "",
             what_you_will_learn_ar: [],
             what_you_will_learn_en: [],
             requirements_ar: [],
@@ -95,7 +98,7 @@ export default function CoursesPage({
             category: c.category || "GIS & Mapping",
             level: c.level || "all_levels",
             level_ar: c.level === "beginner" ? "مبتدئ" : c.level === "advanced" ? "متقدم" : "جميع المستويات",
-            level_en: c.level,
+            level_en: c.level || "All Levels",
             is_free: c.is_free,
             price: c.price || 0,
             currency: c.currency || "USD",
@@ -112,6 +115,8 @@ export default function CoursesPage({
         }
       } catch (err) {
         console.error("Live courses fetch error:", err);
+      } finally {
+        setLoading(false);
       }
     }
     fetchLiveCourses();
@@ -266,7 +271,14 @@ export default function CoursesPage({
         </div>
 
         {/* Courses Cards Grid */}
-        {filteredCourses.length === 0 ? (
+        {loading ? (
+          <div className="py-24 text-center space-y-3">
+            <RefreshCw className="w-8 h-8 mx-auto animate-spin text-brand-cyan" />
+            <p className="text-xs text-muted-foreground font-medium">
+              {isRtl ? "جارٍ تحميل الدورات التعليمية..." : "Loading courses..."}
+            </p>
+          </div>
+        ) : filteredCourses.length === 0 ? (
           <div className="text-center py-20 rounded-3xl glass-panel border border-dashed border-border/80 max-w-lg mx-auto space-y-4">
             <BookOpen className="w-12 h-12 mx-auto text-muted-foreground/40" />
             <h3 className="text-lg font-bold text-foreground">
