@@ -53,28 +53,69 @@ export default function CourseDetailsPage({
       try {
         setLoading(true);
 
-        // 1. Try Supabase first
-        const { data: dbCourse, error } = await supabase
-          .from("courses")
-          .select(`
-            *,
-            course_sections (
+        const rawSlug = String(slug || "").trim();
+        const decodedSlug = decodeURIComponent(rawSlug).trim();
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decodedSlug);
+
+        // 1. Try Supabase query safely
+        const selectFields = `
+          *,
+          course_sections (
+            id,
+            title_ar,
+            title_en,
+            order_index,
+            lessons (
               id,
               title_ar,
               title_en,
-              order_index,
-              lessons (
-                id,
-                title_ar,
-                title_en,
-                duration_seconds,
-                is_free_preview,
-                order_index
-              )
+              duration_seconds,
+              is_free_preview,
+              order_index
             )
-          `)
-          .or(`slug.eq.${slug},id.eq.${slug}`)
-          .maybeSingle();
+          )
+        `;
+
+        let dbCourse: any = null;
+
+        if (isUuid) {
+          const { data, error } = await supabase
+            .from("courses")
+            .select(selectFields)
+            .eq("id", decodedSlug)
+            .maybeSingle();
+          if (!error && data) dbCourse = data;
+        } else {
+          // Try decoded slug
+          const { data: d1, error: e1 } = await supabase
+            .from("courses")
+            .select(selectFields)
+            .eq("slug", decodedSlug)
+            .maybeSingle();
+
+          if (!e1 && d1) {
+            dbCourse = d1;
+          } else {
+            // Try raw slug
+            const { data: d2, error: e2 } = await supabase
+              .from("courses")
+              .select(selectFields)
+              .eq("slug", rawSlug)
+              .maybeSingle();
+
+            if (!e2 && d2) {
+              dbCourse = d2;
+            } else {
+              // Try case-insensitive ilike
+              const { data: d3 } = await supabase
+                .from("courses")
+                .select(selectFields)
+                .ilike("slug", decodedSlug)
+                .maybeSingle();
+              if (d3) dbCourse = d3;
+            }
+          }
+        }
 
         if (dbCourse) {
           const sortedSections = (dbCourse.course_sections || [])
@@ -138,7 +179,7 @@ export default function CourseDetailsPage({
         }
 
         // 2. Fallback to static mock courses
-        const staticMatch = getCourseBySlug(slug);
+        const staticMatch = getCourseBySlug(decodedSlug) || getCourseBySlug(rawSlug);
         if (staticMatch) {
           setCourse(staticMatch);
           if (staticMatch.sections.length > 0) {
@@ -386,28 +427,42 @@ export default function CourseDetailsPage({
                             {(section.lessons || []).map((lesson, lIdx) => {
                               const lTitle = locale === "ar" ? lesson.title_ar : lesson.title_en;
                               const minutes = Math.round((lesson.duration_seconds || 900) / 60);
-                              return (
-                                <div
+                              return lesson.is_free_preview || course.is_free ? (
+                                <Link
                                   key={lesson.id || lIdx}
-                                  className="py-2.5 flex items-center justify-between text-xs sm:text-sm"
+                                  href={`/player/${course.slug}?lessonId=${lesson.id}`}
+                                  className="py-2.5 flex items-center justify-between text-xs sm:text-sm group hover:bg-brand-blue/5 px-2 rounded-lg transition-colors"
                                 >
                                   <div className="flex items-center gap-2.5">
-                                    {lesson.is_free_preview ? (
-                                      <PlayCircle className="w-4 h-4 text-emerald-500 shrink-0" />
-                                    ) : (
-                                      <Lock className="w-4 h-4 text-muted-foreground shrink-0" />
-                                    )}
-                                    <span className="text-foreground font-medium">
+                                    <PlayCircle className="w-4 h-4 text-emerald-500 group-hover:scale-110 transition-transform shrink-0" />
+                                    <span className="text-foreground font-medium group-hover:text-brand-blue dark:group-hover:text-brand-cyan">
                                       {lTitle}
                                     </span>
                                   </div>
 
                                   <div className="flex items-center gap-2">
-                                    {lesson.is_free_preview && (
-                                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                                        {isRtl ? "معاينة مجانية" : "Free Preview"}
-                                      </span>
-                                    )}
+                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 flex items-center gap-1">
+                                      <span>{isRtl ? "مشاهدة ومعاينة" : "Watch Preview"}</span>
+                                      <ExternalLink className="w-2.5 h-2.5" />
+                                    </span>
+                                    <span className="text-xs text-muted-foreground font-mono">
+                                      {minutes} {locale === "ar" ? "د" : "m"}
+                                    </span>
+                                  </div>
+                                </Link>
+                              ) : (
+                                <div
+                                  key={lesson.id || lIdx}
+                                  className="py-2.5 flex items-center justify-between text-xs sm:text-sm px-2"
+                                >
+                                  <div className="flex items-center gap-2.5">
+                                    <Lock className="w-4 h-4 text-muted-foreground shrink-0" />
+                                    <span className="text-muted-foreground font-medium">
+                                      {lTitle}
+                                    </span>
+                                  </div>
+
+                                  <div className="flex items-center gap-2">
                                     <span className="text-xs text-muted-foreground font-mono">
                                       {minutes} {locale === "ar" ? "د" : "m"}
                                     </span>
@@ -508,16 +563,26 @@ export default function CourseDetailsPage({
                     <span>{t("enrollFree")}</span>
                   </Link>
                 ) : (
-                  <button
-                    onClick={() => {
-                      setRequestSuccess(false);
-                      setRequestModalOpen(true);
-                    }}
-                    className="w-full inline-flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl text-sm font-bold text-white shadow-xl shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] transition-all"
-                  >
-                    <PhoneCall className="w-4 h-4" />
-                    <span>{isRtl ? "طلب الاشتراك والتفعيل (فودافون كاش / إنستاباي)" : "Request Access & Payment"}</span>
-                  </button>
+                  <>
+                    <button
+                      onClick={() => {
+                        setRequestSuccess(false);
+                        setRequestModalOpen(true);
+                      }}
+                      className="w-full inline-flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl text-sm font-bold text-white shadow-xl shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] transition-all"
+                    >
+                      <PhoneCall className="w-4 h-4" />
+                      <span>{isRtl ? "طلب الاشتراك والتفعيل (فودافون كاش / إنستاباي)" : "Request Access & Payment"}</span>
+                    </button>
+
+                    <Link
+                      href={`/player/${course.slug}`}
+                      className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold border border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10 transition-all"
+                    >
+                      <PlayCircle className="w-4 h-4" />
+                      <span>{isRtl ? "مشاهدة الدروس المجانية والمعاينة" : "Watch Free Preview Lessons"}</span>
+                    </Link>
+                  </>
                 )}
 
                 <Link

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { notFound } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { notFound, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import { getCourseBySlug, LessonData } from "@/lib/data/courses";
@@ -28,7 +28,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 
-export default function CoursePlayerPage({
+function CoursePlayerContent({
   params: { locale, slug },
 }: {
   params: { locale: string; slug: string };
@@ -38,6 +38,8 @@ export default function CoursePlayerPage({
   const NextArrow = isRtl ? ChevronLeft : ChevronRight;
   const PrevArrow = isRtl ? ChevronRight : ChevronLeft;
   const supabase = createClient();
+  const searchParams = useSearchParams();
+  const urlLessonId = searchParams.get("lessonId");
 
   const [course, setCourse] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
@@ -61,28 +63,65 @@ export default function CoursePlayerPage({
       try {
         setLoading(true);
 
-        // 1. Check Supabase
-        const { data: dbCourse } = await supabase
-          .from("courses")
-          .select(`
-            *,
-            course_sections (
+        const rawSlug = String(slug || "").trim();
+        const decodedSlug = decodeURIComponent(rawSlug).trim();
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(decodedSlug);
+
+        const selectFields = `
+          *,
+          course_sections (
+            id,
+            title_ar,
+            title_en,
+            order_index,
+            lessons (
               id,
               title_ar,
               title_en,
-              order_index,
-              lessons (
-                id,
-                title_ar,
-                title_en,
-                duration_seconds,
-                is_free_preview,
-                order_index
-              )
+              duration_seconds,
+              is_free_preview,
+              order_index
             )
-          `)
-          .or(`slug.eq.${slug},id.eq.${slug}`)
-          .maybeSingle();
+          )
+        `;
+
+        let dbCourse: any = null;
+
+        if (isUuid) {
+          const { data, error } = await supabase
+            .from("courses")
+            .select(selectFields)
+            .eq("id", decodedSlug)
+            .maybeSingle();
+          if (!error && data) dbCourse = data;
+        } else {
+          const { data: d1, error: e1 } = await supabase
+            .from("courses")
+            .select(selectFields)
+            .eq("slug", decodedSlug)
+            .maybeSingle();
+
+          if (!e1 && d1) {
+            dbCourse = d1;
+          } else {
+            const { data: d2, error: e2 } = await supabase
+              .from("courses")
+              .select(selectFields)
+              .eq("slug", rawSlug)
+              .maybeSingle();
+
+            if (!e2 && d2) {
+              dbCourse = d2;
+            } else {
+              const { data: d3 } = await supabase
+                .from("courses")
+                .select(selectFields)
+                .ilike("slug", decodedSlug)
+                .maybeSingle();
+              if (d3) dbCourse = d3;
+            }
+          }
+        }
 
         if (dbCourse) {
           const sortedSections = (dbCourse.course_sections || [])
@@ -105,7 +144,7 @@ export default function CoursePlayerPage({
         }
 
         // 2. Fallback to static
-        const staticMatch = getCourseBySlug(slug);
+        const staticMatch = getCourseBySlug(decodedSlug) || getCourseBySlug(rawSlug);
         if (staticMatch) {
           setCourse(staticMatch);
           return;
@@ -138,6 +177,16 @@ export default function CoursePlayerPage({
 
   const currentLesson = allLessons[currentLessonIndex] || allLessons[0];
   const isCurrentCompleted = !!completedLessons[currentLesson?.id];
+
+  // Auto select lesson if passed in query param
+  useEffect(() => {
+    if (urlLessonId && allLessons.length > 0) {
+      const idx = allLessons.findIndex((l) => l.id === urlLessonId);
+      if (idx !== -1) {
+        setCurrentLessonIndex(idx);
+      }
+    }
+  }, [urlLessonId, allLessons.length]);
 
   // Fetch real protected video & watermark
   useEffect(() => {
@@ -600,5 +649,24 @@ export default function CoursePlayerPage({
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CoursePlayerPage({
+  params,
+}: {
+  params: { locale: string; slug: string };
+}) {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen py-24 flex flex-col items-center justify-center space-y-4">
+          <RefreshCw className="w-8 h-8 animate-spin text-brand-cyan" />
+          <p className="text-xs text-muted-foreground font-medium">Loading course player...</p>
+        </div>
+      }
+    >
+      <CoursePlayerContent params={params} />
+    </Suspense>
   );
 }
