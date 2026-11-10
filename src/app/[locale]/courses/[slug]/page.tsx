@@ -259,20 +259,22 @@ export default function CourseDetailsPage({
     try {
       setSubmittingRequest(true);
 
-      // 1. Get user id if logged in
-      const { data: { user } } = await supabase.auth.getUser();
-
-      // 2. Insert into enrollment_requests in Supabase
-      if (course.id && user) {
-        await supabase.from("enrollment_requests").insert({
-          user_id: user.id,
-          course_id: course.id,
-          full_name: studentName,
+      // Call dedicated API endpoint with Service Role bypass
+      const res = await fetch("/api/enroll-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          courseId: course.id,
+          fullName: studentName,
           email: studentEmail,
           phone: studentPhone,
-          status: "pending",
           notes: `Requested via Course Details page (${course.price} ${course.currency})`,
-        });
+        }),
+      });
+
+      const result = await res.json();
+      if (!res.ok || result.error) {
+        console.warn("Backend enroll request warning:", result.error);
       }
 
       setRequestSuccess(true);

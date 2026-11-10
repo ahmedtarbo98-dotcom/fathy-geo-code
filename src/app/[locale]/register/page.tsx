@@ -61,7 +61,23 @@ export default function RegisterPage({
     setLoading(true);
 
     try {
-      await signUpWithEmail(email, password, fullName, locale);
+      const signUpRes = await signUpWithEmail(email, password, fullName, locale);
+
+      // Sync profile immediately to admin database
+      try {
+        await fetch("/api/auth/sync-profile", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email,
+            fullName,
+            userId: signUpRes?.user?.id,
+          }),
+        });
+      } catch (e) {
+        console.warn("Sync profile warning:", e);
+      }
+
       setSuccess(t("registerSuccess"));
       setTimeout(() => {
         router.push("/dashboard");

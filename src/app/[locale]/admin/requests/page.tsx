@@ -47,12 +47,34 @@ export default function AdminRequestsPage({
   const [filterStatus, setFilterStatus] = useState<"all" | "pending" | "approved" | "rejected">("all");
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
-  // Fetch real requests & courses from Supabase
+  // Fetch real requests & courses from API / Supabase
   const loadRequests = async () => {
     try {
       setLoading(true);
 
-      // 1. Fetch courses lookup
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const headers: Record<string, string> = {};
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+
+      const res = await fetch("/api/admin/requests", { headers });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.requests) {
+          const mapped = data.requests.map((r: any) => ({
+            ...r,
+            course_title: isRtl ? r.course_title : (r.course_title_en || r.course_title),
+          }));
+          setRequests(mapped);
+          return;
+        }
+      }
+
+      // Fallback direct query
       const { data: coursesData } = await supabase
         .from("courses")
         .select("id, title_ar, title_en, price, currency");
@@ -62,13 +84,10 @@ export default function AdminRequestsPage({
         coursesMap.set(c.id, c);
       });
 
-      // 2. Fetch enrollment requests
-      const { data: reqData, error: reqErr } = await supabase
+      const { data: reqData } = await supabase
         .from("enrollment_requests")
         .select("*")
         .order("created_at", { ascending: false });
-
-      if (reqErr) throw reqErr;
 
       const mapped: EnrollmentRequestItem[] = (reqData || []).map((r) => {
         const c = coursesMap.get(r.course_id);

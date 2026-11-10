@@ -156,28 +156,59 @@ export default function AdminOverviewPage({
 
       setRecentStudents((recentUsers as RecentStudent[]) || []);
 
-      // 8. Pending Requests
-      const { data: reqData } = await supabase
-        .from("enrollment_requests")
-        .select("id, full_name, email, phone, course_id, created_at")
-        .eq("status", "pending")
-        .order("created_at", { ascending: false })
-        .limit(5);
+      // 8. Pending Requests via API
+      let loadedViaApi = false;
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const headers: Record<string, string> = {};
+        if (session?.access_token) headers["Authorization"] = `Bearer ${session.access_token}`;
+        const reqRes = await fetch("/api/admin/requests", { headers });
+        if (reqRes.ok) {
+          const reqJson = await reqRes.json();
+          if (reqJson?.requests) {
+            const pending = reqJson.requests
+              .filter((r: any) => r.status === "pending")
+              .slice(0, 5)
+              .map((r: any) => ({
+                id: r.id,
+                full_name: r.full_name,
+                email: r.email,
+                phone: r.phone,
+                course_id: r.course_id,
+                course_title: isRtl ? r.course_title : (r.course_title_en || r.course_title),
+                created_at: r.created_at,
+              }));
+            setPendingRequests(pending);
+            loadedViaApi = true;
+          }
+        }
+      } catch (err) {
+        console.warn("Failed to load requests via API:", err);
+      }
 
-      if (reqData && reqData.length > 0) {
-        // Map course title
-        const mapped = reqData.map((r) => {
-          const matchedCourse = (coursesData || []).find((c) => c.id === r.course_id);
-          return {
-            ...r,
-            course_title: matchedCourse
-              ? isRtl ? matchedCourse.title_ar : matchedCourse.title_en
-              : "GIS Course",
-          };
-        });
-        setPendingRequests(mapped);
-      } else {
-        setPendingRequests([]);
+      if (!loadedViaApi) {
+        const { data: reqData } = await supabase
+          .from("enrollment_requests")
+          .select("id, full_name, email, phone, course_id, created_at")
+          .eq("status", "pending")
+          .order("created_at", { ascending: false })
+          .limit(5);
+
+        if (reqData && reqData.length > 0) {
+          // Map course title
+          const mapped = reqData.map((r) => {
+            const matchedCourse = (coursesData || []).find((c) => c.id === r.course_id);
+            return {
+              ...r,
+              course_title: matchedCourse
+                ? isRtl ? matchedCourse.title_ar : matchedCourse.title_en
+                : "GIS Course",
+            };
+          });
+          setPendingRequests(mapped);
+        } else {
+          setPendingRequests([]);
+        }
       }
 
       // 9. Popular Courses (Enrollments per course)

@@ -71,6 +71,33 @@ export default function AdminStudentsPage({
     try {
       setLoading(true);
 
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const headers: Record<string, string> = {};
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+
+      const res = await fetch("/api/admin/students", { headers });
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.students) {
+          const mapped: StudentRecord[] = data.students.map((s: any) => ({
+            ...s,
+            enrollments: (s.enrollments || []).map((e: any) => ({
+              ...e,
+              course_title: isRtl ? e.course_title : (e.course_title_en || e.course_title),
+            })),
+          }));
+          setStudents(mapped);
+          setCourses(data.courses || []);
+          return;
+        }
+      }
+
+      // Fallback direct query
       // 1. Fetch all courses
       const { data: coursesData } = await supabase
         .from("courses")
