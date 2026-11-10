@@ -189,7 +189,7 @@ export default function AdminCoursesPage({
         if (updateErr) throw updateErr;
       } else {
         // INSERT new
-        const { error: insertErr } = await supabase
+        const { data: newCourse, error: insertErr } = await supabase
           .from("courses")
           .insert({
             slug: baseSlug,
@@ -198,9 +198,26 @@ export default function AdminCoursesPage({
             what_you_will_learn_en: [],
             requirements_ar: [],
             requirements_en: [],
-          });
+          })
+          .select("id")
+          .single();
 
         if (insertErr) throw insertErr;
+
+        setIsModalOpen(false);
+        await loadCourses();
+
+        if (newCourse?.id) {
+          const goToVideos = confirm(
+            isRtl
+              ? "تم إنشاء الدورة بنجاح!\n\nهل تريد الانتقال الآن إلى صفحة 'منهج الدورة والفيديوهات' لإضافة الأقسام وروابط الفيديوهات؟"
+              : "Course created successfully!\n\nDo you want to proceed to the Curriculum page now to add sections and video links?"
+          );
+          if (goToVideos) {
+            window.location.href = `/${locale}/admin/curriculum?courseId=${newCourse.id}`;
+            return;
+          }
+        }
       }
 
       setIsModalOpen(false);
@@ -398,48 +415,70 @@ export default function AdminCoursesPage({
                   </div>
 
                   {/* Actions Bar */}
-                  <div className="pt-3 border-t border-border/60 flex items-center justify-between gap-2">
-                    {/* Toggle publish button */}
-                    <button
-                      onClick={() => togglePublish(course)}
-                      className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition-colors ${
-                        course.status === "published"
-                          ? "bg-amber-500/10 text-amber-500 hover:bg-amber-500/20"
-                          : "bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20"
-                      }`}
-                      title={course.status === "published" ? "إلغاء النشر" : "نشر الدورة"}
+                  <div className="pt-3 border-t border-border/60 space-y-2.5">
+                    {/* Primary Button: Manage Curriculum & Videos */}
+                    <a
+                      href={`/${locale}/admin/curriculum?courseId=${course.id}`}
+                      className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-brand-blue/10 hover:bg-brand-blue hover:text-white text-brand-blue dark:text-brand-cyan text-xs font-bold transition-all border border-brand-blue/20"
                     >
-                      {course.status === "published" ? (
-                        <>
-                          <EyeOff className="w-3.5 h-3.5" />
-                          <span>{isRtl ? "إلغاء النشر" : "Unpublish"}</span>
-                        </>
-                      ) : (
-                        <>
-                          <Eye className="w-3.5 h-3.5" />
-                          <span>{isRtl ? "نشر الدورة" : "Publish"}</span>
-                        </>
-                      )}
-                    </button>
+                      <Layers className="w-3.5 h-3.5" />
+                      <span>{isRtl ? "إدارة الفيديوهات والمنهج (إضافة لينكات)" : "Manage Videos & Lessons"}</span>
+                    </a>
 
-                    <div className="flex items-center gap-1">
-                      {/* Edit */}
+                    <div className="flex items-center justify-between gap-2">
+                      {/* Toggle publish button */}
                       <button
-                        onClick={() => handleOpenEdit(course)}
-                        className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                        title={isRtl ? "تعديل الدورة" : "Edit course"}
+                        onClick={() => togglePublish(course)}
+                        className={`px-2.5 py-1.5 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition-colors ${
+                          course.status === "published"
+                            ? "bg-amber-500/10 text-amber-500 hover:bg-amber-500/20"
+                            : "bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500/20"
+                        }`}
+                        title={course.status === "published" ? "إلغاء النشر" : "نشر الدورة"}
                       >
-                        <Edit className="w-4 h-4" />
+                        {course.status === "published" ? (
+                          <>
+                            <EyeOff className="w-3.5 h-3.5" />
+                            <span>{isRtl ? "إلغاء النشر" : "Unpublish"}</span>
+                          </>
+                        ) : (
+                          <>
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>{isRtl ? "نشر الدورة" : "Publish"}</span>
+                          </>
+                        )}
                       </button>
 
-                      {/* Delete */}
-                      <button
-                        onClick={() => handleDeleteCourse(course.id, courseTitle)}
-                        className="p-1.5 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors"
-                        title={isRtl ? "حذف الدورة" : "Delete course"}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-1">
+                        {/* View in site */}
+                        <a
+                          href={`/${locale}/courses/${course.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1.5 rounded-lg text-muted-foreground hover:text-brand-cyan hover:bg-muted transition-colors"
+                          title={isRtl ? "عرض صفحة الدورة في الموقع" : "View course page"}
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+
+                        {/* Edit */}
+                        <button
+                          onClick={() => handleOpenEdit(course)}
+                          className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                          title={isRtl ? "تعديل بيانات الدورة" : "Edit course details"}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+
+                        {/* Delete */}
+                        <button
+                          onClick={() => handleDeleteCourse(course.id, courseTitle)}
+                          className="p-1.5 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                          title={isRtl ? "حذف الدورة بالكامل" : "Delete course"}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>

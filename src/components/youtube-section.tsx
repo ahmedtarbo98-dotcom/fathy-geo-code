@@ -1,35 +1,72 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { Youtube, Play, ExternalLink, Sparkles, CheckCircle2 } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+
+interface YouTubeCard {
+  id?: string;
+  title_ar: string;
+  title_en: string;
+  duration: string;
+  views: string;
+  tag: string;
+  video_url?: string;
+}
+
+const DEFAULT_VIDEOS: YouTubeCard[] = [
+  {
+    title_ar: "أسرار التعامل مع صور الأقمار الصناعية وحساب مؤشر NDVI",
+    title_en: "Satellite Imagery Analysis & NDVI Spectral Index in ArcGIS Pro",
+    duration: "24:15",
+    views: "3.4K",
+    tag: "Remote Sensing",
+    video_url: "https://www.youtube.com/channel/UCBrwWaq6E8lg0xEmDCLmekw",
+  },
+  {
+    title_ar: "بناء نموذج ملاءمة مكانية باستخدام ModelBuilder خطوة بخطوة",
+    title_en: "Building a Multi-Criteria Spatial Suitability Model with ModelBuilder",
+    duration: "32:40",
+    views: "5.1K",
+    tag: "GIS Analysis",
+    video_url: "https://www.youtube.com/channel/UCBrwWaq6E8lg0xEmDCLmekw",
+  },
+  {
+    title_ar: "مقدمة سريعة للمبتدئين في Google Earth Engine عبر الجافاسكريبت",
+    title_en: "Fast-Track Introduction to Google Earth Engine Scripting",
+    duration: "19:50",
+    views: "2.8K",
+    tag: "GEE & Code",
+    video_url: "https://www.youtube.com/channel/UCBrwWaq6E8lg0xEmDCLmekw",
+  },
+];
 
 export default function YouTubeSection({ currentLocale }: { currentLocale: string }) {
   const t = useTranslations("YouTubeSection");
   const channelUrl = "https://www.youtube.com/channel/UCBrwWaq6E8lg0xEmDCLmekw";
+  const supabase = createClient();
 
-  const videoCards = [
-    {
-      title_ar: "أسرار التعامل مع صور الأقمار الصناعية وحساب مؤشر NDVI",
-      title_en: "Satellite Imagery Analysis & NDVI Spectral Index in ArcGIS Pro",
-      duration: "24:15",
-      views: "3.4K",
-      tag: "Remote Sensing",
-    },
-    {
-      title_ar: "بناء نموذج ملاءمة مكانية باستخدام ModelBuilder خطوة بخطوة",
-      title_en: "Building a Multi-Criteria Spatial Suitability Model with ModelBuilder",
-      duration: "32:40",
-      views: "5.1K",
-      tag: "GIS Analysis",
-    },
-    {
-      title_ar: "مقدمة سريعة للمبتدئين في Google Earth Engine عبر الجافاسكريبت",
-      title_en: "Fast-Track Introduction to Google Earth Engine Scripting",
-      duration: "19:50",
-      views: "2.8K",
-      tag: "GEE & Code",
-    },
-  ];
+  const [videoCards, setVideoCards] = useState<YouTubeCard[]>(DEFAULT_VIDEOS);
+
+  useEffect(() => {
+    async function loadDynamicYouTubeVideos() {
+      try {
+        const { data, error } = await supabase
+          .from("site_settings")
+          .select("value")
+          .eq("key", "youtube_featured_videos")
+          .single();
+
+        if (data?.value && Array.isArray(data.value) && data.value.length > 0) {
+          setVideoCards(data.value);
+        }
+      } catch (err) {
+        // Fallback to defaults
+      }
+    }
+    loadDynamicYouTubeVideos();
+  }, []);
 
   return (
     <section className="py-20 relative overflow-hidden bg-gradient-to-b from-background via-brand-navy/5 to-background">
@@ -72,10 +109,12 @@ export default function YouTubeSection({ currentLocale }: { currentLocale: strin
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {videoCards.map((video, idx) => {
                 const title = currentLocale === "ar" ? video.title_ar : video.title_en;
+                const targetLink = video.video_url && video.video_url.trim().length > 5 ? video.video_url : channelUrl;
+
                 return (
                   <a
                     key={idx}
-                    href={channelUrl}
+                    href={targetLink}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="group flex flex-col rounded-xl overflow-hidden bg-background/80 border border-border/60 hover:border-red-500/40 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-red-500/10"
@@ -100,7 +139,7 @@ export default function YouTubeSection({ currentLocale }: { currentLocale: strin
                         {title}
                       </h4>
                       <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t border-border/30">
-                        <span>{video.views} views</span>
+                        <span>{video.views}</span>
                         <span className="text-red-500 font-semibold flex items-center gap-1">
                           <span>{t("watchVideo")}</span>
                           <ExternalLink className="w-3 h-3" />

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -66,7 +67,7 @@ interface SectionItem {
   lessons: LessonItem[];
 }
 
-export default function AdminCurriculumPage({
+function AdminCurriculumContent({
   params: { locale },
 }: {
   params: { locale: string };
@@ -74,6 +75,8 @@ export default function AdminCurriculumPage({
   const t = useTranslations("Admin");
   const isRtl = locale === "ar";
   const supabase = createClient();
+  const searchParams = useSearchParams();
+  const urlCourseId = searchParams.get("courseId");
 
   const [courses, setCourses] = useState<CourseOption[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState<string>("");
@@ -131,7 +134,8 @@ export default function AdminCurriculumPage({
         if (error) throw error;
         if (data && data.length > 0) {
           setCourses(data);
-          setSelectedCourseId(data[0].id);
+          const matchedCourse = urlCourseId ? data.find((c) => c.id === urlCourseId) : null;
+          setSelectedCourseId(matchedCourse ? matchedCourse.id : data[0].id);
         }
       } catch (err) {
         console.error("Failed to load courses for curriculum:", err);
@@ -140,7 +144,7 @@ export default function AdminCurriculumPage({
       }
     }
     loadCourses();
-  }, []);
+  }, [urlCourseId]);
 
   // 2. Fetch sections, lessons, videos & resources for selected course
   const loadCurriculum = async (courseId: string) => {
@@ -788,6 +792,38 @@ export default function AdminCurriculumPage({
                   className="w-full px-3 py-2 rounded-xl border border-border bg-background text-xs font-mono focus:outline-none focus:border-brand-blue"
                 />
 
+                {/* Live YouTube Preview Card */}
+                {extractYouTubeId(lessonVideoUrl) && extractYouTubeId(lessonVideoUrl).length === 11 && (
+                  <div className="rounded-xl overflow-hidden border border-brand-cyan/30 bg-background/80 p-2.5 flex items-center gap-3">
+                    <div className="relative w-28 aspect-video rounded-lg overflow-hidden bg-black shrink-0 border border-border">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={`https://img.youtube.com/vi/${extractYouTubeId(lessonVideoUrl)}/hqdefault.jpg`}
+                        alt="YouTube Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div className="text-[11px] text-muted-foreground space-y-1">
+                      <div className="text-emerald-500 font-bold flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>{isRtl ? "تم التحقق من رابط الفيديو بنجاح" : "Valid YouTube video detected"}</span>
+                      </div>
+                      <div className="font-mono text-[10px] text-brand-cyan">
+                        ID: {extractYouTubeId(lessonVideoUrl)}
+                      </div>
+                      <a
+                        href={`https://www.youtube.com/watch?v=${extractYouTubeId(lessonVideoUrl)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] text-foreground hover:text-brand-cyan hover:underline flex items-center gap-1"
+                      >
+                        <span>{isRtl ? "معاينة الفيديو في يوتيوب" : "Preview on YouTube"}</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </div>
+                )}
+
                 <p className="text-[11px] text-muted-foreground">
                   {isRtl
                     ? "الصق رابط يوتيوب العادي وسيتم استخراج الـ Video ID تلقائياً وتخزينه في جدول الفيديوهات المحمي."
@@ -930,5 +966,24 @@ export default function AdminCurriculumPage({
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdminCurriculumPage({
+  params,
+}: {
+  params: { locale: string };
+}) {
+  return (
+    <Suspense
+      fallback={
+        <div className="p-12 text-center text-muted-foreground space-y-3">
+          <RefreshCw className="w-8 h-8 mx-auto animate-spin text-brand-cyan" />
+          <p className="text-xs font-medium">Loading curriculum...</p>
+        </div>
+      }
+    >
+      <AdminCurriculumContent params={params} />
+    </Suspense>
   );
 }

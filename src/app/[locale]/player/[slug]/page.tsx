@@ -25,6 +25,7 @@ import {
   ChevronUp,
   FileCode,
   Check,
+  RefreshCw,
 } from "lucide-react";
 
 export default function CoursePlayerPage({
@@ -36,31 +37,13 @@ export default function CoursePlayerPage({
   const isRtl = locale === "ar";
   const NextArrow = isRtl ? ChevronLeft : ChevronRight;
   const PrevArrow = isRtl ? ChevronRight : ChevronLeft;
+  const supabase = createClient();
 
-  const course = getCourseBySlug(slug);
-
-  if (!course) {
-    notFound();
-  }
-
-  // Flatten lessons
-  const allLessons: (LessonData & { sectionTitle_ar: string; sectionTitle_en: string })[] = [];
-  course.sections.forEach((s) => {
-    s.lessons.forEach((l) => {
-      allLessons.push({
-        ...l,
-        sectionTitle_ar: s.title_ar,
-        sectionTitle_en: s.title_en,
-      });
-    });
-  });
+  const [course, setCourse] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
-  const [completedLessons, setCompletedLessons] = useState<Record<string, boolean>>({
-    l1: true,
-    l2: true,
-  });
-
+  const [completedLessons, setCompletedLessons] = useState<Record<string, boolean>>({});
   const [activeTab, setActiveTab] = useState<"overview" | "resources" | "notes">("overview");
   const [notes, setNotes] = useState("");
   const [notesSaved, setNotesSaved] = useState(false);
@@ -72,7 +55,86 @@ export default function CoursePlayerPage({
     userId: "STUDENT",
   });
   const [lessonResourcesList, setLessonResourcesList] = useState<any[]>([]);
-  const supabase = createClient();
+
+  useEffect(() => {
+    async function loadPlayerCourse() {
+      try {
+        setLoading(true);
+
+        // 1. Check Supabase
+        const { data: dbCourse } = await supabase
+          .from("courses")
+          .select(`
+            *,
+            course_sections (
+              id,
+              title_ar,
+              title_en,
+              order_index,
+              lessons (
+                id,
+                title_ar,
+                title_en,
+                duration_seconds,
+                is_free_preview,
+                order_index
+              )
+            )
+          `)
+          .or(`slug.eq.${slug},id.eq.${slug}`)
+          .maybeSingle();
+
+        if (dbCourse) {
+          const sortedSections = (dbCourse.course_sections || [])
+            .sort((a: any, b: any) => (a.order_index || 0) - (b.order_index || 0))
+            .map((sec: any) => ({
+              id: sec.id,
+              title_ar: sec.title_ar,
+              title_en: sec.title_en,
+              order_index: sec.order_index,
+              lessons: (sec.lessons || []).sort(
+                (a: any, b: any) => (a.order_index || 0) - (b.order_index || 0)
+              ),
+            }));
+
+          setCourse({
+            ...dbCourse,
+            sections: sortedSections,
+          });
+          return;
+        }
+
+        // 2. Fallback to static
+        const staticMatch = getCourseBySlug(slug);
+        if (staticMatch) {
+          setCourse(staticMatch);
+          return;
+        }
+
+        setCourse(null);
+      } catch (err) {
+        console.error("Player load error:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    loadPlayerCourse();
+  }, [slug]);
+
+  // Flatten lessons
+  const allLessons: any[] = [];
+  if (course?.sections) {
+    course.sections.forEach((s: any) => {
+      (s.lessons || []).forEach((l: any) => {
+        allLessons.push({
+          ...l,
+          sectionTitle_ar: s.title_ar,
+          sectionTitle_en: s.title_en,
+        });
+      });
+    });
+  }
 
   const currentLesson = allLessons[currentLessonIndex] || allLessons[0];
   const isCurrentCompleted = !!completedLessons[currentLesson?.id];
@@ -116,7 +178,7 @@ export default function CoursePlayerPage({
 
   // Calculate percentage
   const completedCount = Object.values(completedLessons).filter(Boolean).length;
-  const totalCount = allLessons.length;
+  const totalCount = allLessons.length || 1;
   const progressPercent = Math.min(100, Math.round((completedCount / totalCount) * 100));
 
   const toggleComplete = (id: string) => {
@@ -169,6 +231,21 @@ export default function CoursePlayerPage({
     },
   ];
 
+  if (loading) {
+    return (
+      <div className="min-h-screen py-24 flex flex-col items-center justify-center space-y-4">
+        <RefreshCw className="w-8 h-8 animate-spin text-brand-cyan" />
+        <p className="text-xs text-muted-foreground font-medium">
+          {isRtl ? "جارٍ تحميل مشغل الدورة..." : "Loading course player..."}
+        </p>
+      </div>
+    );
+  }
+
+  if (!course) {
+    notFound();
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Player Top Navigation Bar */}
@@ -198,19 +275,18 @@ export default function CoursePlayerPage({
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
-            <span className="font-bold font-mono text-brand-blue dark:text-brand-cyan">
+            <span className="font-mono font-bold text-brand-cyan">
               {progressPercent}%
             </span>
           </div>
         </div>
       </div>
 
-      {/* Main Player & Sidebar Grid */}
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          {/* Main Stage: Video + Controls + Tabs (Col 8) */}
+          {/* Main Video & Lesson Content (Col 8) */}
           <div className="lg:col-span-8 space-y-6">
-            {/* The Protected Video Player Abstraction */}
+            {/* Custom Video Player with Overlay & Watermark */}
             <VideoPlayer
               provider="youtube"
               videoId={videoTokenData.videoId}
@@ -427,23 +503,23 @@ export default function CoursePlayerPage({
 
               {/* Sections Accordion */}
               <div className="space-y-3 max-h-[600px] overflow-y-auto pe-1">
-                {course.sections.map((section, sIdx) => {
+                {(course.sections || []).map((section: any, sIdx: number) => {
                   const sTitle = locale === "ar" ? section.title_ar : section.title_en;
 
                   return (
                     <div
-                      key={section.id}
+                      key={section.id || sIdx}
                       className="rounded-2xl border border-border/60 bg-card overflow-hidden"
                     >
                       <div className="p-3 bg-muted/40 font-bold text-xs text-foreground flex items-center justify-between">
                         <span>{sTitle}</span>
                         <span className="text-[10px] text-muted-foreground">
-                          {section.lessons.length} {locale === "ar" ? "دروس" : "lessons"}
+                          {section.lessons?.length || 0} {locale === "ar" ? "دروس" : "lessons"}
                         </span>
                       </div>
 
                       <div className="divide-y divide-border/30">
-                        {section.lessons.map((lesson) => {
+                        {(section.lessons || []).map((lesson: any) => {
                           const lTitle =
                             locale === "ar" ? lesson.title_ar : lesson.title_en;
                           const isDone = !!completedLessons[lesson.id];
@@ -483,7 +559,7 @@ export default function CoursePlayerPage({
                               </div>
 
                               <span className="text-[11px] text-muted-foreground shrink-0 font-mono">
-                                {Math.floor(lesson.duration_seconds / 60)}m
+                                {Math.floor((lesson.duration_seconds || 900) / 60)}m
                               </span>
                             </button>
                           );
@@ -502,7 +578,7 @@ export default function CoursePlayerPage({
                     {t("certificateUnlockedTitle")}
                   </div>
                   <Link
-                    href={`/verify/FGC-2026-${course.slug.slice(0, 4).toUpperCase()}`}
+                    href={`/verify/FGC-2026-${(course.slug || "CRS").slice(0, 4).toUpperCase()}`}
                     className="w-full inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-md transition-all"
                   >
                     <span>{t("claimCertificate")}</span>

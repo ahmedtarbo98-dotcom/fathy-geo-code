@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { platform_stats, instructor_profile, site_identity } = body;
+    const { platform_stats, instructor_profile, site_identity, youtube_featured_videos } = body;
 
     // 1. Update platform_stats
     if (platform_stats) {
@@ -75,6 +75,17 @@ export async function POST(request: Request) {
         updated_at: new Date().toISOString(),
       });
       if (err3) throw err3;
+    }
+
+    // 4. Update youtube_featured_videos
+    if (youtube_featured_videos) {
+      const { error: err4 } = await adminClient.from("site_settings").upsert({
+        key: "youtube_featured_videos",
+        value: youtube_featured_videos,
+        description: "Featured YouTube videos displayed on the homepage community section",
+        updated_at: new Date().toISOString(),
+      });
+      if (err4) throw err4;
     }
 
     return NextResponse.json({ success: true });
