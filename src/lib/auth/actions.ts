@@ -3,8 +3,9 @@ import { createClient } from "@/lib/supabase/client";
 export async function signInWithGoogle(locale: string = "ar") {
   const supabase = createClient();
   const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
+    (typeof window !== "undefined" && window.location.origin)
+      ? window.location.origin
+      : (process.env.NEXT_PUBLIC_SITE_URL || "https://fathy-geo-code.vercel.app");
 
   const redirectTo = `${siteUrl}/auth/callback?next=/${locale}/dashboard`;
 
@@ -45,8 +46,9 @@ export async function signUpWithEmail(
 ) {
   const supabase = createClient();
   const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
+    (typeof window !== "undefined" && window.location.origin)
+      ? window.location.origin
+      : (process.env.NEXT_PUBLIC_SITE_URL || "https://fathy-geo-code.vercel.app");
 
   const { data, error } = await supabase.auth.signUp({
     email,
@@ -73,8 +75,9 @@ export async function signOut() {
 export async function resetPassword(email: string, locale: string = "ar") {
   const supabase = createClient();
   const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
-    (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
+    (typeof window !== "undefined" && window.location.origin)
+      ? window.location.origin
+      : (process.env.NEXT_PUBLIC_SITE_URL || "https://fathy-geo-code.vercel.app");
 
   const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${siteUrl}/auth/callback?next=/${locale}/profile`,

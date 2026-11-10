@@ -182,20 +182,40 @@ export default function AdminStudentsPage({
 
     try {
       setActionLoading(true);
-      const { data, error } = await supabase.from("enrollments").insert({
-        user_id: selectedStudent.id,
-        course_id: enrollCourseId,
-        status: "active",
-      }).select().single();
 
-      if (error) throw error;
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+
+      const res = await fetch("/api/admin/enroll", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          userId: selectedStudent.id,
+          studentEmail: selectedStudent.email,
+          courseId: enrollCourseId,
+          action: "enroll",
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "Enrollment failed");
+      }
 
       await loadData();
 
       // Update current selectedStudent modal
       const matched = courses.find((c) => c.id === enrollCourseId);
       const newEnrollment: StudentEnrollment = {
-        id: data.id,
+        id: data.enrollment?.id || `enr_${Date.now()}`,
         course_id: enrollCourseId,
         status: "active",
         enrolled_at: new Date().toISOString(),
@@ -215,13 +235,37 @@ export default function AdminStudentsPage({
   };
 
   // Manual Unenroll Student
-  const handleManualUnenroll = async (enrollmentId: string) => {
+  const handleManualUnenroll = async (enrollmentId: string, courseId?: string) => {
     if (!confirm(isRtl ? "إلغاء اشتراك هذا الطالب من الدورة؟" : "Revoke student enrollment?")) return;
 
     try {
       setActionLoading(true);
-      const { error } = await supabase.from("enrollments").delete().eq("id", enrollmentId);
-      if (error) throw error;
+
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+
+      if (selectedStudent && courseId) {
+        await fetch("/api/admin/enroll", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            userId: selectedStudent.id,
+            courseId: courseId,
+            action: "unenroll",
+          }),
+        });
+      } else {
+        const { error } = await supabase.from("enrollments").delete().eq("id", enrollmentId);
+        if (error) throw error;
+      }
 
       await loadData();
       if (selectedStudent) {
@@ -520,7 +564,7 @@ export default function AdminStudentsPage({
 
                       <button
                         type="button"
-                        onClick={() => handleManualUnenroll(enr.id)}
+                        onClick={() => handleManualUnenroll(enr.id, enr.course_id)}
                         disabled={actionLoading}
                         className="p-1.5 rounded-lg text-red-500 hover:bg-red-500/10 transition-colors"
                         title={isRtl ? "إلغاء الاشتراك" : "Unenroll"}

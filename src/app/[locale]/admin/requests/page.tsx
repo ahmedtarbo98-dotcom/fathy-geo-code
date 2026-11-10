@@ -97,29 +97,33 @@ export default function AdminRequestsPage({
     try {
       setActionLoadingId(req.id);
 
-      // 1. Activate enrollment
-      const { error: enrollErr } = await supabase.from("enrollments").upsert(
-        {
-          user_id: req.user_id,
-          course_id: req.course_id,
-          status: "active",
-          enrolled_at: new Date().toISOString(),
-        },
-        { onConflict: "user_id,course_id" }
-      );
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      if (enrollErr) throw enrollErr;
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
 
-      // 2. Mark request as approved
-      const { error: updateErr } = await supabase
-        .from("enrollment_requests")
-        .update({
-          status: "approved",
-          reviewed_at: new Date().toISOString(),
-        })
-        .eq("id", req.id);
+      const res = await fetch("/api/admin/enroll", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          userId: req.user_id,
+          studentEmail: req.email,
+          courseId: req.course_id,
+          requestId: req.id,
+          action: "enroll",
+        }),
+      });
 
-      if (updateErr) throw updateErr;
+      const data = await res.json();
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "Failed to approve enrollment");
+      }
 
       // Update local state
       setRequests((prev) =>
