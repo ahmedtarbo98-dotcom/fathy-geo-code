@@ -20,6 +20,7 @@ import {
   RefreshCw,
   PlayCircle,
   TrendingUp,
+  Briefcase,
 } from "lucide-react";
 
 interface DailySignupPoint {
@@ -72,6 +73,8 @@ interface OverviewData {
   totalLessons: number;
   pendingRequestsCount: number;
   unreadMessagesCount: number;
+  totalProjects: number;
+  publishedProjects: number;
   recentSignups: Array<{
     id: string;
     full_name: string | null;
@@ -341,7 +344,7 @@ export default function AdminOverviewPage() {
       </div>
 
       {/* Actionable Counters Strip */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Link
           href="/admin/requests"
           className="rounded-2xl glass-panel p-4 border border-border/70 hover:border-amber-500/40 transition-all flex items-center justify-between"
@@ -376,6 +379,29 @@ export default function AdminOverviewPage() {
               </p>
               <p className="text-xl font-extrabold text-foreground">
                 {fmtNum(metrics.unreadMessagesCount)}
+              </p>
+            </div>
+          </div>
+          <ArrowUpRight className="w-4 h-4 text-muted-foreground" />
+        </Link>
+
+        <Link
+          href="/admin/projects"
+          className="rounded-2xl glass-panel p-4 border border-border/70 hover:border-emerald-500/40 transition-all flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-500 flex items-center justify-center">
+              <Briefcase className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs text-muted-foreground font-semibold">
+                {isRtl ? "المشاريع (منشور / الإجمالي)" : "Projects (Published / Total)"}
+              </p>
+              <p className="text-xl font-extrabold text-foreground">
+                {fmtNum(metrics.publishedProjects)}{" "}
+                <span className="text-sm font-semibold text-muted-foreground">
+                  / {fmtNum(metrics.totalProjects)}
+                </span>
               </p>
             </div>
           </div>

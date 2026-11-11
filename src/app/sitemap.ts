@@ -1,14 +1,19 @@
 import { MetadataRoute } from "next";
 import { getCourses } from "@/lib/data/courses";
+import { getPublishedProjects } from "@/lib/projects-server";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export const revalidate = 300;
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://fathygeocode.com";
   const courses = getCourses();
+  const projects = await getPublishedProjects();
   const locales = ["ar", "en"];
 
   const routes = [
     "",
     "/courses",
+    "/projects",
     "/about",
     "/contact",
     "/verify",
@@ -18,7 +23,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
 
   const sitemapEntries: MetadataRoute.Sitemap = [];
 
-  // Static Pages across both locales
   routes.forEach((route) => {
     locales.forEach((locale) => {
       sitemapEntries.push({
@@ -30,7 +34,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     });
   });
 
-  // Dynamic Course Pages
   courses.forEach((course) => {
     locales.forEach((locale) => {
       sitemapEntries.push({
@@ -38,6 +41,17 @@ export default function sitemap(): MetadataRoute.Sitemap {
         lastModified: new Date(),
         changeFrequency: "weekly",
         priority: 0.9,
+      });
+    });
+  });
+
+  projects.forEach((project) => {
+    locales.forEach((locale) => {
+      sitemapEntries.push({
+        url: `${baseUrl}/${locale}/projects/${project.slug}`,
+        lastModified: project.updated_at ? new Date(project.updated_at) : new Date(),
+        changeFrequency: "weekly",
+        priority: 0.85,
       });
     });
   });

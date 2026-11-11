@@ -1,32 +1,20 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAdminRequest } from "@/lib/admin-auth";
+import {
+  PROJECT_IMAGE_BUCKET,
+  PROJECT_IMAGE_MAX_BYTES,
+  PROJECT_IMAGE_MIME_TYPES,
+  extractStoragePathFromUrl,
+} from "@/lib/projects";
+
+export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
-    // 1. Verify user authentication via cookies or Bearer token
-    const supabase = createClient();
-    let {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const auth = await requireAdminRequest(request);
+    if (!auth.ok) return auth.response;
+    const { adminClient } = auth;
 
-    if (!user) {
-      const authHeader = request.headers.get("authorization");
-      if (authHeader && authHeader.startsWith("Bearer ")) {
-        const token = authHeader.substring(7);
-        const { data: tokenUser } = await supabase.auth.getUser(token);
-        user = tokenUser.user;
-      }
-    }
-
-    if (!user) {
-      return NextResponse.json(
-        { error: "يجب تسجيل الدخول كمدير لرفع الصور (Unauthorized)" },
-        { status: 401 }
-      );
-    }
-
-    // 2. Parse form data
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
     const bucket = (formData.get("bucket") as string) || "course-images";
@@ -36,49 +24,94 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    // 3. Admin Client with Service Role (Bypasses manual bucket setup hurdles)
-    const admin = createAdminClient();
+    if (bucket === PROJECT_IMAGE_BUCKET) {
+      if (file.size > PROJECT_IMAGE_MAX_BYTES) {
+        return NextResponse.json(
+          { error: "Image exceeds 3 MB maximum size limit." },
+          { status: 400 }
+        );
+      }
+      const normalizedType = (file.type || "").toLowerCase();
+      if (!PROJECT_IMAGE_MIME_TYPES.includes(normalizedType)) {
+        return NextResponse.json(
+          { error: "Only JPG, PNG, and WebP images are allowed." },
+          { status: 400 }
+        );
+      }
+    }
 
-    // Auto-create bucket if it doesn't exist yet
-    const { data: bucketData, error: bucketCheckErr } = await admin.storage.getBucket(bucket);
+    const { data: bucketData, error: bucketCheckErr } =
+      await adminClient.storage.getBucket(bucket);
     if (!bucketData || bucketCheckErr) {
-      await admin.storage.createBucket(bucket, {
+      await adminClient.storage.createBucket(bucket, {
         public: true,
-        fileSizeLimit: 5242880, // 5 MB
-        allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "image/jpg", "image/svg+xml"],
+        fileSizeLimit: bucket === PROJECT_IMAGE_BUCKET ? PROJECT_IMAGE_MAX_BYTES : 5242880,
+        allowedMimeTypes:
+          bucket === PROJECT_IMAGE_BUCKET
+            ? PROJECT_IMAGE_MIME_TYPES
+            : ["image/jpeg", "image/png", "image/webp", "image/jpg", "image/svg+xml"],
       });
     }
 
-    // 4. Upload file
-    const ext = file.name.split(".").pop() || "jpg";
-    const cleanFileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(2, 9)}.${ext}`;
+    const rawExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const safeExt = rawExt.replace(/[^a-z0-9]/g, "") || "jpg";
+    const cleanFileName = `${folder}/${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2, 9)}.${safeExt}`;
+
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    const { error: uploadError } = await admin.storage
+    const { error: uploadError } = await adminClient.storage
       .from(bucket)
       .upload(cleanFileName, buffer, {
         contentType: file.type || "image/jpeg",
         upsert: true,
       });
 
-    if (uploadError) {
-      throw uploadError;
-    }
+    if (uploadError) throw uploadError;
 
-    // 5. Get public URL
     const {
       data: { publicUrl },
-    } = admin.storage.from(bucket).getPublicUrl(cleanFileName);
+    } = adminClient.storage.from(bucket).getPublicUrl(cleanFileName);
 
     return NextResponse.json({
       success: true,
       url: publicUrl,
+      path: cleanFileName,
     });
   } catch (err: any) {
     console.error("API upload error:", err);
     return NextResponse.json(
-      { error: err.message || "Failed to upload file to storage" },
+      { error: err?.message || "Failed to upload file to storage" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const auth = await requireAdminRequest(request);
+    if (!auth.ok) return auth.response;
+    const { adminClient } = auth;
+
+    const url = new URL(request.url);
+    const fileUrl = url.searchParams.get("url");
+    const bucket = url.searchParams.get("bucket") || PROJECT_IMAGE_BUCKET;
+
+    const path = extractStoragePathFromUrl(fileUrl, bucket);
+    if (!path) {
+      return NextResponse.json({ success: true, skipped: true });
+    }
+
+    const { error } = await adminClient.storage.from(bucket).remove([path]);
+    if (error) throw error;
+
+    return NextResponse.json({ success: true, deletedPath: path });
+  } catch (err: any) {
+    console.error("API upload delete error:", err);
+    return NextResponse.json(
+      { error: err?.message || "Failed to delete file from storage" },
       { status: 500 }
     );
   }

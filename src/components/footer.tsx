@@ -129,6 +129,14 @@ export default function Footer({ currentLocale }: { currentLocale: string }) {
               </li>
               <li>
                 <Link
+                  href="/projects"
+                  className="transition-colors hover:text-brand-blue dark:hover:text-brand-cyan inline-flex items-center gap-1.5"
+                >
+                  <span>{t("projects")}</span>
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/about"
                   className="transition-colors hover:text-brand-blue dark:hover:text-brand-cyan inline-flex items-center gap-1.5"
                 >

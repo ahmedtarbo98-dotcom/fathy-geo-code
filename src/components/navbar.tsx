@@ -22,6 +22,7 @@ import {
   LogOut,
   ChevronDown,
   LayoutDashboard,
+  Briefcase,
 } from "lucide-react";
 
 interface UserProfile {
@@ -164,6 +165,7 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
   const navLinks = [
     { href: "/", label: t("home"), icon: Compass },
     { href: "/courses", label: t("courses"), icon: BookOpen },
+    { href: "/projects", label: t("projects"), icon: Briefcase },
     { href: "/about", label: t("about"), icon: User },
     { href: "/contact", label: t("contact"), icon: Mail },
   ];

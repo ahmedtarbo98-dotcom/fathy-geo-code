@@ -8,6 +8,7 @@
   "Nav": {
     "home": "Home",
     "courses": "Courses",
+    "projects": "Projects",
     "about": "About",
     "contact": "Contact",
     "myCourses": "My Courses",
@@ -112,6 +113,7 @@
     "description": "The premier educational hub for GIS, remote sensing, and modern geomatics technologies, directed by Eng. Ahmed Fathy.",
     "quickLinks": "Quick Links",
     "courses": "Courses",
+    "projects": "Projects",
     "about": "About",
     "contact": "Contact",
     "legal": "Legal & Terms",
@@ -292,6 +294,7 @@
     "returnToSite": "Back to Public Site",
     "overview": "Overview",
     "courses": "Courses Management",
+    "projects": "Projects Portfolio",
     "curriculum": "Curriculum Builder",
     "quizzes": "Quizzes & Questions",
     "students": "Students Management",

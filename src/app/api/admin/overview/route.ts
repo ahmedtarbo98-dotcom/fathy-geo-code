@@ -49,6 +49,8 @@ export async function GET(request: Request) {
       allEnrollmentsRes,
       allProgressRes,
       recentVideoLogsRes,
+      totalProjectsRes,
+      publishedProjectsRes,
     ] = await Promise.all([
       adminClient
         .from("profiles")
@@ -119,6 +121,11 @@ export async function GET(request: Request) {
         .select("id, user_id, lesson_id, ip_address, accessed_at")
         .order("accessed_at", { ascending: false })
         .limit(250),
+      adminClient.from("projects").select("*", { count: "exact", head: true }),
+      adminClient
+        .from("projects")
+        .select("*", { count: "exact", head: true })
+        .eq("is_published", true),
     ]);
 
     // 1. 30-day UTC daily signup series (zero-filled)
@@ -333,6 +340,8 @@ export async function GET(request: Request) {
       totalLessons: totalLessonsRes.count ?? 0,
       pendingRequestsCount: pendingRequestsCountRes.count ?? 0,
       unreadMessagesCount: unreadMessagesCountRes.count ?? 0,
+      totalProjects: totalProjectsRes.count ?? 0,
+      publishedProjects: publishedProjectsRes.count ?? 0,
       recentSignups: recentSignupsRes.data || [],
       recentRequests: pendingRequestsListRes.data || [],
       mostWatchedCourses,

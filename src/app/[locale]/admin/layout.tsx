@@ -29,6 +29,7 @@ import {
   LogOut,
   Home,
   RefreshCw,
+  Briefcase,
 } from "lucide-react";
 
 export default function AdminLayout({
@@ -161,6 +162,7 @@ export default function AdminLayout({
   const navItems = [
     { href: "/admin", label: t("overview"), icon: LayoutDashboard },
     { href: "/admin/courses", label: t("courses"), icon: BookOpen },
+    { href: "/admin/projects", label: t("projects"), icon: Briefcase },
     { href: "/admin/curriculum", label: t("curriculum"), icon: Layers },
     { href: "/admin/quizzes", label: t("quizzes"), icon: HelpCircle },
     { href: "/admin/students", label: t("students"), icon: Users },
