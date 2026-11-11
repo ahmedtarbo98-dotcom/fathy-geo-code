@@ -1,6 +1,31 @@
 import { createClient } from "@/lib/supabase/client";
 
 export async function signInWithGoogle(locale: string = "ar") {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (supabaseUrl && supabaseAnonKey) {
+    try {
+      const res = await fetch(`${supabaseUrl}/auth/v1/settings`, {
+        headers: { apikey: supabaseAnonKey },
+      });
+      if (res.ok) {
+        const settings = await res.json();
+        if (settings?.external?.google === false) {
+          throw new Error(
+            locale === "ar"
+              ? "تسجيل الدخول عبر Google غير مفعّل بعد في إعدادات Supabase (Authentication → Providers → Google)."
+              : "Google sign-in is not enabled yet in Supabase Dashboard (Authentication → Providers → Google)."
+          );
+        }
+      }
+    } catch (checkErr: any) {
+      if (checkErr?.message?.includes("Supabase")) {
+        throw checkErr;
+      }
+    }
+  }
+
   const supabase = createClient();
   const siteUrl =
     (typeof window !== "undefined" && window.location.origin)
@@ -14,8 +39,7 @@ export async function signInWithGoogle(locale: string = "ar") {
     options: {
       redirectTo,
       queryParams: {
-        access_type: "offline",
-        prompt: "consent",
+        prompt: "select_account",
       },
     },
   });
