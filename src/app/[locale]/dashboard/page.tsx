@@ -80,49 +80,66 @@ export default function StudentDashboardPage({
           setUserName(user.user_metadata.full_name);
         }
 
-        // Fetch real enrollments
-        const { data: enrollmentsData, error: enrError } = await supabase
-          .from("enrollments")
-          .select(`
-            id,
-            status,
-            enrolled_at,
-            course_id,
-            courses (
+        // Fetch real enrollments via reliable server API (checks user.id + email-matched profiles)
+        let enrollmentsData: any[] = [];
+        let completedLessonIds = new Set<string>();
+
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        const headers: Record<string, string> = {};
+        if (session?.access_token) headers["Authorization"] = `Bearer ${session.access_token}`;
+
+        const apiRes = await fetch("/api/check-enrollment?details=1", { headers });
+        if (apiRes.ok) {
+          const apiData = await apiRes.json();
+          enrollmentsData = apiData.detailedEnrollments || [];
+          completedLessonIds = new Set(apiData.completedLessonIds || []);
+        } else {
+          const { data: directEnr, error: enrError } = await supabase
+            .from("enrollments")
+            .select(`
               id,
-              slug,
-              title_ar,
-              title_en,
-              category,
-              thumbnail_url,
-              course_sections (
+              status,
+              enrolled_at,
+              course_id,
+              courses (
                 id,
+                slug,
                 title_ar,
                 title_en,
-                order_index,
-                lessons (
+                category,
+                thumbnail_url,
+                course_sections (
                   id,
                   title_ar,
                   title_en,
-                  duration_seconds,
-                  order_index
+                  order_index,
+                  lessons (
+                    id,
+                    title_ar,
+                    title_en,
+                    duration_seconds,
+                    order_index
+                  )
                 )
               )
-            )
-          `)
-          .eq("user_id", user.id)
-          .eq("status", "active");
+            `)
+            .eq("user_id", user.id)
+            .eq("status", "active");
 
-        if (enrError) throw enrError;
+          if (enrError) throw enrError;
+          enrollmentsData = directEnr || [];
 
-        // Fetch user lesson progress
-        const { data: progressData } = await supabase
-          .from("lesson_progress")
-          .select("lesson_id, completed")
-          .eq("user_id", user.id)
-          .eq("completed", true);
+          const { data: progressData } = await supabase
+            .from("lesson_progress")
+            .select("lesson_id, completed")
+            .eq("user_id", user.id)
+            .eq("completed", true);
 
-        const completedLessonIds = new Set((progressData || []).map((p) => p.lesson_id));
+          completedLessonIds = new Set((progressData || []).map((p) => p.lesson_id));
+        }
 
         const mapped: EnrolledCourseItem[] = [];
 
@@ -201,10 +218,10 @@ export default function StudentDashboardPage({
   }
 
   return (
-    <div className="min-h-screen py-10 md:py-16 relative">
+    <div className="min-h-screen py-8 md:py-16 relative overflow-hidden">
       {/* Background ambient accents */}
-      <div className="absolute top-0 right-1/4 w-96 h-96 bg-brand-cyan/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-1/2 left-1/4 w-96 h-96 bg-brand-blue/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-0 right-1/4 w-72 sm:w-96 h-72 sm:h-96 bg-brand-cyan/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/2 left-1/4 w-72 sm:w-96 h-72 sm:h-96 bg-brand-blue/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="container relative mx-auto px-4 sm:px-6 space-y-10">
         {/* Welcome Header */}

@@ -75,9 +75,21 @@
   * {
     @apply border-border;
   }
+  html,
+  body {
+    overflow-x: hidden;
+    max-width: 100%;
+    width: 100%;
+    -webkit-text-size-adjust: 100%;
+  }
   body {
     @apply bg-background text-foreground transition-colors duration-300;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+  img,
+  video,
+  iframe {
+    max-width: 100%;
   }
 }
 

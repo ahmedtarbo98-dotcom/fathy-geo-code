@@ -172,7 +172,7 @@ export default function AdminLayout({
   ];
 
   return (
-    <div className="min-h-screen bg-background flex flex-col md:flex-row">
+    <div className="min-h-screen bg-background flex flex-col md:flex-row overflow-x-hidden w-full">
       {/* Mobile Top Header */}
       <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-card">
         <div className="flex items-center gap-2">
@@ -289,7 +289,7 @@ export default function AdminLayout({
       </aside>
 
       {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+      <main className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto p-4 sm:p-6 lg:p-8">
         <div className="max-w-7xl mx-auto">{children}</div>
       </main>
     </div>

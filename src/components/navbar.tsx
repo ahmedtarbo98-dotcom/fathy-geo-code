@@ -157,13 +157,13 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
           : "bg-background/60 backdrop-blur-md border-b border-border/30"
       }`}
     >
-      <div className="container mx-auto flex h-20 items-center justify-between px-4 sm:px-6">
+      <div className="container mx-auto flex h-16 sm:h-20 items-center justify-between gap-2 px-3 sm:px-6">
         {/* Brand Logo & Title */}
         <Link
           href="/"
-          className="group flex items-center gap-3 transition-transform duration-300 hover:scale-[1.02]"
+          className="group flex items-center gap-2 sm:gap-3 transition-transform duration-300 hover:scale-[1.02] min-w-0"
         >
-          <div className="relative w-12 h-12 rounded-xl overflow-hidden p-0.5 bg-gradient-to-tr from-brand-navy via-brand-blue to-brand-cyan shadow-md shadow-brand-blue/20 group-hover:shadow-brand-cyan/40 transition-shadow">
+          <div className="relative w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-xl overflow-hidden p-0.5 bg-gradient-to-tr from-brand-navy via-brand-blue to-brand-cyan shadow-md shadow-brand-blue/20 group-hover:shadow-brand-cyan/40 transition-shadow">
             <div className="relative w-full h-full rounded-[10px] overflow-hidden bg-background">
               <Image
                 src="/logo.jpg"
@@ -174,19 +174,19 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
               />
             </div>
           </div>
-          <div className="flex flex-col">
-            <span className="font-extrabold tracking-tight text-lg sm:text-xl bg-gradient-to-r from-brand-navy via-brand-blue to-brand-cyan dark:from-white dark:via-blue-400 dark:to-cyan-400 bg-clip-text text-transparent">
+          <div className="flex flex-col min-w-0">
+            <span className="font-extrabold tracking-tight text-sm sm:text-lg lg:text-xl truncate bg-gradient-to-r from-brand-navy via-brand-blue to-brand-cyan dark:from-white dark:via-blue-400 dark:to-cyan-400 bg-clip-text text-transparent">
               {tBrand("name")}
             </span>
-            <span className="text-[10px] sm:text-xs font-medium text-muted-foreground tracking-wide flex items-center gap-1">
-              <Sparkles className="w-2.5 h-2.5 text-brand-cyan inline" />
-              {tBrand("tagline")}
+            <span className="hidden sm:flex text-[10px] sm:text-xs font-medium text-muted-foreground tracking-wide items-center gap-1 truncate">
+              <Sparkles className="w-2.5 h-2.5 text-brand-cyan inline shrink-0" />
+              <span className="truncate">{tBrand("tagline")}</span>
             </span>
           </div>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-1 lg:gap-2">
+        <nav className="hidden md:flex items-center gap-1 lg:gap-2 shrink-0">
           {navLinks.map((link) => {
             const isActive =
               pathname === link.href ||
@@ -196,7 +196,7 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 flex items-center gap-1.5 ${
+                className={`relative px-3 lg:px-4 py-2 rounded-lg text-xs lg:text-sm font-medium transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap ${
                   isActive
                     ? "text-brand-blue dark:text-brand-cyan font-bold bg-brand-blue/10 dark:bg-brand-cyan/10"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
@@ -213,7 +213,7 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
         </nav>
 
         {/* Action Controls (Theme, Language, Auth) */}
-        <div className="hidden sm:flex items-center gap-2.5">
+        <div className="hidden md:flex items-center gap-2 lg:gap-2.5 shrink-0">
           <LanguageSwitcher currentLocale={currentLocale} />
           <ThemeToggle />
 
@@ -332,8 +332,8 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
           )}
         </div>
 
-        {/* Mobile menu button */}
-        <div className="flex sm:hidden items-center gap-2">
+        {/* Mobile & Tablet menu button */}
+        <div className="flex md:hidden items-center gap-1.5 shrink-0">
           <ThemeToggle />
           <LanguageSwitcher currentLocale={currentLocale} />
           <button
@@ -350,9 +350,9 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
         </div>
       </div>
 
-      {/* Mobile Drawer Menu */}
+      {/* Mobile & Tablet Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="sm:hidden border-b border-border bg-background/95 backdrop-blur-xl px-4 pt-3 pb-6 space-y-3 transition-all animate-in slide-in-from-top-4">
+        <div className="md:hidden border-b border-border bg-background/95 backdrop-blur-xl px-4 pt-3 pb-6 space-y-3 transition-all animate-in slide-in-from-top-4">
           {/* User Info Header on Mobile */}
           {currentUser && (
             <div className="p-3 rounded-xl bg-card border border-border flex items-center justify-between">

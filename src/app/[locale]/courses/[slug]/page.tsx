@@ -39,6 +39,8 @@ export default function CourseDetailsPage({
   const [course, setCourse] = useState<CourseDetailData | null>(null);
   const [loading, setLoading] = useState(true);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+  const [isEnrolled, setIsEnrolled] = useState(false);
+  const [hasPendingRequest, setHasPendingRequest] = useState(false);
 
   // Paid Request Modal State
   const [requestModalOpen, setRequestModalOpen] = useState(false);
@@ -175,6 +177,35 @@ export default function CourseDetailsPage({
           if (sortedSections.length > 0) {
             setOpenSections({ [sortedSections[0].id]: true });
           }
+
+          // Check enrollment status & prefill user info
+          try {
+            const {
+              data: { session },
+            } = await supabase.auth.getSession();
+
+            if (session?.user) {
+              setStudentName(session.user.user_metadata?.full_name || "");
+              setStudentEmail(session.user.email || "");
+            }
+
+            const headers: Record<string, string> = {};
+            if (session?.access_token) {
+              headers["Authorization"] = `Bearer ${session.access_token}`;
+            }
+
+            const enrRes = await fetch(`/api/check-enrollment?courseId=${dbCourse.id}`, {
+              headers,
+            });
+            if (enrRes.ok) {
+              const enrData = await enrRes.json();
+              setIsEnrolled(!!enrData.isEnrolled);
+              setHasPendingRequest(!!enrData.pendingRequest);
+            }
+          } catch (e) {
+            console.warn("Check enrollment warning:", e);
+          }
+
           return;
         }
 
@@ -292,15 +323,15 @@ export default function CourseDetailsPage({
   };
 
   return (
-    <div className="relative min-h-screen py-10 md:py-16">
+    <div className="relative min-h-screen py-8 md:py-16 overflow-hidden">
       {/* Background ambient accents */}
-      <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-brand-blue/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-1/2 left-1/4 w-[400px] h-[400px] bg-brand-cyan/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-0 right-1/4 w-[320px] sm:w-[500px] h-[320px] sm:h-[500px] bg-brand-blue/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/2 left-1/4 w-[260px] sm:w-[400px] h-[260px] sm:h-[400px] bg-brand-cyan/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="container relative mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
           {/* Main Course Content */}
-          <div className="lg:col-span-8 space-y-10">
+          <div className="order-2 lg:order-1 lg:col-span-8 space-y-8 sm:space-y-10 min-w-0">
             {/* Header / Breadcrumb & Badge */}
             <div className="space-y-4">
               <div className="flex flex-wrap items-center gap-2">
@@ -429,22 +460,23 @@ export default function CourseDetailsPage({
                             {(section.lessons || []).map((lesson, lIdx) => {
                               const lTitle = locale === "ar" ? lesson.title_ar : lesson.title_en;
                               const minutes = Math.round((lesson.duration_seconds || 900) / 60);
-                              return lesson.is_free_preview || course.is_free ? (
+                              const canWatch = isEnrolled || lesson.is_free_preview || course.is_free;
+                              return canWatch ? (
                                 <Link
                                   key={lesson.id || lIdx}
                                   href={`/player/${course.slug}?lessonId=${lesson.id}`}
-                                  className="py-2.5 flex items-center justify-between text-xs sm:text-sm group hover:bg-brand-blue/5 px-2 rounded-lg transition-colors"
+                                  className="py-2.5 flex items-center justify-between gap-2 text-xs sm:text-sm group hover:bg-brand-blue/5 px-2 rounded-lg transition-colors"
                                 >
-                                  <div className="flex items-center gap-2.5">
+                                  <div className="flex items-center gap-2.5 min-w-0">
                                     <PlayCircle className="w-4 h-4 text-emerald-500 group-hover:scale-110 transition-transform shrink-0" />
-                                    <span className="text-foreground font-medium group-hover:text-brand-blue dark:group-hover:text-brand-cyan">
+                                    <span className="text-foreground font-medium group-hover:text-brand-blue dark:group-hover:text-brand-cyan truncate">
                                       {lTitle}
                                     </span>
                                   </div>
 
-                                  <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-2 shrink-0">
                                     <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 flex items-center gap-1">
-                                      <span>{isRtl ? "مشاهدة ومعاينة" : "Watch Preview"}</span>
+                                      <span>{isEnrolled ? (isRtl ? "مشاهدة الدرس" : "Watch Lesson") : (isRtl ? "معاينة" : "Preview")}</span>
                                       <ExternalLink className="w-2.5 h-2.5" />
                                     </span>
                                     <span className="text-xs text-muted-foreground font-mono">
@@ -515,8 +547,8 @@ export default function CourseDetailsPage({
           </div>
 
           {/* Sticky Sidebar Action Card */}
-          <div className="lg:col-span-4 sticky top-28 space-y-6">
-            <div className="rounded-3xl glass-panel p-6 sm:p-7 border border-border/70 shadow-2xl shadow-brand-blue/10 backdrop-blur-2xl space-y-6">
+          <div className="order-1 lg:order-2 lg:col-span-4 lg:sticky lg:top-28 space-y-6">
+            <div className="rounded-3xl glass-panel p-5 sm:p-7 border border-border/70 shadow-2xl shadow-brand-blue/10 backdrop-blur-2xl space-y-5 sm:space-y-6">
               {/* Thumbnail Banner */}
               <div className="relative aspect-video rounded-2xl overflow-hidden shadow-md bg-muted">
                 {course.thumbnail_url ? (
@@ -538,25 +570,46 @@ export default function CourseDetailsPage({
                 </div>
               </div>
 
-              {/* Price Tag */}
-              <div className="flex items-baseline justify-between pt-1">
-                <span className="text-xs text-muted-foreground">
-                  {locale === "ar" ? "قيمة الاشتراك:" : "Enrollment Fee:"}
-                </span>
-                <span className="text-3xl font-extrabold text-foreground">
-                  {course.is_free ? (
-                    <span className="text-emerald-500">
-                      {locale === "ar" ? "مجاناً" : "Free"}
-                    </span>
-                  ) : (
-                    <span>{course.price} {course.currency}</span>
-                  )}
-                </span>
-              </div>
+              {/* Price Tag or Enrolled Status */}
+              {isEnrolled ? (
+                <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs sm:text-sm font-bold flex items-center gap-2.5">
+                  <CheckCircle2 className="w-5 h-5 shrink-0 text-emerald-500" />
+                  <span>
+                    {isRtl
+                      ? "تم تفعيل اشتراكك في هذه الدورة بنجاح!"
+                      : "You are enrolled in this course!"}
+                  </span>
+                </div>
+              ) : (
+                <div className="flex items-baseline justify-between pt-1">
+                  <span className="text-xs text-muted-foreground">
+                    {locale === "ar" ? "قيمة الاشتراك:" : "Enrollment Fee:"}
+                  </span>
+                  <span className="text-2xl sm:text-3xl font-extrabold text-foreground">
+                    {course.is_free ? (
+                      <span className="text-emerald-500">
+                        {locale === "ar" ? "مجاناً" : "Free"}
+                      </span>
+                    ) : (
+                      <span>{course.price} {course.currency}</span>
+                    )}
+                  </span>
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="space-y-3">
-                {course.is_free ? (
+                {isEnrolled ? (
+                  <Link
+                    href={`/player/${course.slug}`}
+                    className="w-full inline-flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl text-sm font-bold text-white shadow-xl shadow-brand-blue/20 bg-gradient-to-r from-brand-navy via-brand-blue to-brand-cyan hover:scale-[1.02] active:scale-[0.98] transition-all"
+                  >
+                    <PlayCircle className="w-5 h-5 text-brand-cyan" />
+                    <span>
+                      {isRtl ? "تم التفعيل • ابدأ المشاهدة الآن" : "Activated • Start Watching Now"}
+                    </span>
+                  </Link>
+                ) : course.is_free ? (
                   <Link
                     href={`/player/${course.slug}`}
                     className="w-full inline-flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl text-sm font-bold text-white shadow-xl shadow-brand-blue/20 bg-gradient-to-r from-brand-navy via-brand-blue to-brand-cyan hover:scale-[1.02] active:scale-[0.98] transition-all"
@@ -566,6 +619,14 @@ export default function CourseDetailsPage({
                   </Link>
                 ) : (
                   <>
+                    {hasPendingRequest && (
+                      <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-600 dark:text-amber-400 text-xs font-semibold leading-relaxed">
+                        {isRtl
+                          ? "⏳ تم استلام طلب الاشتراك الخاص بك وجاري مراجعته من الإدارة لتفعيل الدورة على حسابك."
+                          : "⏳ Your enrollment request is pending review."}
+                      </div>
+                    )}
+
                     <button
                       onClick={() => {
                         setRequestSuccess(false);
@@ -573,7 +634,7 @@ export default function CourseDetailsPage({
                       }}
                       className="w-full inline-flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl text-sm font-bold text-white shadow-xl shadow-emerald-500/20 bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] transition-all"
                     >
-                      <PhoneCall className="w-4 h-4" />
+                      <PhoneCall className="w-4 h-4 shrink-0" />
                       <span>{isRtl ? "طلب الاشتراك والتفعيل (فودافون كاش / إنستاباي)" : "Request Access & Payment"}</span>
                     </button>
 
@@ -581,7 +642,7 @@ export default function CourseDetailsPage({
                       href={`/player/${course.slug}`}
                       className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold border border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10 transition-all"
                     >
-                      <PlayCircle className="w-4 h-4" />
+                      <PlayCircle className="w-4 h-4 shrink-0" />
                       <span>{isRtl ? "مشاهدة الدروس المجانية والمعاينة" : "Watch Free Preview Lessons"}</span>
                     </Link>
                   </>

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Cairo } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages, setRequestLocale } from "next-intl/server";
@@ -20,6 +20,12 @@ const cairo = Cairo({
   variable: "--font-cairo",
   display: "swap",
 });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
 
 export const metadata: Metadata = {
   title: {
@@ -110,9 +116,9 @@ export default async function LocaleLayout({
           disableTransitionOnChange
         >
           <NextIntlClientProvider messages={messages} locale={locale}>
-            <div className="flex min-h-screen flex-col">
+            <div className="flex min-h-screen flex-col overflow-x-hidden w-full">
               <Navbar currentLocale={locale} />
-              <main className="flex-1">{children}</main>
+              <main className="flex-1 w-full min-w-0">{children}</main>
               <Footer currentLocale={locale} />
             </div>
           </NextIntlClientProvider>

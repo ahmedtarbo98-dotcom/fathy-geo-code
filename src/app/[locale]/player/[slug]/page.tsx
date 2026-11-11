@@ -43,6 +43,7 @@ function CoursePlayerContent({
 
   const [course, setCourse] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isEnrolled, setIsEnrolled] = useState(false);
 
   const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
   const [completedLessons, setCompletedLessons] = useState<Record<string, boolean>>({});
@@ -140,6 +141,25 @@ function CoursePlayerContent({
             ...dbCourse,
             sections: sortedSections,
           });
+
+          // Check enrollment status
+          try {
+            const {
+              data: { session },
+            } = await supabase.auth.getSession();
+            const headers: Record<string, string> = {};
+            if (session?.access_token) headers["Authorization"] = `Bearer ${session.access_token}`;
+            const enrRes = await fetch(`/api/check-enrollment?courseId=${dbCourse.id}`, {
+              headers,
+            });
+            if (enrRes.ok) {
+              const enrData = await enrRes.json();
+              setIsEnrolled(!!enrData.isEnrolled);
+            }
+          } catch (e) {
+            console.warn("Player enrollment check failed:", e);
+          }
+
           return;
         }
 
@@ -295,30 +315,32 @@ function CoursePlayerContent({
     notFound();
   }
 
+  const canWatchCurrentLesson = isEnrolled || course?.is_free || currentLesson?.is_free_preview;
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Player Top Navigation Bar */}
-      <div className="border-b border-border bg-card/60 backdrop-blur-md px-4 sm:px-6 py-3">
-        <div className="container mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
+      <div className="border-b border-border bg-card/60 backdrop-blur-md px-3 sm:px-6 py-3">
+        <div className="container mx-auto flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
             <Link
               href={`/courses/${course.slug}`}
-              className="text-xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1"
+              className="text-xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1 shrink-0"
             >
               <PrevArrow className="w-3.5 h-3.5" />
               <span>{locale === "ar" ? "تفاصيل الدورة" : "Course Details"}</span>
             </Link>
-            <span className="text-muted-foreground">•</span>
-            <h1 className="text-xs sm:text-sm font-bold text-foreground line-clamp-1">
+            <span className="text-muted-foreground hidden sm:inline">•</span>
+            <h1 className="text-xs sm:text-sm font-bold text-foreground line-clamp-1 truncate">
               {locale === "ar" ? course.title_ar : course.title_en}
             </h1>
           </div>
 
-          <div className="flex items-center gap-3 text-xs">
+          <div className="flex items-center gap-2 sm:gap-3 text-xs shrink-0">
             <span className="text-muted-foreground hidden sm:inline">
               {t("courseProgress")}:
             </span>
-            <div className="w-24 sm:w-32 h-2 rounded-full bg-muted overflow-hidden">
+            <div className="w-16 sm:w-32 h-2 rounded-full bg-muted overflow-hidden">
               <div
                 className="h-full bg-gradient-to-r from-brand-blue to-brand-cyan rounded-full transition-all duration-300"
                 style={{ width: `${progressPercent}%` }}
@@ -331,19 +353,47 @@ function CoursePlayerContent({
         </div>
       </div>
 
-      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      <div className="container mx-auto px-3 sm:px-6 py-5 sm:py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
           {/* Main Video & Lesson Content (Col 8) */}
-          <div className="lg:col-span-8 space-y-6">
-            {/* Custom Video Player with Overlay & Watermark */}
-            <VideoPlayer
-              provider="youtube"
-              videoId={videoTokenData.videoId}
-              userEmail={videoTokenData.email}
-              userId={videoTokenData.userId}
-              isProtected={true}
-              onComplete={() => toggleComplete(currentLesson?.id)}
-            />
+          <div className="lg:col-span-8 space-y-6 min-w-0">
+            {/* Custom Video Player or Locked Paywall */}
+            {canWatchCurrentLesson ? (
+              <VideoPlayer
+                provider="youtube"
+                videoId={videoTokenData.videoId}
+                userEmail={videoTokenData.email}
+                userId={videoTokenData.userId}
+                isProtected={true}
+                onComplete={() => toggleComplete(currentLesson?.id)}
+              />
+            ) : (
+              <div className="aspect-video w-full rounded-2xl bg-slate-950 border border-border/80 flex flex-col items-center justify-center p-6 text-center space-y-4 shadow-xl">
+                <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+                  <Lock className="w-7 h-7" />
+                </div>
+                <div className="space-y-1.5 max-w-md">
+                  <h3 className="text-base sm:text-lg font-bold text-white">
+                    {locale === "ar"
+                      ? "هذا الدرس متاح للمشتركين فقط"
+                      : "This lesson is for enrolled students only"}
+                  </h3>
+                  <p className="text-xs text-slate-300 leading-relaxed">
+                    {locale === "ar"
+                      ? "يرجى الاشتراك وتفعيل الدورة للوصول إلى جميع الدروس والفيديوهات المحمية."
+                      : "Please enroll and activate this course to access all protected lessons."}
+                  </p>
+                </div>
+                <Link
+                  href={`/courses/${course.slug}`}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-bold shadow-lg transition-all"
+                >
+                  <span>
+                    {locale === "ar" ? "طلب الاشتراك والتفعيل الآن" : "Request Enrollment"}
+                  </span>
+                </Link>
+              </div>
+            )}
 
             {/* Video Action Controls Bar */}
             <div className="rounded-2xl glass-panel p-4 sm:p-5 border border-border/70 flex flex-col sm:flex-row items-center justify-between gap-4">

@@ -58,23 +58,35 @@ export async function POST(request: Request) {
 
     let targetUserId = userId;
 
-    // If userId not provided, look up by studentEmail
-    if (!targetUserId && studentEmail) {
-      const { data: prof } = await adminClient
-        .from("profiles")
-        .select("id")
-        .ilike("email", studentEmail.trim())
-        .maybeSingle();
+    // Always prefer the real auth.users ID if studentEmail matches a registered account
+    if (studentEmail) {
+      const { data: usersList } = await adminClient.auth.admin.listUsers();
+      const foundAuth = usersList?.users?.find(
+        (u) => u.email?.toLowerCase() === studentEmail.trim().toLowerCase()
+      );
 
-      if (prof?.id) {
-        targetUserId = prof.id;
-      } else {
-        // Try admin auth list
-        const { data: usersList } = await adminClient.auth.admin.listUsers();
-        const found = usersList?.users?.find(
-          (u) => u.email?.toLowerCase() === studentEmail.trim().toLowerCase()
+      if (foundAuth) {
+        targetUserId = foundAuth.id;
+        // Ensure profile exists for this auth user
+        await adminClient.from("profiles").upsert(
+          {
+            id: foundAuth.id,
+            full_name: foundAuth.user_metadata?.full_name || studentEmail.split("@")[0],
+            email: foundAuth.email,
+            role: "student",
+          },
+          { onConflict: "id" }
         );
-        if (found) targetUserId = found.id;
+      } else if (!targetUserId) {
+        const { data: prof } = await adminClient
+          .from("profiles")
+          .select("id")
+          .ilike("email", studentEmail.trim())
+          .maybeSingle();
+
+        if (prof?.id) {
+          targetUserId = prof.id;
+        }
       }
     }
 

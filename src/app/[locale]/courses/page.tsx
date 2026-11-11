@@ -37,12 +37,34 @@ export default function CoursesPage({
   const [selectedLevel, setSelectedLevel] = useState<string>("all");
 
   const [coursesList, setCoursesList] = useState<CourseDetailData[]>([]);
+  const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([]);
+  const [isAdminUser, setIsAdminUser] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchLiveCourses() {
       try {
         setLoading(true);
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        // Check enrollments
+        if (session) {
+          try {
+            const headers: Record<string, string> = {};
+            if (session.access_token) headers["Authorization"] = `Bearer ${session.access_token}`;
+            const enrRes = await fetch("/api/check-enrollment", { headers });
+            if (enrRes.ok) {
+              const enrData = await enrRes.json();
+              setEnrolledCourseIds(enrData.enrolledCourseIds || []);
+              setIsAdminUser(!!enrData.isAdmin);
+            }
+          } catch (e) {
+            console.warn("Enrollment check failed:", e);
+          }
+        }
+
         const { data, error } = await supabase
           .from("courses")
           .select(`
@@ -160,10 +182,10 @@ export default function CoursesPage({
   };
 
   return (
-    <div className="relative min-h-screen py-12 md:py-16">
+    <div className="relative min-h-screen py-10 md:py-16 overflow-hidden">
       {/* Background ambient accents */}
-      <div className="absolute top-0 right-1/4 w-96 h-96 bg-brand-cyan/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-1/3 left-1/4 w-96 h-96 bg-brand-blue/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-0 right-1/4 w-72 sm:w-96 h-72 sm:h-96 bg-brand-cyan/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/3 left-1/4 w-72 sm:w-96 h-72 sm:h-96 bg-brand-blue/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="container relative mx-auto px-4 sm:px-6">
         {/* Header */}
@@ -303,6 +325,7 @@ export default function CoursesPage({
                   ? course.short_description_ar
                   : course.short_description_en;
               const level = locale === "ar" ? course.level_ar : course.level_en;
+              const isEnrolled = isAdminUser || enrolledCourseIds.includes(course.id);
               const lessonsTotal = course.sections.reduce(
                 (acc, s) => acc + (s.lessons?.length || 0),
                 0
@@ -343,15 +366,21 @@ export default function CoursesPage({
                     </div>
 
                     <div className="absolute bottom-3.5 end-3.5 z-10">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-bold shadow-md ${
-                          course.is_free
-                            ? "bg-emerald-500 text-white"
-                            : "bg-black/80 backdrop-blur-md text-brand-cyan border border-brand-cyan/40"
-                        }`}
-                      >
-                        {course.is_free ? tFeatured("free") : `${course.price} ${course.currency || "USD"}`}
-                      </span>
+                      {isEnrolled ? (
+                        <span className="px-3 py-1 rounded-full text-xs font-bold shadow-md bg-emerald-500 text-white">
+                          {locale === "ar" ? "مفعل ✅" : "Activated ✅"}
+                        </span>
+                      ) : (
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-bold shadow-md ${
+                            course.is_free
+                              ? "bg-emerald-500 text-white"
+                              : "bg-black/80 backdrop-blur-md text-brand-cyan border border-brand-cyan/40"
+                          }`}
+                        >
+                          {course.is_free ? tFeatured("free") : `${course.price} ${course.currency || "USD"}`}
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -399,10 +428,18 @@ export default function CoursesPage({
                       </Link>
 
                       <Link
-                        href={`/courses/${course.slug}`}
-                        className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-brand-navy via-brand-blue to-brand-cyan shadow-md hover:shadow-brand-blue/30 transition-all hover:scale-105"
+                        href={isEnrolled ? `/player/${course.slug}` : `/courses/${course.slug}`}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold text-white shadow-md transition-all hover:scale-105 ${
+                          isEnrolled
+                            ? "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/20"
+                            : "bg-gradient-to-r from-brand-navy via-brand-blue to-brand-cyan hover:shadow-brand-blue/30"
+                        }`}
                       >
-                        {course.is_free
+                        {isEnrolled
+                          ? locale === "ar"
+                            ? "مشاهدة الدورة"
+                            : "Watch Course"
+                          : course.is_free
                           ? tFeatured("startNow")
                           : tFeatured("enroll")}
                       </Link>
