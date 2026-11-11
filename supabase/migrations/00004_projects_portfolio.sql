@@ -3,6 +3,32 @@
 -- Review carefully before running in Supabase SQL Editor.
 -- ==============================================================================
 
+-- 0. ENSURE ADMIN HELPER FUNCTIONS EXIST (safe & idempotent)
+CREATE OR REPLACE FUNCTION public.is_admin(user_id UUID)
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = user_id
+      AND role::text = 'admin'
+      AND COALESCE(is_blocked, false) = false
+  );
+$$;
+
+CREATE OR REPLACE FUNCTION public.is_current_admin()
+RETURNS BOOLEAN
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+STABLE
+AS $$
+  SELECT public.is_admin(auth.uid());
+$$;
+
 -- 1. PROJECTS TABLE
 CREATE TABLE IF NOT EXISTS public.projects (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -139,3 +165,6 @@ CREATE POLICY "Admins can delete project images"
   ON storage.objects FOR DELETE
   TO authenticated
   USING (bucket_id = 'project-images' AND public.is_current_admin());
+
+-- 7. RELOAD POSTGREST SCHEMA CACHE
+NOTIFY pgrst, 'reload schema';
