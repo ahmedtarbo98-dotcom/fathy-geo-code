@@ -59,7 +59,10 @@ export default function VideoPlayer({
   const [playbackRate, setPlaybackRate] = useState(1);
   const [quality, setQuality] = useState("auto");
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
   const [isReady, setIsReady] = useState(false);
+
+  const activeFullscreen = isFullscreen || isPseudoFullscreen;
 
   // Format seconds to mm:ss
   const formatTime = (seconds: number) => {
@@ -90,7 +93,10 @@ export default function VideoPlayer({
       }
 
       playerRef.current = new window.YT.Player(containerId, {
+        host: "https://www.youtube-nocookie.com",
         videoId: videoId,
+        width: "100%",
+        height: "100%",
         playerVars: {
           autoplay: 0,
           controls: 0,
@@ -235,24 +241,71 @@ export default function VideoPlayer({
     } catch {}
   };
 
-  // 6. Fullscreen
-  const toggleFullscreen = () => {
-    if (!containerRef.current) return;
-    if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen().catch(() => {});
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen().catch(() => {});
+  // 6. Fullscreen (with iOS / mobile WebView pseudo-fullscreen fallback)
+  const toggleFullscreen = async () => {
+    const el = containerRef.current as any;
+    if (!el) return;
+
+    const doc = document as any;
+    const fsElement = doc.fullscreenElement || doc.webkitFullscreenElement;
+
+    if (fsElement || isPseudoFullscreen) {
+      if (fsElement) {
+        try {
+          if (doc.exitFullscreen) await doc.exitFullscreen();
+          else if (doc.webkitExitFullscreen) doc.webkitExitFullscreen();
+        } catch {}
+      }
+      try {
+        (screen.orientation as any)?.unlock?.();
+      } catch {}
       setIsFullscreen(false);
+      setIsPseudoFullscreen(false);
+      return;
+    }
+
+    let enteredNative = false;
+    try {
+      if (el.requestFullscreen) {
+        await el.requestFullscreen();
+        enteredNative = true;
+      } else if (el.webkitRequestFullscreen) {
+        el.webkitRequestFullscreen();
+        enteredNative = true;
+      }
+    } catch {
+      enteredNative = false;
+    }
+
+    if (enteredNative) {
+      setIsFullscreen(true);
+      try {
+        await (screen.orientation as any)?.lock?.("landscape");
+      } catch {}
+    } else {
+      // Fallback for iPhone Safari & mobile WebViews where div.requestFullscreen is unsupported
+      setIsPseudoFullscreen(true);
     }
   };
 
   useEffect(() => {
     const handleFsChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      const doc = document as any;
+      setIsFullscreen(!!(doc.fullscreenElement || doc.webkitFullscreenElement));
+    };
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setIsPseudoFullscreen(false);
+      }
     };
     document.addEventListener("fullscreenchange", handleFsChange);
-    return () => document.removeEventListener("fullscreenchange", handleFsChange);
+    document.addEventListener("webkitfullscreenchange", handleFsChange);
+    window.addEventListener("keydown", handleEsc);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFsChange);
+      document.removeEventListener("webkitfullscreenchange", handleFsChange);
+      window.removeEventListener("keydown", handleEsc);
+    };
   }, []);
 
   // 7. Dynamic Moving Watermark
@@ -318,24 +371,39 @@ export default function VideoPlayer({
   return (
     <div
       ref={containerRef}
-      className="relative w-full aspect-video rounded-2xl overflow-hidden bg-black select-none shadow-2xl border border-border/80 group flex flex-col justify-end"
+      className={
+        isPseudoFullscreen
+          ? "fixed inset-0 z-[9999] w-screen h-[100dvh] bg-black select-none group flex flex-col justify-end overflow-hidden"
+          : "relative w-full aspect-video rounded-2xl overflow-hidden bg-black select-none shadow-2xl border border-border/80 group flex flex-col justify-end"
+      }
       style={{ userSelect: "none", WebkitUserSelect: "none" }}
     >
-      {/* Video Frame Layer */}
-      <div className="absolute inset-0 w-full h-full pointer-events-none">
-        {provider === "youtube" ? (
-          <div
-            id={`yt-player-${videoId}`}
-            className="w-full h-full pointer-events-none scale-[1.02]"
-          />
-        ) : (
-          <iframe
-            src={`https://player.vimeo.com/video/${videoId}`}
-            title="Course Video"
-            allow="autoplay; fullscreen"
-            className="w-full h-full border-0 pointer-events-none"
-          />
-        )}
+      {/* Video Frame Layer — crops out YouTube top header (title/copy link/share) and bottom YouTube logo */}
+      <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-black pointer-events-none overflow-hidden">
+        <div
+          className="relative w-full aspect-video overflow-hidden"
+          style={
+            activeFullscreen
+              ? { width: "min(100vw, calc(100dvh * 16 / 9))" }
+              : undefined
+          }
+        >
+          {provider === "youtube" ? (
+            <div className="absolute inset-x-0 -top-[72px] h-[calc(100%+144px)] pointer-events-none">
+              <div
+                id={`yt-player-${videoId}`}
+                className="w-full h-full pointer-events-none"
+              />
+            </div>
+          ) : (
+            <iframe
+              src={`https://player.vimeo.com/video/${videoId}`}
+              title="Course Video"
+              allow="autoplay; fullscreen"
+              className="w-full h-full border-0 pointer-events-none"
+            />
+          )}
+        </div>
       </div>
 
       {/* CLICK-SHIELD OVERLAY (Protects against clicking YouTube UI, title, share, etc.) */}
@@ -382,8 +450,8 @@ export default function VideoPlayer({
         </button>
       )}
 
-      {/* CUSTOM CONTROLS BAR (No copy link, share, or external navigation) */}
-      <div className="relative z-20 w-full bg-gradient-to-t from-black/95 via-black/80 to-transparent p-3 sm:p-4 space-y-2 opacity-90 group-hover:opacity-100 transition-opacity">
+      {/* CUSTOM CONTROLS BAR (Responsive on mobile + opaque bottom mask hides any YouTube link/chrome) */}
+      <div className="relative z-20 w-full bg-gradient-to-t from-black via-black/90 to-transparent px-2.5 py-2 sm:p-4 space-y-1.5 sm:space-y-2 opacity-95 group-hover:opacity-100 transition-opacity">
         {/* Progress / Seek bar */}
         <div className="w-full flex items-center gap-2">
           <input
@@ -392,47 +460,50 @@ export default function VideoPlayer({
             max={duration || 100}
             value={currentTime}
             onChange={(e) => handleSeek(parseFloat(e.target.value))}
-            className="w-full h-1.5 bg-white/20 rounded-lg appearance-none cursor-pointer accent-brand-cyan hover:h-2 transition-all"
+            className="w-full h-1.5 bg-white/25 rounded-lg appearance-none cursor-pointer accent-brand-cyan hover:h-2 transition-all"
           />
         </div>
 
         {/* Buttons Row */}
-        <div className="flex items-center justify-between text-white text-xs">
-          {/* Left: Play/Pause, Replay 10s, Time */}
-          <div className="flex items-center gap-2 sm:gap-4">
+        <div className="flex items-center justify-between gap-1 sm:gap-2 text-white text-xs">
+          {/* Start: Play/Pause, Replay 10s, Time */}
+          <div className="flex items-center gap-1 sm:gap-3 min-w-0">
             <button
+              type="button"
               onClick={togglePlay}
-              className="p-1.5 rounded-lg hover:bg-white/10 text-white transition-colors"
+              className="p-1 sm:p-1.5 rounded-lg hover:bg-white/10 text-white transition-colors shrink-0"
               aria-label={isPlaying ? "Pause" : "Play"}
             >
               {isPlaying ? (
-                <Pause className="w-5 h-5 fill-white" />
+                <Pause className="w-4 h-4 sm:w-5 sm:h-5 fill-white" />
               ) : (
-                <Play className="w-5 h-5 fill-white" />
+                <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-white" />
               )}
             </button>
 
             <button
+              type="button"
               onClick={() => handleSeek(Math.max(0, currentTime - 10))}
-              className="p-1.5 rounded-lg hover:bg-white/10 text-white/80 hover:text-white transition-colors text-[11px] font-mono flex items-center gap-0.5"
+              className="p-1 sm:p-1.5 rounded-lg hover:bg-white/10 text-white/85 hover:text-white transition-colors text-[10px] sm:text-[11px] font-mono flex items-center gap-0.5 shrink-0"
               title="-10 ثوانٍ"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
+              <RotateCcw className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
               <span>10s</span>
             </button>
 
-            <span className="font-mono text-[11px] sm:text-xs text-white/80">
+            <span className="font-mono text-[10px] sm:text-xs text-white/85 whitespace-nowrap">
               {formatTime(currentTime)} / {formatTime(duration)}
             </span>
           </div>
 
-          {/* Right: Volume, Speed, Fullscreen */}
-          <div className="flex items-center gap-2 sm:gap-3">
-            {/* Volume */}
-            <div className="flex items-center gap-1.5 group/vol">
+          {/* End: Volume, Quality, Speed, Fullscreen */}
+          <div className="flex items-center gap-1 sm:gap-2.5 shrink-0">
+            {/* Volume (Slider hidden on narrow mobile so Fullscreen always fits cleanly) */}
+            <div className="flex items-center gap-1 group/vol">
               <button
+                type="button"
                 onClick={toggleMute}
-                className="p-1.5 rounded-lg hover:bg-white/10 text-white transition-colors"
+                className="p-1 sm:p-1.5 rounded-lg hover:bg-white/10 text-white transition-colors shrink-0"
                 aria-label="Mute"
               >
                 {isMuted || volume === 0 ? (
@@ -447,22 +518,22 @@ export default function VideoPlayer({
                 max="100"
                 value={isMuted ? 0 : volume}
                 onChange={(e) => handleVolumeChange(parseInt(e.target.value))}
-                className="w-14 sm:w-20 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-brand-cyan"
+                className="hidden sm:block w-16 md:w-20 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-brand-cyan"
               />
             </div>
 
             {/* Quality Selector */}
             <div className="flex items-center gap-1">
-              <SlidersHorizontal className="w-3 h-3 text-white/60 hidden sm:inline" />
+              <SlidersHorizontal className="w-3 h-3 text-white/60 hidden md:inline" />
               <select
                 value={quality}
                 onChange={(e) => handleQualityChange(e.target.value)}
-                className="bg-black/40 border border-white/20 text-white text-[11px] font-bold rounded-lg px-2 py-1 outline-none hover:bg-black/60 transition-colors cursor-pointer"
+                className="bg-black/60 border border-white/20 text-white text-[10px] sm:text-[11px] font-bold rounded-lg px-1.5 sm:px-2 py-1 outline-none hover:bg-black/80 transition-colors cursor-pointer"
                 title="جودة الفيديو"
               >
-                <option value="auto" className="bg-slate-900">Auto (تلقائي)</option>
-                <option value="hd1080" className="bg-slate-900">1080p HD</option>
-                <option value="hd720" className="bg-slate-900">720p HD</option>
+                <option value="auto" className="bg-slate-900">Auto</option>
+                <option value="hd1080" className="bg-slate-900">1080p</option>
+                <option value="hd720" className="bg-slate-900">720p</option>
                 <option value="large" className="bg-slate-900">480p</option>
                 <option value="medium" className="bg-slate-900">360p</option>
               </select>
@@ -472,23 +543,25 @@ export default function VideoPlayer({
             <select
               value={playbackRate}
               onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
-              className="bg-black/40 border border-white/20 text-white text-[11px] font-bold rounded-lg px-2 py-1 outline-none hover:bg-black/60 transition-colors cursor-pointer"
+              className="bg-black/60 border border-white/20 text-white text-[10px] sm:text-[11px] font-bold rounded-lg px-1.5 sm:px-2 py-1 outline-none hover:bg-black/80 transition-colors cursor-pointer"
               title="سرعة التشغيل"
             >
               <option value="0.75" className="bg-slate-900">0.75x</option>
-              <option value="1" className="bg-slate-900">1.0x</option>
+              <option value="1" className="bg-slate-900">1x</option>
               <option value="1.25" className="bg-slate-900">1.25x</option>
               <option value="1.5" className="bg-slate-900">1.5x</option>
-              <option value="2" className="bg-slate-900">2.0x</option>
+              <option value="2" className="bg-slate-900">2x</option>
             </select>
 
-            {/* Fullscreen */}
+            {/* Fullscreen (Always visible & prominent on mobile) */}
             <button
+              type="button"
               onClick={toggleFullscreen}
-              className="p-1.5 rounded-lg hover:bg-white/10 text-white transition-colors"
+              className="p-1.5 rounded-lg bg-white/15 hover:bg-white/25 border border-white/20 text-white transition-colors shrink-0"
               aria-label="Fullscreen"
+              title={activeFullscreen ? "تصغير الشاشة" : "تكبير الشاشة"}
             >
-              {isFullscreen ? (
+              {activeFullscreen ? (
                 <Minimize className="w-4 h-4" />
               ) : (
                 <Maximize className="w-4 h-4" />
