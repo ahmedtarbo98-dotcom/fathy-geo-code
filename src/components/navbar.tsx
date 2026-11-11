@@ -48,28 +48,41 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
 
   // 1. Listen to Supabase auth state in real time
   useEffect(() => {
-    const fetchProfile = async (userId: string, email?: string) => {
+    const fetchProfile = async (
+      userId: string,
+      email?: string,
+      metaName?: string,
+      metaAvatar?: string
+    ) => {
+      const fallbackName =
+        metaName?.trim() || email?.split("@")[0] || "User";
+      const adminEmail = "ahmedtarbo98@gmail.com";
+
+      // Immediately update UI from session user so name/email replaces login right away
+      setCurrentUser({
+        id: userId,
+        email,
+        full_name: fallbackName,
+        avatar_url: metaAvatar,
+        role: email?.toLowerCase() === adminEmail ? "admin" : "student",
+      });
+
       try {
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from("profiles")
           .select("id, full_name, avatar_url, role, email")
           .eq("id", userId)
-          .single();
+          .maybeSingle();
 
         if (data) {
           setCurrentUser({
             id: data.id,
             email: data.email || email,
-            full_name: data.full_name || email?.split("@")[0] || "User",
-            avatar_url: data.avatar_url,
-            role: data.role || (email === "ahmedtarbo98@gmail.com" ? "admin" : "student"),
-          });
-        } else {
-          setCurrentUser({
-            id: userId,
-            email: email,
-            full_name: email?.split("@")[0] || "User",
-            role: email === "ahmedtarbo98@gmail.com" ? "admin" : "student",
+            full_name: data.full_name || fallbackName,
+            avatar_url: data.avatar_url || metaAvatar,
+            role:
+              data.role ||
+              (email?.toLowerCase() === adminEmail ? "admin" : "student"),
           });
         }
       } catch (err) {
@@ -80,7 +93,12 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
     // Check active session on mount
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
-        fetchProfile(user.id, user.email);
+        fetchProfile(
+          user.id,
+          user.email,
+          user.user_metadata?.full_name || user.user_metadata?.name,
+          user.user_metadata?.avatar_url
+        );
       } else {
         setCurrentUser(null);
       }
@@ -91,9 +109,19 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
-        fetchProfile(session.user.id, session.user.email);
+        fetchProfile(
+          session.user.id,
+          session.user.email,
+          session.user.user_metadata?.full_name ||
+            session.user.user_metadata?.name,
+          session.user.user_metadata?.avatar_url
+        );
       } else {
         setCurrentUser(null);
+      }
+
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT") {
+        router.refresh();
       }
     });
 
@@ -334,6 +362,27 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
 
         {/* Mobile & Tablet menu button */}
         <div className="flex md:hidden items-center gap-1.5 shrink-0">
+          {currentUser ? (
+            <Link
+              href={currentUser.role === "admin" ? "/admin" : "/dashboard"}
+              className="flex items-center gap-1.5 ps-1 pe-2 py-1 rounded-full bg-brand-cyan/10 border border-brand-cyan/30 max-w-[120px]"
+              title={currentUser.email || currentUser.full_name}
+            >
+              <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-brand-navy via-brand-blue to-brand-cyan flex items-center justify-center text-white text-[10px] font-bold shrink-0">
+                {getInitials(currentUser.full_name)}
+              </div>
+              <span className="text-xs font-bold text-foreground truncate">
+                {currentUser.full_name}
+              </span>
+            </Link>
+          ) : (
+            <Link
+              href="/login"
+              className="px-2.5 py-1.5 rounded-lg bg-gradient-to-r from-brand-blue to-brand-cyan text-white text-xs font-semibold shrink-0"
+            >
+              {t("login")}
+            </Link>
+          )}
           <ThemeToggle />
           <LanguageSwitcher currentLocale={currentLocale} />
           <button

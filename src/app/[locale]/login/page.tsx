@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/routing";
@@ -38,6 +38,23 @@ export default function LoginPage({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const errParam = params.get("error");
+    if (errParam) {
+      if (errParam === "auth_callback_failed") {
+        setError(
+          locale === "ar"
+            ? "تعذر إتمام تسجيل الدخول عبر Google. يرجى التحقق من تفعيل موفر Google في إعدادات المنصة أو المحاولة بالبريد الإلكتروني."
+            : "Could not complete Google sign-in. Please verify Google provider settings or try email login."
+        );
+      } else {
+        setError(decodeURIComponent(errParam));
+      }
+    }
+  }, [locale]);
+
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -45,13 +62,35 @@ export default function LoginPage({
     setLoading(true);
 
     try {
-      await signInWithEmail(email, password);
+      await signInWithEmail(email.trim().toLowerCase(), password);
       setSuccess(t("loginSuccess"));
+      router.refresh();
       setTimeout(() => {
         router.push("/dashboard");
-      }, 1000);
+      }, 700);
     } catch (err: any) {
-      setError(err?.message || "Failed to sign in. Please verify your credentials.");
+      const msg = String(err?.message || "");
+      const lower = msg.toLowerCase();
+      if (lower.includes("invalid login credentials")) {
+        setError(
+          locale === "ar"
+            ? "البريد الإلكتروني أو كلمة المرور غير صحيحة."
+            : "Invalid email or password."
+        );
+      } else if (lower.includes("email not confirmed")) {
+        setError(
+          locale === "ar"
+            ? "الحساب غير مؤكد بعد. يرجى التواصل مع الإدارة لتأكيد الحساب أو إعادة التسجيل."
+            : "Email not confirmed yet. Please contact support or re-register."
+        );
+      } else {
+        setError(
+          msg ||
+            (locale === "ar"
+              ? "فشل تسجيل الدخول. يرجى التحقق من البيانات."
+              : "Failed to sign in. Please verify your credentials.")
+        );
+      }
     } finally {
       setLoading(false);
     }

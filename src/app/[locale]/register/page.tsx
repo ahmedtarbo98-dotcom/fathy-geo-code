@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Link, useRouter } from "@/i18n/routing";
 import HeroBackground from "@/components/hero-background";
-import { signUpWithEmail, signInWithGoogle } from "@/lib/auth/actions";
+import { signInWithEmail, signInWithGoogle } from "@/lib/auth/actions";
 import {
   User,
   Mail,
@@ -61,29 +61,42 @@ export default function RegisterPage({
     setLoading(true);
 
     try {
-      const signUpRes = await signUpWithEmail(email, password, fullName, locale);
+      const regRes = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          password,
+          fullName,
+          locale,
+        }),
+      });
 
-      // Sync profile immediately to admin database
-      try {
-        await fetch("/api/auth/sync-profile", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email,
-            fullName,
-            userId: signUpRes?.user?.id,
-          }),
-        });
-      } catch (e) {
-        console.warn("Sync profile warning:", e);
+      const regData = await regRes.json();
+      if (!regRes.ok) {
+        throw new Error(
+          regData?.error ||
+            (locale === "ar"
+              ? "فشل إنشاء الحساب، يرجى التحقق من البيانات."
+              : "Registration failed. Please check your details.")
+        );
       }
 
+      // Sign in immediately to establish an active browser session
+      await signInWithEmail(email.trim().toLowerCase(), password);
+
       setSuccess(t("registerSuccess"));
+      router.refresh();
       setTimeout(() => {
         router.push("/dashboard");
-      }, 2000);
+      }, 900);
     } catch (err: any) {
-      setError(err?.message || "Registration failed. Please check your details.");
+      setError(
+        err?.message ||
+          (locale === "ar"
+            ? "فشل إنشاء الحساب، يرجى التحقق من البيانات."
+            : "Registration failed. Please check your details.")
+      );
     } finally {
       setLoading(false);
     }
