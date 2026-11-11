@@ -5,6 +5,8 @@ import { getMessages, setRequestLocale } from "next-intl/server";
 import { notFound } from "next/navigation";
 import { routing } from "@/i18n/routing";
 import { ThemeProvider } from "@/components/theme-provider";
+import { SiteBrandingProvider } from "@/components/site-branding-provider";
+import { getSiteBranding } from "@/lib/site-branding";
 import Navbar from "@/components/navbar";
 import Footer from "@/components/footer";
 import "./globals.css";
@@ -27,18 +29,23 @@ export const viewport: Viewport = {
   maximumScale: 5,
 };
 
-export const metadata: Metadata = {
-  title: {
-    template: "%s | FATHY GEO CODE",
-    default: "FATHY GEO CODE — GIS & Remote Sensing Educational Hub",
-  },
-  description:
-    "Bilingual GIS, Surveying & Remote Sensing Learning Platform led by Eng. Ahmed Fathy. Comprehensive courses in ArcGIS Pro, Google Earth Engine, Spatial Modeling, and Geomatics.",
-  icons: {
-    icon: "/logo.jpg",
-    apple: "/logo.jpg",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const branding = await getSiteBranding();
+  const iconUrl = branding.logoUrl || "/logo.jpg";
+
+  return {
+    title: {
+      template: `%s | ${branding.siteName || "FATHY GEO CODE"}`,
+      default: `${branding.siteName || "FATHY GEO CODE"} — ${branding.tagline || "GIS & Remote Sensing Educational Hub"}`,
+    },
+    description:
+      "Bilingual GIS, Surveying & Remote Sensing Learning Platform led by Eng. Ahmed Fathy. Comprehensive courses in ArcGIS Pro, Google Earth Engine, Spatial Modeling, and Geomatics.",
+    icons: {
+      icon: iconUrl,
+      apple: iconUrl,
+    },
+  };
+}
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -59,6 +66,7 @@ export default async function LocaleLayout({
 
   setRequestLocale(locale);
   const messages = await getMessages();
+  const initialBranding = await getSiteBranding();
   const dir = locale === "ar" ? "rtl" : "ltr";
 
   const jsonLd = {
@@ -67,10 +75,10 @@ export default async function LocaleLayout({
       {
         "@type": "Organization",
         "@id": "https://fathygeocode.com/#organization",
-        "name": "FATHY GEO CODE",
+        "name": initialBranding.siteName || "FATHY GEO CODE",
         "url": "https://fathygeocode.com",
-        "logo": "https://fathygeocode.com/logo.jpg",
-        "description": "GIS & Remote Sensing Educational Hub",
+        "logo": initialBranding.logoUrl || "https://fathygeocode.com/logo.jpg",
+        "description": initialBranding.tagline || "GIS & Remote Sensing Educational Hub",
         "sameAs": [
           "https://www.youtube.com/channel/UCBrwWaq6E8lg0xEmDCLmekw",
           "https://t.me/Fathy772",
@@ -116,11 +124,13 @@ export default async function LocaleLayout({
           disableTransitionOnChange
         >
           <NextIntlClientProvider messages={messages} locale={locale}>
-            <div className="flex min-h-screen flex-col overflow-x-hidden w-full">
-              <Navbar currentLocale={locale} />
-              <main className="flex-1 w-full min-w-0">{children}</main>
-              <Footer currentLocale={locale} />
-            </div>
+            <SiteBrandingProvider initialBranding={initialBranding}>
+              <div className="flex min-h-screen flex-col overflow-x-hidden w-full">
+                <Navbar currentLocale={locale} />
+                <main className="flex-1 w-full min-w-0">{children}</main>
+                <Footer currentLocale={locale} />
+              </div>
+            </SiteBrandingProvider>
           </NextIntlClientProvider>
         </ThemeProvider>
       </body>

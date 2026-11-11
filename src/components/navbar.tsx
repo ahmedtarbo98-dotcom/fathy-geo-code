@@ -6,6 +6,7 @@ import { Link, usePathname, useRouter } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 import { ThemeToggle } from "./theme-toggle";
 import { LanguageSwitcher } from "./language-switcher";
+import { SiteLogoImage } from "./site-branding-provider";
 import { createClient } from "@/lib/supabase/client";
 import {
   Menu,
@@ -193,10 +194,8 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
         >
           <div className="relative w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-xl overflow-hidden p-0.5 bg-gradient-to-tr from-brand-navy via-brand-blue to-brand-cyan shadow-md shadow-brand-blue/20 group-hover:shadow-brand-cyan/40 transition-shadow">
             <div className="relative w-full h-full rounded-[10px] overflow-hidden bg-background">
-              <Image
-                src="/logo.jpg"
+              <SiteLogoImage
                 alt="FATHY GEO CODE Logo"
-                fill
                 priority
                 className="object-cover transition-transform duration-500 group-hover:scale-110"
               />

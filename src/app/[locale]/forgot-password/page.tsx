@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import HeroBackground from "@/components/hero-background";
+import { SiteLogoImage } from "@/components/site-branding-provider";
 import { resetPassword } from "@/lib/auth/actions";
 import {
   Mail,
@@ -60,10 +61,8 @@ export default function ForgotPasswordPage({
             <Link href="/" className="inline-block group">
               <div className="relative w-16 h-16 mx-auto rounded-2xl overflow-hidden p-0.5 bg-gradient-to-tr from-brand-navy via-brand-blue to-brand-cyan shadow-xl group-hover:scale-105 transition-transform duration-300">
                 <div className="relative w-full h-full rounded-[14px] overflow-hidden bg-background">
-                  <Image
-                    src="/logo.jpg"
+                  <SiteLogoImage
                     alt="FATHY GEO CODE"
-                    fill
                     className="object-cover"
                     priority
                   />

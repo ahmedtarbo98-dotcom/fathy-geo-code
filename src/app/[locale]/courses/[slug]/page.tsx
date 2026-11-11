@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import { getCourseBySlug, CourseDetailData } from "@/lib/data/courses";
 import { createClient } from "@/lib/supabase/client";
+import { SiteLogoImage } from "@/components/site-branding-provider";
 import {
   BookOpen,
   Clock,
@@ -518,10 +519,9 @@ export default function CourseDetailsPage({
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
                 <div className="relative w-20 h-20 rounded-2xl overflow-hidden p-0.5 bg-gradient-to-tr from-brand-navy to-brand-cyan shadow-lg shrink-0">
                   <div className="relative w-full h-full rounded-[14px] overflow-hidden bg-background">
-                    <Image
-                      src="/logo.jpg"
+                    <SiteLogoImage
+                      variant="instructor"
                       alt={tBrand("owner")}
-                      fill
                       className="object-cover"
                     />
                   </div>

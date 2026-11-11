@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
+import { SiteLogoImage } from "./site-branding-provider";
 import {
   Send,
   Youtube,
@@ -65,10 +66,8 @@ export default function Footer({ currentLocale }: { currentLocale: string }) {
             <Link href="/" className="inline-flex items-center gap-3">
               <div className="relative w-12 h-12 rounded-xl overflow-hidden p-0.5 bg-gradient-to-tr from-brand-navy via-brand-blue to-brand-cyan shadow-md">
                 <div className="relative w-full h-full rounded-[10px] overflow-hidden bg-background">
-                  <Image
-                    src="/logo.jpg"
+                  <SiteLogoImage
                     alt="FATHY GEO CODE"
-                    fill
                     className="object-cover"
                   />
                 </div>

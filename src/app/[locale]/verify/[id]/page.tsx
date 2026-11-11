@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Link } from "@/i18n/routing";
 import { setRequestLocale } from "next-intl/server";
+import { SiteLogoImage } from "@/components/site-branding-provider";
 import {
   ShieldCheck,
   CheckCircle2,
@@ -63,7 +64,7 @@ export default function CertificateVerificationPage({
               </div>
 
               <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-border">
-                <Image src="/logo.jpg" alt="Logo" fill className="object-cover" />
+                <SiteLogoImage alt="Logo" className="object-cover" />
               </div>
             </div>
 

@@ -6,6 +6,7 @@ import { Link, usePathname, useRouter } from "@/i18n/routing";
 import { useTranslations } from "next-intl";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { SiteLogoImage } from "@/components/site-branding-provider";
 import { createClient } from "@/lib/supabase/client";
 import {
   LayoutDashboard,
@@ -177,7 +178,7 @@ export default function AdminLayout({
       <div className="md:hidden flex items-center justify-between p-4 border-b border-border bg-card">
         <div className="flex items-center gap-2">
           <div className="relative w-8 h-8 rounded-lg overflow-hidden">
-            <Image src="/logo.jpg" alt="Logo" fill className="object-cover" />
+            <SiteLogoImage alt="Logo" className="object-cover" />
           </div>
           <span className="font-bold text-sm text-foreground">
             {t("dashboardTitle")}
@@ -207,7 +208,7 @@ export default function AdminLayout({
             <Link href="/admin" className="flex items-center gap-3">
               <div className="relative w-10 h-10 rounded-xl overflow-hidden p-0.5 bg-gradient-to-tr from-brand-navy via-brand-blue to-brand-cyan shadow-md">
                 <div className="relative w-full h-full rounded-[9px] overflow-hidden bg-background">
-                  <Image src="/logo.jpg" alt="Logo" fill className="object-cover" />
+                  <SiteLogoImage alt="Logo" className="object-cover" />
                 </div>
               </div>
               <div>

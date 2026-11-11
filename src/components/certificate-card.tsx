@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { SiteLogoImage } from "./site-branding-provider";
 import { Award, ShieldCheck, Printer, Download, Share2, Sparkles } from "lucide-react";
 
 interface CertificateProps {
@@ -50,7 +51,7 @@ export default function CertificateCard({
             <div className="flex items-center gap-3">
               <div className="relative w-14 h-14 rounded-xl overflow-hidden p-0.5 bg-gradient-to-tr from-brand-navy via-brand-blue to-brand-cyan shadow-md">
                 <div className="relative w-full h-full rounded-[10px] overflow-hidden bg-white">
-                  <Image src="/logo.jpg" alt="Logo" fill className="object-cover" />
+                  <SiteLogoImage alt="Logo" className="object-cover" />
                 </div>
               </div>
               <div className="text-start">

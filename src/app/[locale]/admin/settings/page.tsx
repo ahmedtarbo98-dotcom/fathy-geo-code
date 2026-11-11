@@ -192,6 +192,19 @@ export default function AdminSettingsPage({
         throw new Error(result.error || "Failed to save settings");
       }
 
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("site-branding-updated", {
+            detail: {
+              logoUrl,
+              siteName,
+              tagline,
+              instructorAvatarUrl: instructorAvatar,
+            },
+          })
+        );
+      }
+
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch (err: any) {

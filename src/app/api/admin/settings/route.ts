@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -88,6 +89,14 @@ export async function POST(request: Request) {
         updated_at: new Date().toISOString(),
       });
       if (err4) throw err4;
+    }
+
+    try {
+      revalidateTag("site-branding");
+      revalidatePath("/ar", "layout");
+      revalidatePath("/en", "layout");
+    } catch (revalErr) {
+      console.warn("Revalidate branding warning:", revalErr);
     }
 
     return NextResponse.json({ success: true });
