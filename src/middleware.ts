@@ -5,8 +5,8 @@ export default createMiddleware(routing);
 
 export const config = {
   matcher: [
-    // Skip all API routes, internal Next.js/Vercel assets, and static files
-    "/((?!api|_next|_vercel|.*\\..*).*)",
+    // Skip all API routes, OAuth callback, internal Next.js/Vercel assets, and static files
+    "/((?!api|auth|_next|_vercel|.*\\..*).*)",
     "/",
     "/(ar|en)/:path*",
   ],
