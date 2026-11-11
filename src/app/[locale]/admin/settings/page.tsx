@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import ImageUpload from "@/components/image-upload";
+import { getYouTubeThumbnails } from "@/lib/youtube";
 import {
   Settings,
   ShieldAlert,
@@ -55,6 +56,7 @@ export default function AdminSettingsPage({
   const [statsSatisfaction, setStatsSatisfaction] = useState("99");
 
   // YouTube Featured Videos on Home
+  const [fetchingMetaIdx, setFetchingMetaIdx] = useState<number | null>(null);
   const [youtubeVideos, setYoutubeVideos] = useState<
     {
       id: string;
@@ -64,6 +66,7 @@ export default function AdminSettingsPage({
       views: string;
       tag: string;
       video_url: string;
+      thumbnail_url?: string;
     }[]
   >([
     {
@@ -131,7 +134,60 @@ export default function AdminSettingsPage({
       }
     }
     loadSettings();
+
+    if (typeof window !== "undefined" && window.location.hash === "#youtube-videos") {
+      setTimeout(() => {
+        document.getElementById("youtube-videos")?.scrollIntoView({ behavior: "smooth" });
+      }, 300);
+    }
   }, []);
+
+  const fetchYouTubeMeta = async (
+    idx: number,
+    url: string,
+    forceTitleOverwrite = false
+  ) => {
+    const thumbs = getYouTubeThumbnails(url);
+    if (!thumbs.videoId) return;
+
+    try {
+      setFetchingMetaIdx(idx);
+      const res = await fetch(`/api/youtube-meta?url=${encodeURIComponent(url)}`);
+      if (!res.ok) return;
+      const meta = await res.json();
+
+      setYoutubeVideos((prev) =>
+        prev.map((item, i) => {
+          if (i !== idx) return item;
+          const isPlaceholderTitle =
+            !item.title_ar?.trim() ||
+            item.title_ar.trim() === "عنوان الفيديو الجديد بالعربية";
+          const nextTitleAr =
+            forceTitleOverwrite || isPlaceholderTitle
+              ? meta.title || item.title_ar
+              : item.title_ar;
+          const isPlaceholderEn =
+            !item.title_en?.trim() ||
+            item.title_en.trim() === "New Video Title in English";
+          const nextTitleEn =
+            forceTitleOverwrite || isPlaceholderEn
+              ? meta.title || item.title_en
+              : item.title_en;
+
+          return {
+            ...item,
+            thumbnail_url: meta.thumbnailUrl || thumbs.hq || item.thumbnail_url,
+            title_ar: nextTitleAr,
+            title_en: nextTitleEn,
+          };
+        })
+      );
+    } catch (err) {
+      console.warn("YouTube meta fetch error:", err);
+    } finally {
+      setFetchingMetaIdx(null);
+    }
+  };
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -439,7 +495,10 @@ export default function AdminSettingsPage({
         </div>
 
         {/* YouTube Featured Videos Management */}
-        <div className="rounded-3xl glass-panel p-6 sm:p-8 border border-red-500/20 shadow-lg space-y-6">
+        <div
+          id="youtube-videos"
+          className="rounded-3xl glass-panel p-6 sm:p-8 border border-red-500/20 shadow-lg space-y-6 scroll-mt-24"
+        >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <h2 className="text-base font-bold text-foreground flex items-center gap-2">
@@ -448,8 +507,8 @@ export default function AdminSettingsPage({
               </h2>
               <p className="text-[11px] text-muted-foreground mt-0.5">
                 {isRtl
-                  ? "تحكم في الفيديوهات المعروضة في قسم المجتمع وقناة اليوتيوب على الصفحة الرئيسية. يمكنك تعديل العناوين، الروابط، المدة، والتصنيف."
-                  : "Manage the featured YouTube tutorial cards displayed in the homepage community section."}
+                  ? "الصق رابط فيديو اليوتيوب فقط وسيتم جلب الصورة الرسمية وعنوان الفيديو تلقائياً، ويمكنك تعديل العنوان كما تريد."
+                  : "Paste a YouTube video link to automatically fetch its official thumbnail and title, and edit the title anytime."}
               </p>
             </div>
 
@@ -460,12 +519,13 @@ export default function AdminSettingsPage({
                   ...youtubeVideos,
                   {
                     id: `y_${Date.now()}`,
-                    title_ar: "عنوان الفيديو الجديد بالعربية",
-                    title_en: "New Video Title in English",
-                    duration: "15:00",
-                    views: "1.2K",
-                    tag: "GIS & Python",
-                    video_url: "https://www.youtube.com/watch?v=",
+                    title_ar: "",
+                    title_en: "",
+                    duration: "",
+                    views: "",
+                    tag: "",
+                    video_url: "",
+                    thumbnail_url: "",
                   },
                 ]);
               }}
@@ -477,137 +537,229 @@ export default function AdminSettingsPage({
           </div>
 
           <div className="space-y-4">
-            {youtubeVideos.map((video, idx) => (
-              <div
-                key={video.id || idx}
-                className="p-4 rounded-2xl border border-border/80 bg-background/60 space-y-3 relative group"
-              >
-                <div className="flex items-center justify-between border-b border-border/50 pb-2">
-                  <span className="text-xs font-bold text-red-500 flex items-center gap-1.5">
-                    <Youtube className="w-3.5 h-3.5" />
-                    <span>فيديو #{idx + 1}</span>
-                  </span>
+            {youtubeVideos.map((video, idx) => {
+              const thumbs = getYouTubeThumbnails(video.video_url);
+              const previewThumb =
+                thumbs.maxres || video.thumbnail_url || thumbs.hq;
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setYoutubeVideos(youtubeVideos.filter((_, i) => i !== idx));
-                    }}
-                    className="p-1 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors"
-                    title={isRtl ? "حذف هذا الفيديو" : "Delete video"}
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+              return (
+                <div
+                  key={video.id || idx}
+                  className="p-4 rounded-2xl border border-border/80 bg-background/60 space-y-3 relative group"
+                >
+                  <div className="flex items-center justify-between border-b border-border/50 pb-2">
+                    <span className="text-xs font-bold text-red-500 flex items-center gap-1.5">
+                      <Youtube className="w-3.5 h-3.5" />
+                      <span>{isRtl ? `فيديو #${idx + 1}` : `Video #${idx + 1}`}</span>
+                    </span>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-muted-foreground">
-                      {isRtl ? "عنوان الفيديو (بالعربية)" : "Video Title (Arabic)"}
-                    </label>
-                    <input
-                      type="text"
-                      value={video.title_ar}
-                      onChange={(e) => {
-                        const updated = [...youtubeVideos];
-                        updated[idx].title_ar = e.target.value;
-                        setYoutubeVideos(updated);
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setYoutubeVideos(youtubeVideos.filter((_, i) => i !== idx));
                       }}
-                      className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-xs font-semibold"
-                      placeholder="أسرار التعامل مع صور الأقمار الصناعية..."
-                    />
+                      className="p-1 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors"
+                      title={isRtl ? "حذف هذا الفيديو" : "Delete video"}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-muted-foreground">
-                      {isRtl ? "عنوان الفيديو (بالإنجليزية)" : "Video Title (English)"}
-                    </label>
-                    <input
-                      type="text"
-                      value={video.title_en}
-                      onChange={(e) => {
-                        const updated = [...youtubeVideos];
-                        updated[idx].title_en = e.target.value;
-                        setYoutubeVideos(updated);
-                      }}
-                      className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-xs font-semibold"
-                      placeholder="Satellite Imagery Analysis & NDVI..."
-                    />
-                  </div>
-                </div>
+                  {/* Link + Live Official YouTube Thumbnail Preview */}
+                  <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+                    <div className="md:col-span-4">
+                      <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-gradient-to-br from-neutral-900 via-brand-navy to-neutral-950 border border-border/60 flex items-center justify-center">
+                        {previewThumb ? (
+                          <img
+                            src={previewThumb}
+                            alt={video.title_ar || "YouTube Thumbnail"}
+                            onError={(e) => {
+                              const img = e.currentTarget;
+                              if (thumbs.hq && img.src !== thumbs.hq) {
+                                img.src = thumbs.hq;
+                              } else {
+                                img.style.display = "none";
+                              }
+                            }}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <div className="text-center px-2 space-y-1">
+                            <Youtube className="w-6 h-6 text-red-500 mx-auto opacity-80" />
+                            <p className="text-[10px] text-muted-foreground">
+                              {isRtl
+                                ? "ستظهر صورة الفيديو الرسمية هنا"
+                                : "Official thumbnail preview"}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                  <div className="sm:col-span-2 space-y-1">
-                    <label className="text-[11px] font-bold text-muted-foreground">
-                      {isRtl ? "رابط فيديو اليوتيوب (URL)" : "YouTube Video URL"}
-                    </label>
-                    <input
-                      type="url"
-                      value={video.video_url}
-                      onChange={(e) => {
-                        const updated = [...youtubeVideos];
-                        updated[idx].video_url = e.target.value;
-                        setYoutubeVideos(updated);
-                      }}
-                      className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-xs font-mono text-brand-cyan"
-                      placeholder="https://www.youtube.com/watch?v=..."
-                    />
+                    <div className="md:col-span-8 space-y-3">
+                      <div className="space-y-1">
+                        <label className="text-[11px] font-bold text-foreground">
+                          {isRtl
+                            ? "رابط فيديو اليوتيوب (URL) — أضف اللينك هنا فقط"
+                            : "YouTube Video URL"}
+                        </label>
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <input
+                            type="url"
+                            value={video.video_url}
+                            onChange={(e) => {
+                              const nextUrl = e.target.value;
+                              const nextThumbs = getYouTubeThumbnails(nextUrl);
+                              setYoutubeVideos((prev) =>
+                                prev.map((item, i) =>
+                                  i === idx
+                                    ? {
+                                        ...item,
+                                        video_url: nextUrl,
+                                        thumbnail_url:
+                                          nextThumbs.hq || item.thumbnail_url,
+                                      }
+                                    : item
+                                )
+                              );
+                              if (nextThumbs.videoId) {
+                                fetchYouTubeMeta(idx, nextUrl, false);
+                              }
+                            }}
+                            className="flex-1 px-3 py-2 rounded-lg border border-border bg-background text-xs font-mono text-brand-cyan"
+                            placeholder="https://www.youtube.com/watch?v=... أو https://youtu.be/..."
+                          />
+                          <button
+                            type="button"
+                            disabled={fetchingMetaIdx === idx || !thumbs.videoId}
+                            onClick={() => fetchYouTubeMeta(idx, video.video_url, true)}
+                            className="inline-flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-muted/60 hover:bg-muted text-[11px] font-bold text-foreground disabled:opacity-40 shrink-0"
+                          >
+                            <RefreshCw
+                              className={`w-3.5 h-3.5 ${
+                                fetchingMetaIdx === idx ? "animate-spin" : ""
+                              }`}
+                            />
+                            <span>
+                              {isRtl ? "جلب العنوان والصورة" : "Fetch Info"}
+                            </span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-bold text-muted-foreground">
+                            {isRtl ? "عنوان الفيديو (بالعربية)" : "Video Title (Arabic)"}
+                          </label>
+                          <input
+                            type="text"
+                            value={video.title_ar}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setYoutubeVideos((prev) =>
+                                prev.map((item, i) =>
+                                  i === idx ? { ...item, title_ar: val } : item
+                                )
+                              );
+                            }}
+                            className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-xs font-semibold"
+                            placeholder={
+                              isRtl
+                                ? "يُجلب تلقائياً أو اكتب العنوان..."
+                                : "Arabic title..."
+                            }
+                          />
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[11px] font-bold text-muted-foreground">
+                            {isRtl ? "عنوان الفيديو (بالإنجليزية - اختياري)" : "Video Title (English - Optional)"}
+                          </label>
+                          <input
+                            type="text"
+                            value={video.title_en}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setYoutubeVideos((prev) =>
+                                prev.map((item, i) =>
+                                  i === idx ? { ...item, title_en: val } : item
+                                )
+                              );
+                            }}
+                            className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-xs font-semibold"
+                            placeholder="Optional English title..."
+                          />
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-muted-foreground">
-                      {isRtl ? "التصنيف / التاج" : "Tag"}
-                    </label>
-                    <input
-                      type="text"
-                      value={video.tag}
-                      onChange={(e) => {
-                        const updated = [...youtubeVideos];
-                        updated[idx].tag = e.target.value;
-                        setYoutubeVideos(updated);
-                      }}
-                      className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-xs"
-                      placeholder="Remote Sensing"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
+                  {/* Optional Tag / Duration / Views */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
                     <div className="space-y-1">
                       <label className="text-[11px] font-bold text-muted-foreground">
-                        {isRtl ? "المدة" : "Duration"}
+                        {isRtl ? "التصنيف (اختياري)" : "Tag (Optional)"}
                       </label>
                       <input
                         type="text"
-                        value={video.duration}
+                        value={video.tag || ""}
                         onChange={(e) => {
-                          const updated = [...youtubeVideos];
-                          updated[idx].duration = e.target.value;
-                          setYoutubeVideos(updated);
+                          const val = e.target.value;
+                          setYoutubeVideos((prev) =>
+                            prev.map((item, i) =>
+                              i === idx ? { ...item, tag: val } : item
+                            )
+                          );
                         }}
-                        className="w-full px-2 py-1.5 rounded-lg border border-border bg-background text-xs font-mono"
+                        className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-xs"
+                        placeholder="GIS / Remote Sensing"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-[11px] font-bold text-muted-foreground">
+                        {isRtl ? "المدة (اختياري)" : "Duration (Optional)"}
+                      </label>
+                      <input
+                        type="text"
+                        value={video.duration || ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setYoutubeVideos((prev) =>
+                            prev.map((item, i) =>
+                              i === idx ? { ...item, duration: val } : item
+                            )
+                          );
+                        }}
+                        className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-xs font-mono"
                         placeholder="24:15"
                       />
                     </div>
+
                     <div className="space-y-1">
                       <label className="text-[11px] font-bold text-muted-foreground">
-                        {isRtl ? "المشاهدات" : "Views"}
+                        {isRtl ? "المشاهدات (اختياري)" : "Views (Optional)"}
                       </label>
                       <input
                         type="text"
-                        value={video.views}
+                        value={video.views || ""}
                         onChange={(e) => {
-                          const updated = [...youtubeVideos];
-                          updated[idx].views = e.target.value;
-                          setYoutubeVideos(updated);
+                          const val = e.target.value;
+                          setYoutubeVideos((prev) =>
+                            prev.map((item, i) =>
+                              i === idx ? { ...item, views: val } : item
+                            )
+                          );
                         }}
-                        className="w-full px-2 py-1.5 rounded-lg border border-border bg-background text-xs font-mono"
+                        className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-xs font-mono"
                         placeholder="3.4K"
                       />
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
