@@ -26,15 +26,15 @@
     "description": "An advanced practical learning platform guided by Eng. Ahmed Fathy. Comprehensive, industry-aligned courses in ArcGIS Pro, Google Earth Engine, Spatial Modeling, and Digital Surveying.",
     "ctaCourses": "Explore Courses",
     "ctaProjects": "Request Spatial Project",
-    "activeLearners": "+1,500 Engineers & Students",
+    "activeLearners": "{count} Registered Students",
+    "publishedCoursesPill": "{count} Published Courses",
     "youtubeChannel": "FATHY GEO CODE on YouTube"
   },
   "Stats": {
-    "students": "Students & Learners",
-    "courses": "Courses & Workshops",
-    "hours": "Training Hours",
-    "projects": "Completed Projects",
-    "satisfaction": "Satisfaction Rate"
+    "students": "Registered Students",
+    "courses": "Published Courses",
+    "lessons": "Published Lessons",
+    "hours": "Training Hours"
   },
   "Topics": {
     "badge": "Specialization Tracks",

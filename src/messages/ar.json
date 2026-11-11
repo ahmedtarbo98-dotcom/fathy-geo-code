@@ -26,15 +26,15 @@
     "description": "منصة تعليمية وتطبيقية متقدمة يقدمها م. أحمد فتحي. دورات شاملة في ArcGIS Pro، Google Earth Engine، النمذجة المكانية، والمساحة الرقمية وفق متطلبات سوق العمل الهندسي والجيومكاني.",
     "ctaCourses": "تصفح الدورات التدريبية",
     "ctaProjects": "طلب تنفيذ مشروع مكاني",
-    "activeLearners": "+1500 مهندس وطالب",
+    "activeLearners": "{count} طالب مسجل بالمنصة",
+    "publishedCoursesPill": "{count} دورات منشورة",
     "youtubeChannel": "قناة FATHY GEO CODE على يوتيوب"
   },
   "Stats": {
-    "students": "طالب ومتدرب",
-    "courses": "دورة وورشة عمل",
-    "hours": "ساعة تدريب وتطبيق",
-    "projects": "مشروع استشاري منجز",
-    "satisfaction": "نسبة الرضا والتقييم"
+    "students": "طالب مسجل",
+    "courses": "دورة منشورة",
+    "lessons": "درس تدريبي",
+    "hours": "ساعة تدريب وتطبيق"
   },
   "Topics": {
     "badge": "مجالات التدريب والتخصص",

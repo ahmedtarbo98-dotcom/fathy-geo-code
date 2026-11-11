@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -159,6 +160,14 @@ export async function POST(request: Request) {
         .from("enrollment_requests")
         .update({ user_id: userId })
         .in("user_id", oldIds);
+    }
+
+    try {
+      revalidateTag("public-stats");
+      revalidatePath("/ar");
+      revalidatePath("/en");
+    } catch (e) {
+      console.warn("Revalidate public-stats warning:", e);
     }
 
     return NextResponse.json({

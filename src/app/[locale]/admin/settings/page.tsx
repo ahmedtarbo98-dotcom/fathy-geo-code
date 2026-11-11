@@ -48,14 +48,15 @@ export default function AdminSettingsPage({
   const [pauseOnTabHidden, setPauseOnTabHidden] = useState(true);
   const [adminEmail, setAdminEmail] = useState("ahmedtarbo98@gmail.com");
 
-  // Stats override
-  const [statsStudents, setStatsStudents] = useState("1500");
-  const [statsCourses, setStatsCourses] = useState("14");
-  const [statsHours, setStatsHours] = useState("160");
-  const [statsProjects, setStatsProjects] = useState("45");
-  const [statsSatisfaction, setStatsSatisfaction] = useState("99");
+  // Stats visibility & optional manual overrides (default OFF -> real live DB values)
+  const [showStatsStrip, setShowStatsStrip] = useState(true);
+  const [useManualOverrides, setUseManualOverrides] = useState(false);
+  const [statsStudents, setStatsStudents] = useState("");
+  const [statsCourses, setStatsCourses] = useState("");
+  const [statsLessons, setStatsLessons] = useState("");
+  const [statsHours, setStatsHours] = useState("");
 
-  // YouTube Featured Videos on Home
+  // YouTube Featured Videos on Home (default empty, loaded from site_settings)
   const [fetchingMetaIdx, setFetchingMetaIdx] = useState<number | null>(null);
   const [youtubeVideos, setYoutubeVideos] = useState<
     {
@@ -63,55 +64,45 @@ export default function AdminSettingsPage({
       title_ar: string;
       title_en: string;
       duration: string;
-      views: string;
+      views?: string;
       tag: string;
       video_url: string;
       thumbnail_url?: string;
     }[]
-  >([
-    {
-      id: "y1",
-      title_ar: "أسرار التعامل مع صور الأقمار الصناعية وحساب مؤشر NDVI",
-      title_en: "Satellite Imagery Analysis & NDVI Spectral Index in ArcGIS Pro",
-      duration: "24:15",
-      views: "3.4K",
-      tag: "Remote Sensing",
-      video_url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    },
-    {
-      id: "y2",
-      title_ar: "بناء نموذج ملاءمة مكانية باستخدام ModelBuilder خطوة بخطوة",
-      title_en: "Building a Multi-Criteria Spatial Suitability Model with ModelBuilder",
-      duration: "32:40",
-      views: "5.1K",
-      tag: "GIS Analysis",
-      video_url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    },
-    {
-      id: "y3",
-      title_ar: "مقدمة سريعة للمبتدئين في Google Earth Engine عبر الجافاسكريبت",
-      title_en: "Fast-Track Introduction to Google Earth Engine Scripting",
-      duration: "19:50",
-      views: "2.8K",
-      tag: "GEE & Code",
-      video_url: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
-    },
-  ]);
+  >([]);
 
   // Load existing settings
   useEffect(() => {
     async function loadSettings() {
       try {
         setLoading(true);
-        const { data, error } = await supabase.from("site_settings").select("*");
+        const { data } = await supabase.from("site_settings").select("*");
         if (data) {
           data.forEach((row) => {
             if (row.key === "platform_stats" && row.value) {
-              setStatsStudents(row.value.students?.toString() || "1500");
-              setStatsCourses(row.value.courses?.toString() || "14");
-              setStatsHours(row.value.hours?.toString() || "160");
-              setStatsProjects(row.value.projects?.toString() || "45");
-              setStatsSatisfaction(row.value.satisfaction?.toString() || "99");
+              setShowStatsStrip(row.value.show_stats_strip !== false);
+              const overridesEnabled = row.value.use_manual_overrides === true;
+              setUseManualOverrides(overridesEnabled);
+              setStatsStudents(
+                overridesEnabled && row.value.students != null
+                  ? String(row.value.students)
+                  : ""
+              );
+              setStatsCourses(
+                overridesEnabled && row.value.courses != null
+                  ? String(row.value.courses)
+                  : ""
+              );
+              setStatsLessons(
+                overridesEnabled && row.value.lessons != null
+                  ? String(row.value.lessons)
+                  : ""
+              );
+              setStatsHours(
+                overridesEnabled && row.value.hours != null
+                  ? String(row.value.hours)
+                  : ""
+              );
             }
             if (row.key === "instructor_profile" && row.value) {
               if (row.value.avatar_url) setInstructorAvatar(row.value.avatar_url);
@@ -122,7 +113,7 @@ export default function AdminSettingsPage({
               if (row.value.site_name) setSiteName(row.value.site_name);
               if (row.value.tagline) setTagline(row.value.tagline);
             }
-            if (row.key === "youtube_featured_videos" && Array.isArray(row.value) && row.value.length > 0) {
+            if (row.key === "youtube_featured_videos" && Array.isArray(row.value)) {
               setYoutubeVideos(row.value);
             }
           });
@@ -194,13 +185,20 @@ export default function AdminSettingsPage({
     try {
       setSaving(true);
 
+      const toNumOrNull = (val: string) => {
+        if (!val.trim()) return null;
+        const n = Number(val);
+        return Number.isFinite(n) && n >= 0 ? n : null;
+      };
+
       const payload = {
         platform_stats: {
-          students: parseInt(statsStudents) || 1500,
-          courses: parseInt(statsCourses) || 14,
-          hours: parseInt(statsHours) || 160,
-          projects: parseInt(statsProjects) || 45,
-          satisfaction: parseInt(statsSatisfaction) || 99,
+          show_stats_strip: showStatsStrip,
+          use_manual_overrides: useManualOverrides,
+          students: useManualOverrides ? toNumOrNull(statsStudents) : null,
+          courses: useManualOverrides ? toNumOrNull(statsCourses) : null,
+          lessons: useManualOverrides ? toNumOrNull(statsLessons) : null,
+          hours: useManualOverrides ? toNumOrNull(statsHours) : null,
         },
         instructor_profile: {
           name_ar: "م. أحمد فتحي",
@@ -393,65 +391,107 @@ export default function AdminSettingsPage({
           </div>
         </div>
 
-        {/* Public Stats Strip Override */}
-        <div className="rounded-3xl glass-panel p-6 sm:p-8 border border-border/70 shadow-lg space-y-4">
-          <h2 className="text-base font-bold text-foreground flex items-center gap-2">
-            <BarChart className="w-4 h-4 text-emerald-500" />
-            <span>{isRtl ? "إحصائيات شريط الرئيسية (تخصيص اختياري)" : "Home Stats Strip Override"}</span>
-          </h2>
-          <p className="text-[11px] text-muted-foreground">
-            {isRtl
-              ? "إذا تركت هذه الحقول، ستحسب المنصة الإحصائيات آلياً من قاعدة البيانات الحية. يمكنك هنا تحديد أرقام مخصصة تظهر للزوار."
-              : "Optional override numbers for public hero stats strip."}
-          </p>
-
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-            <div className="space-y-1">
-              <label className="text-[11px] font-bold text-muted-foreground">الطلاب</label>
-              <input
-                type="number"
-                value={statsStudents}
-                onChange={(e) => setStatsStudents(e.target.value)}
-                className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-background text-xs font-mono"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] font-bold text-muted-foreground">الدورات</label>
-              <input
-                type="number"
-                value={statsCourses}
-                onChange={(e) => setStatsCourses(e.target.value)}
-                className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-background text-xs font-mono"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] font-bold text-muted-foreground">الساعات</label>
-              <input
-                type="number"
-                value={statsHours}
-                onChange={(e) => setStatsHours(e.target.value)}
-                className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-background text-xs font-mono"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] font-bold text-muted-foreground">المشاريع</label>
-              <input
-                type="number"
-                value={statsProjects}
-                onChange={(e) => setStatsProjects(e.target.value)}
-                className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-background text-xs font-mono"
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] font-bold text-muted-foreground">الرضا %</label>
-              <input
-                type="number"
-                value={statsSatisfaction}
-                onChange={(e) => setStatsSatisfaction(e.target.value)}
-                className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-background text-xs font-mono"
-              />
+        {/* Public Stats Strip Controls & Optional Overrides */}
+        <div className="rounded-3xl glass-panel p-6 sm:p-8 border border-border/70 shadow-lg space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h2 className="text-base font-bold text-foreground flex items-center gap-2">
+                <BarChart className="w-4 h-4 text-emerald-500" />
+                <span>{isRtl ? "شريط الإحصائيات بالصفحة الرئيسية" : "Homepage Stats Strip"}</span>
+              </h2>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                {isRtl
+                  ? "تعرض المنصة الإحصائيات الحقيقية من قاعدة البيانات تلقائياً. التخصيص اليدوي معطل افتراضياً."
+                  : "Displays live counts directly from PostgreSQL by default. Manual overrides are OFF unless enabled."}
+              </p>
             </div>
           </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 pt-1">
+            <label className="flex items-center gap-2.5 text-xs font-bold text-foreground cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={showStatsStrip}
+                onChange={(e) => setShowStatsStrip(e.target.checked)}
+                className="rounded border-border w-4 h-4 accent-brand-cyan"
+              />
+              <span>
+                {isRtl ? "إظهار شريط الإحصائيات في الرئيسية" : "Show stats strip on Home"}
+              </span>
+            </label>
+
+            <label className="flex items-center gap-2.5 text-xs font-bold text-foreground cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={useManualOverrides}
+                onChange={(e) => setUseManualOverrides(e.target.checked)}
+                className="rounded border-border w-4 h-4 accent-amber-500"
+              />
+              <span>
+                {isRtl
+                  ? "تفعيل التعديل اليدوي للأرقام (بدلاً من الحسبة التلقائية)"
+                  : "Use manual overrides (instead of live DB numbers)"}
+              </span>
+            </label>
+          </div>
+
+          {useManualOverrides && (
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-border/50">
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-muted-foreground">
+                  {isRtl ? "عدد الطلاب" : "Students"}
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder={isRtl ? "تلقائي من DB" : "Auto from DB"}
+                  value={statsStudents}
+                  onChange={(e) => setStatsStudents(e.target.value)}
+                  className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-background text-xs font-mono"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-muted-foreground">
+                  {isRtl ? "الدورات المنشورة" : "Published Courses"}
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder={isRtl ? "تلقائي من DB" : "Auto from DB"}
+                  value={statsCourses}
+                  onChange={(e) => setStatsCourses(e.target.value)}
+                  className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-background text-xs font-mono"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-muted-foreground">
+                  {isRtl ? "الدروس المنشورة" : "Published Lessons"}
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  placeholder={isRtl ? "تلقائي من DB" : "Auto from DB"}
+                  value={statsLessons}
+                  onChange={(e) => setStatsLessons(e.target.value)}
+                  className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-background text-xs font-mono"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[11px] font-bold text-muted-foreground">
+                  {isRtl ? "ساعات التدريب" : "Training Hours"}
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  placeholder={isRtl ? "تلقائي من DB" : "Auto from DB"}
+                  value={statsHours}
+                  onChange={(e) => setStatsHours(e.target.value)}
+                  className="w-full px-2.5 py-1.5 rounded-lg border border-border bg-background text-xs font-mono"
+                />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Security & Concurrent Devices */}
@@ -753,7 +793,7 @@ export default function AdminSettingsPage({
                           );
                         }}
                         className="w-full px-3 py-1.5 rounded-lg border border-border bg-background text-xs font-mono"
-                        placeholder="3.4K"
+                        placeholder={isRtl ? "اختياري" : "Optional"}
                       />
                     </div>
                   </div>

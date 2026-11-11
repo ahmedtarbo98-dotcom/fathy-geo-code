@@ -1,16 +1,20 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import {
-  Mail,
-  Trash2,
-  CheckCircle2,
-  Clock,
-  Phone,
-  MessageSquare,
-  Search,
-} from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { Mail, Trash2, CheckCircle2, Clock, Phone, MessageSquare, RefreshCw } from "lucide-react";
+
+interface ContactMessageRow {
+  id: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  subject: string | null;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+}
 
 export default function AdminMessagesPage({
   params: { locale },
@@ -18,184 +22,196 @@ export default function AdminMessagesPage({
   params: { locale: string };
 }) {
   const t = useTranslations("Admin");
+  const isRtl = locale === "ar";
+  const numLocale = isRtl ? "ar-EG" : "en-US";
+  const supabase = createClient();
 
-  const [messages, setMessages] = useState([
-    {
-      id: "msg-1",
-      name: "م. حسام النجار",
-      email: "hossam@example.com",
-      phone: "+201022233344",
-      subject: "طلب استشارة لتنفيذ مشروع دراسة هيدرولوجية ونمذجة DEM",
-      message:
-        "السلام عليكم م. أحمد، لدينا مشروع تخطيط عمران بمحافظة أسوان ونحتاج لتحليل نموذج الارتفاعات الرقمية DEM وحساب مجاري السيول وتحديد أحواض التصريف عبر ArcGIS Spatial Analyst. نود معرفة إمكانية تنفيذ المشروع والتكلفة والمدة الزمنية.",
-      date: "08 نوفمبر 2026 - 02:15 م",
-      isRead: false,
-    },
-    {
-      id: "msg-2",
-      name: "نادية عبد العزيز",
-      email: "nadia@example.com",
-      phone: "+201088899900",
-      subject: "استفسار بخصوص موعد دورة Google Earth Engine",
-      message:
-        "مرحباً، أتابع شروحاتك الممتازة على يوتيوب، هل سيتم فتح ورشة عمل متقدمة في كتابة أكواد GEE بالبايثون قريباً؟ شكراً جزيلاً لجهودك.",
-      date: "07 نوفمبر 2026 - 11:30 ص",
-      isRead: true,
-    },
-    {
-      id: "msg-3",
-      name: "م. فادي خوري",
-      email: "fadi@example.com",
-      phone: "+962791234567",
-      subject: "استفسار عن طريقة الدفع والتحويل من خارج مصر",
-      message:
-        "أهلاً م. أحمد، أود الاشتراك في دورة النمذجة المكانية MCE، ما هي الطرق المتاحة للتحويل الدولي؟",
-      date: "06 نوفمبر 2026 - 08:45 م",
-      isRead: true,
-    },
-  ]);
+  const [messages, setMessages] = useState<ContactMessageRow[]>([]);
+  const [selectedMessage, setSelectedMessage] = useState<ContactMessageRow | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const [selectedMessage, setSelectedMessage] = useState<any>(messages[0]);
+  const getAuthHeaders = useCallback(async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const headers: Record<string, string> = {};
+    if (session?.access_token) headers["Authorization"] = `Bearer ${session.access_token}`;
+    return headers;
+  }, [supabase]);
 
-  const toggleRead = (id: string) => {
-    setMessages((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, isRead: !m.isRead } : m))
-    );
-  };
+  const loadMessages = useCallback(async () => {
+    try {
+      setLoading(true);
+      const headers = await getAuthHeaders();
+      const res = await fetch("/api/admin/messages", { cache: "no-store", headers });
+      const data = await res.json();
+      if (res.ok && Array.isArray(data.messages)) {
+        setMessages(data.messages);
+        setSelectedMessage((prev) =>
+          prev ? data.messages.find((m: ContactMessageRow) => m.id === prev.id) || data.messages[0] || null : data.messages[0] || null
+        );
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [getAuthHeaders]);
 
-  const deleteMessage = (id: string) => {
-    setMessages((prev) => prev.filter((m) => m.id !== id));
-    if (selectedMessage?.id === id) {
-      setSelectedMessage(null);
+  useEffect(() => {
+    loadMessages();
+  }, [loadMessages]);
+
+  const setReadState = async (msg: ContactMessageRow, nextRead: boolean) => {
+    const headers = await getAuthHeaders();
+    await fetch("/api/admin/messages", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", ...headers },
+      body: JSON.stringify({ id: msg.id, is_read: nextRead }),
+    });
+    setMessages((prev) => prev.map((m) => (m.id === msg.id ? { ...m, is_read: nextRead } : m)));
+    if (selectedMessage?.id === msg.id) {
+      setSelectedMessage({ ...msg, is_read: nextRead });
     }
   };
+
+  const deleteMessage = async (id: string) => {
+    const headers = await getAuthHeaders();
+    await fetch(`/api/admin/messages?id=${encodeURIComponent(id)}`, {
+      method: "DELETE",
+      headers,
+    });
+    setMessages((prev) => prev.filter((m) => m.id !== id));
+    if (selectedMessage?.id === id) setSelectedMessage(null);
+  };
+
+  const fmtDate = (iso: string) =>
+    new Intl.DateTimeFormat(numLocale, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(iso));
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border/50">
         <div>
-          <h1 className="text-2xl font-extrabold text-foreground">
-            {t("messages")}
-          </h1>
+          <h1 className="text-2xl font-extrabold text-foreground">{t("messages")}</h1>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {locale === "ar"
+            {isRtl
               ? "صندوق البريد الوارد ورسائل استفسارات المشاريع المكانية من نموذج التواصل"
-              : "Inquiries inbox submitted through the public contact form"}
+              : "Live inquiries inbox submitted through the public contact form"}
           </p>
         </div>
+        <button
+          onClick={loadMessages}
+          disabled={loading}
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-border bg-card text-xs font-bold self-start sm:self-auto"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+          <span>{isRtl ? "تحديث" : "Refresh"}</span>
+        </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Messages List (Col 5) */}
-        <div className="lg:col-span-5 space-y-3">
-          <div className="rounded-2xl glass-panel border border-border/70 overflow-hidden divide-y divide-border/40">
+      {loading ? (
+        <div className="h-48 rounded-2xl bg-muted/60 animate-pulse" />
+      ) : messages.length === 0 ? (
+        <div className="rounded-2xl glass-panel p-12 border border-dashed border-border/70 text-center space-y-2 text-muted-foreground">
+          <MessageSquare className="w-8 h-8 mx-auto opacity-50" />
+          <p className="text-sm font-bold text-foreground">
+            {isRtl ? "صندوق الرسائل فارغ حالياً" : "No contact messages yet"}
+          </p>
+          <p className="text-xs">
+            {isRtl
+              ? "ستظهر هنا أي رسائل يرسلها الزوار أو العملاء عبر صفحة تواصل معنا."
+              : "Messages submitted through the Contact page will appear here."}
+          </p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div className="lg:col-span-5 rounded-2xl glass-panel border border-border/70 overflow-hidden divide-y divide-border/40">
             {messages.map((msg) => (
               <div
                 key={msg.id}
                 onClick={() => {
                   setSelectedMessage(msg);
-                  if (!msg.isRead) toggleRead(msg.id);
+                  if (!msg.is_read) setReadState(msg, true);
                 }}
                 className={`p-4 cursor-pointer transition-colors ${
-                  selectedMessage?.id === msg.id
-                    ? "bg-brand-blue/10 dark:bg-brand-cyan/10"
-                    : "hover:bg-muted/40"
+                  selectedMessage?.id === msg.id ? "bg-brand-cyan/10" : "hover:bg-muted/30"
                 }`}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <div className="flex items-center gap-2">
-                    {!msg.isRead && (
-                      <span className="w-2 h-2 rounded-full bg-brand-blue shrink-0" />
-                    )}
-                    <span
-                      className={`text-xs font-bold text-foreground line-clamp-1 ${
-                        !msg.isRead ? "font-extrabold" : ""
-                      }`}
-                    >
-                      {msg.name}
-                    </span>
-                  </div>
-                  <span className="text-[10px] text-muted-foreground font-mono">
-                    {msg.date.split("-")[0]}
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <span className="font-bold text-xs text-foreground flex items-center gap-1.5">
+                    {!msg.is_read && <span className="w-2 h-2 rounded-full bg-brand-cyan" />}
+                    <span>{msg.name}</span>
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">
+                    {fmtDate(msg.created_at)}
                   </span>
                 </div>
-
-                <div className="text-xs font-semibold text-foreground/90 line-clamp-1">
-                  {msg.subject}
-                </div>
-
-                <div className="text-[11px] text-muted-foreground line-clamp-1 mt-1">
-                  {msg.message}
-                </div>
+                <p className="text-xs font-semibold text-foreground/90 truncate">
+                  {msg.subject || msg.message}
+                </p>
+                <p className="text-[11px] text-muted-foreground truncate mt-0.5">{msg.email}</p>
               </div>
             ))}
           </div>
-        </div>
 
-        {/* Message Detail Viewer (Col 7) */}
-        <div className="lg:col-span-7">
-          {selectedMessage ? (
-            <div className="rounded-3xl glass-panel p-6 sm:p-8 border border-border/70 shadow-lg space-y-6 bg-card">
-              <div className="flex items-start justify-between gap-4 pb-4 border-b border-border/50">
-                <div className="space-y-1">
-                  <h3 className="font-bold text-lg text-foreground">
-                    {selectedMessage.subject}
-                  </h3>
-                  <div className="text-xs text-muted-foreground flex items-center gap-3">
-                    <span>
-                      {locale === "ar" ? "من:" : "From:"} {selectedMessage.name}
-                    </span>
-                    <span>•</span>
-                    <span className="font-mono">{selectedMessage.email}</span>
+          <div className="lg:col-span-7">
+            {selectedMessage ? (
+              <div className="rounded-2xl glass-panel p-6 border border-border/70 space-y-4">
+                <div className="flex items-start justify-between gap-4 border-b border-border/50 pb-4">
+                  <div>
+                    <h2 className="text-base font-extrabold text-foreground">
+                      {selectedMessage.subject || (isRtl ? "رسالة تواصل" : "Contact Inquiry")}
+                    </h2>
+                    <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1">
+                        <Mail className="w-3.5 h-3.5" />
+                        <span>{selectedMessage.email}</span>
+                      </span>
+                      {selectedMessage.phone && (
+                        <span className="flex items-center gap-1">
+                          <Phone className="w-3.5 h-3.5" />
+                          <span>{selectedMessage.phone}</span>
+                        </span>
+                      )}
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>{fmtDate(selectedMessage.created_at)}</span>
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground font-mono">
-                    {selectedMessage.phone}
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setReadState(selectedMessage, !selectedMessage.is_read)}
+                      className="p-2 rounded-xl border border-border hover:bg-muted text-emerald-500"
+                      title={isRtl ? "تغيير حالة القراءة" : "Toggle read"}
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => deleteMessage(selectedMessage.id)}
+                      className="p-2 rounded-xl border border-border hover:bg-red-500/10 text-red-500"
+                      title={isRtl ? "حذف" : "Delete"}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
-
-                <button
-                  onClick={() => deleteMessage(selectedMessage.id)}
-                  className="p-2 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
-                  title="Delete message"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
+                  {selectedMessage.message}
+                </p>
               </div>
-
-              {/* Message Body */}
-              <div className="text-xs sm:text-sm text-foreground/90 leading-relaxed whitespace-pre-line p-4 rounded-2xl bg-muted/30 border border-border/40">
-                {selectedMessage.message}
+            ) : (
+              <div className="rounded-2xl glass-panel p-10 text-center text-xs text-muted-foreground">
+                {isRtl ? "اختر رسالة لعرض تفاصيلها" : "Select a message to view details"}
               </div>
-
-              <div className="flex items-center gap-3 pt-2">
-                <a
-                  href={`mailto:${selectedMessage.email}?subject=رد: ${encodeURIComponent(
-                    selectedMessage.subject
-                  )}`}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-brand-blue hover:bg-brand-blue/90 shadow-sm"
-                >
-                  الرد عبر البريد الإلكتروني
-                </a>
-
-                {selectedMessage.phone && (
-                  <a
-                    href={`https://wa.me/${selectedMessage.phone.replace(/[^0-9]/g, "")}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-sm"
-                  >
-                    محادثة عبر واتساب
-                  </a>
-                )}
-              </div>
-            </div>
-          ) : (
-            <div className="rounded-3xl glass-panel p-12 text-center text-muted-foreground border border-border/70">
-              اختر رسالة من القائمة لعرض تفاصيلها
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

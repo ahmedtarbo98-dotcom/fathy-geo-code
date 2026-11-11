@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/routing";
 import HeroBackground from "./hero-background";
+import type { PublicPlatformStats } from "@/lib/public-stats";
 import {
   Compass,
   ArrowRight,
@@ -16,11 +17,20 @@ import {
   PlayCircle,
 } from "lucide-react";
 
-export default function HeroSection({ currentLocale }: { currentLocale: string }) {
+export default function HeroSection({
+  currentLocale,
+  stats,
+}: {
+  currentLocale: string;
+  stats: PublicPlatformStats;
+}) {
   const t = useTranslations("Hero");
   const tBrand = useTranslations("Brand");
   const isRtl = currentLocale === "ar";
   const Arrow = isRtl ? ArrowLeft : ArrowRight;
+  const numLocale = isRtl ? "ar-EG" : "en-US";
+  const formattedStudents = new Intl.NumberFormat(numLocale).format(stats.studentsCount);
+  const formattedCourses = new Intl.NumberFormat(numLocale).format(stats.publishedCoursesCount);
 
   return (
     <section className="relative min-h-[92vh] flex items-center justify-center overflow-hidden pt-8 pb-20">
@@ -148,11 +158,13 @@ export default function HeroSection({ currentLocale }: { currentLocale: string }
                 <Arrow className="w-4 h-4 text-muted-foreground group-hover:text-red-500 transition-colors" />
               </a>
 
-              {/* Learner Count Pill */}
+              {/* Live Learner & Courses Pill */}
               <div className="mt-4 pt-4 border-t border-border/40 flex items-center justify-between text-xs">
-                <span className="text-muted-foreground">{t("activeLearners")}</span>
+                <span className="text-muted-foreground">
+                  {t("activeLearners", { count: formattedStudents })}
+                </span>
                 <span className="font-bold text-brand-blue dark:text-brand-cyan">
-                  4.9 / 5.0 ⭐
+                  {t("publishedCoursesPill", { count: formattedCourses })}
                 </span>
               </div>
             </div>

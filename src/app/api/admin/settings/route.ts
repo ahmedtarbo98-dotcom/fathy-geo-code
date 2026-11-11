@@ -93,6 +93,9 @@ export async function POST(request: Request) {
 
     try {
       revalidateTag("site-branding");
+      revalidateTag("public-stats");
+      revalidatePath("/ar");
+      revalidatePath("/en");
       revalidatePath("/ar", "layout");
       revalidatePath("/en", "layout");
     } catch (revalErr) {

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -27,12 +28,22 @@ export async function POST(request: Request) {
     }
 
     if (targetUserId) {
+      const { data: existingRoleRow } = await adminClient
+        .from("profiles")
+        .select("role")
+        .eq("id", targetUserId)
+        .maybeSingle();
+      const role =
+        existingRoleRow?.role === "admin" || cleanEmail === "ahmedtarbo98@gmail.com"
+          ? "admin"
+          : "student";
+
       await adminClient.from("profiles").upsert(
         {
           id: targetUserId,
           full_name: cleanName,
           email: cleanEmail,
-          role: "student",
+          role,
           language: "ar",
         },
         { onConflict: "id" }
@@ -54,6 +65,14 @@ export async function POST(request: Request) {
           language: "ar",
         });
       }
+    }
+
+    try {
+      revalidateTag("public-stats");
+      revalidatePath("/ar");
+      revalidatePath("/en");
+    } catch {
+      // Ignore cache revalidation error
     }
 
     return NextResponse.json({ success: true });

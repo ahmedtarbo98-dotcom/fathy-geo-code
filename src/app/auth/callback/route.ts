@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -78,6 +79,13 @@ export async function GET(request: Request) {
               .from("enrollment_requests")
               .update({ user_id: user.id })
               .in("user_id", oldIds);
+          }
+          try {
+            revalidateTag("public-stats");
+            revalidatePath("/ar");
+            revalidatePath("/en");
+          } catch {
+            // Ignore cache revalidation error
           }
         }
       } catch (syncErr) {

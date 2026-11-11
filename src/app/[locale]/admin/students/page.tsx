@@ -1,335 +1,304 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useTranslations } from "next-intl";
+import { useEffect, useState, useCallback } from "react";
+import { useLocale } from "next-intl";
 import { createClient } from "@/lib/supabase/client";
 import {
   Users,
   Search,
   Download,
-  Ban,
-  CheckCircle2,
-  BookOpen,
-  RotateCcw,
+  UserCheck,
+  UserX,
   Plus,
-  Mail,
-  Phone,
-  RefreshCw,
+  CheckCircle2,
   X,
-  AlertCircle,
-  GraduationCap,
+  BookOpen,
+  ShieldAlert,
   Trash2,
+  RotateCcw,
+  Eye,
+  ChevronLeft,
+  ChevronRight,
+  AlertCircle,
+  RefreshCw,
 } from "lucide-react";
 
-interface StudentEnrollment {
-  id: string;
+interface CourseProgressDetail {
+  enrollment_id: string;
   course_id: string;
+  title_ar: string;
+  title_en: string;
   status: string;
   enrolled_at: string;
-  course_title?: string;
+  expires_at: string | null;
+  total_lessons: number;
+  completed_lessons: number;
+  progress_pct: number;
 }
 
-interface StudentRecord {
+interface StudentRow {
   id: string;
-  full_name: string;
+  full_name: string | null;
   email: string;
   phone: string | null;
+  avatar_url: string | null;
   role: string;
   is_blocked: boolean;
   created_at: string;
-  enrollments: StudentEnrollment[];
-  progressPercent: number;
+  last_sign_in_at: string | null;
+  enrolled_courses_count: number;
+  total_enrollments_count: number;
+  overall_progress: number;
+  course_progress: CourseProgressDetail[];
 }
 
-interface CourseItem {
+interface CourseSummary {
   id: string;
   title_ar: string;
   title_en: string;
+  status: string;
 }
 
-export default function AdminStudentsPage({
-  params: { locale },
-}: {
-  params: { locale: string };
-}) {
-  const t = useTranslations("Admin");
+type FilterMode = "all" | "blocked" | "enrolled";
+
+export default function AdminStudentsPage() {
+  const locale = useLocale();
   const isRtl = locale === "ar";
+  const numLocale = isRtl ? "ar-EG" : "en-US";
   const supabase = createClient();
 
-  const [students, setStudents] = useState<StudentRecord[]>([]);
-  const [courses, setCourses] = useState<CourseItem[]>([]);
+  const [students, setStudents] = useState<StudentRow[]>([]);
+  const [courses, setCourses] = useState<CourseSummary[]>([]);
+  const [counts, setCounts] = useState({ all: 0, blocked: 0, enrolled: 0 });
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
-  // Details & Manual Enroll Modal
-  const [selectedStudent, setSelectedStudent] = useState<StudentRecord | null>(null);
-  const [enrollCourseId, setEnrollCourseId] = useState("");
-  const [actionLoading, setActionLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [filter, setFilter] = useState<FilterMode>("all");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
 
-  // Load students & all courses
-  const loadData = async () => {
-    try {
-      setLoading(true);
+  const [selectedStudent, setSelectedStudent] = useState<StudentRow | null>(null);
+  const [selectedCourseId, setSelectedCourseId] = useState("");
+  const [actionBusy, setActionBusy] = useState(false);
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+  const fmtNum = (n: number) =>
+    new Intl.NumberFormat(numLocale).format(Number.isFinite(n) ? n : 0);
 
-      const headers: Record<string, string> = {};
-      if (session?.access_token) {
-        headers["Authorization"] = `Bearer ${session.access_token}`;
-      }
-
-      const res = await fetch("/api/admin/students", { headers });
-      if (res.ok) {
-        const data = await res.json();
-        if (data?.students) {
-          const mapped: StudentRecord[] = data.students.map((s: any) => ({
-            ...s,
-            enrollments: (s.enrollments || []).map((e: any) => ({
-              ...e,
-              course_title: isRtl ? e.course_title : (e.course_title_en || e.course_title),
-            })),
-          }));
-          setStudents(mapped);
-          setCourses(data.courses || []);
-          return;
-        }
-      }
-
-      // Fallback direct query
-      // 1. Fetch all courses
-      const { data: coursesData } = await supabase
-        .from("courses")
-        .select("id, title_ar, title_en");
-
-      setCourses(coursesData || []);
-
-      // 2. Fetch profiles
-      const { data: profilesData, error: profErr } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (profErr) throw profErr;
-
-      // 3. Fetch all enrollments
-      const { data: enrollmentsData } = await supabase
-        .from("enrollments")
-        .select("id, user_id, course_id, status, enrolled_at");
-
-      // 4. Fetch all lesson progress
-      const { data: progressData } = await supabase
-        .from("lesson_progress")
-        .select("user_id, completed");
-
-      // Map profiles with their enrollments and progress
-      const mapped: StudentRecord[] = (profilesData || []).map((prof) => {
-        const userEnrollments = (enrollmentsData || [])
-          .filter((e) => e.user_id === prof.id)
-          .map((e) => {
-            const matched = (coursesData || []).find((c) => c.id === e.course_id);
-            return {
-              id: e.id,
-              course_id: e.course_id,
-              status: e.status,
-              enrolled_at: e.enrolled_at,
-              course_title: matched
-                ? isRtl ? matched.title_ar : matched.title_en
-                : "GIS Course",
-            };
-          });
-
-        const userCompleted = (progressData || []).filter(
-          (p) => p.user_id === prof.id && p.completed
-        ).length;
-
-        const progressPercent = userEnrollments.length > 0
-          ? Math.min(100, Math.round((userCompleted / (userEnrollments.length * 10)) * 100))
-          : 0;
-
-        return {
-          id: prof.id,
-          full_name: prof.full_name || "Student",
-          email: prof.email || "No email",
-          phone: prof.phone,
-          role: prof.role,
-          is_blocked: prof.is_blocked || false,
-          created_at: prof.created_at,
-          enrollments: userEnrollments,
-          progressPercent,
-        };
-      });
-
-      setStudents(mapped);
-    } catch (err: any) {
-      console.error("Failed to load students:", err);
-    } finally {
-      setLoading(false);
-    }
+  const fmtDate = (iso: string | null) => {
+    if (!iso) return isRtl ? "لم يسجل دخول" : "Never";
+    return new Intl.DateTimeFormat(numLocale, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    }).format(new Date(iso));
   };
 
   useEffect(() => {
-    loadData();
-  }, [isRtl]);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery.trim());
+      setPage(1);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-  // Search filter
-  const filtered = students.filter(
-    (s) =>
-      s.full_name.toLowerCase().includes(search.toLowerCase()) ||
-      s.email.toLowerCase().includes(search.toLowerCase())
-  );
-
-  // Toggle Block/Unblock
-  const toggleBlock = async (studentId: string, currentStatus: boolean) => {
-    try {
-      const nextStatus = !currentStatus;
-      const { error } = await supabase
-        .from("profiles")
-        .update({ is_blocked: nextStatus })
-        .eq("id", studentId);
-
-      if (error) throw error;
-
-      setStudents((prev) =>
-        prev.map((s) => (s.id === studentId ? { ...s, is_blocked: nextStatus } : s))
-      );
-
-      if (selectedStudent && selectedStudent.id === studentId) {
-        setSelectedStudent({ ...selectedStudent, is_blocked: nextStatus });
-      }
-    } catch (err: any) {
-      alert(`Error updating status: ${err.message}`);
+  const getAuthHeaders = useCallback(async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const headers: Record<string, string> = {};
+    if (session?.access_token) {
+      headers["Authorization"] = `Bearer ${session.access_token}`;
     }
-  };
+    return headers;
+  }, [supabase]);
 
-  // Manual Enroll Student in Course
-  const handleManualEnroll = async () => {
-    if (!selectedStudent || !enrollCourseId) return;
-
+  const fetchStudents = useCallback(async () => {
     try {
-      setActionLoading(true);
+      setLoading(true);
+      setError(null);
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      const headers = await getAuthHeaders();
+      const params = new URLSearchParams({
+        page: String(page),
+        limit: "15",
+        filter,
+        search: debouncedSearch,
+      });
 
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-      if (session?.access_token) {
-        headers["Authorization"] = `Bearer ${session.access_token}`;
+      const res = await fetch(`/api/admin/students?${params.toString()}`, {
+        cache: "no-store",
+        headers,
+      });
+      const data = await res.json();
+
+      if (!res.ok || data.error) {
+        throw new Error(data.error || `HTTP ${res.status}`);
       }
 
-      const res = await fetch("/api/admin/enroll", {
-        method: "POST",
-        headers,
+      setStudents(data.students || []);
+      setCourses(data.courses || []);
+      setCounts(data.counts || { all: 0, blocked: 0, enrolled: 0 });
+      setTotal(data.total || 0);
+      setTotalPages(data.totalPages || 1);
+
+      if (data.courses?.length > 0 && !selectedCourseId) {
+        setSelectedCourseId(data.courses[0].id);
+      }
+
+      // Sync open details modal if student is in updated results
+      setSelectedStudent((prev) => {
+        if (!prev) return null;
+        return (data.students || []).find((s: StudentRow) => s.id === prev.id) || null;
+      });
+    } catch (err: any) {
+      setError(err?.message || (isRtl ? "تعذر تحميل قائمة الطلاب" : "Failed to load students"));
+    } finally {
+      setLoading(false);
+    }
+  }, [getAuthHeaders, page, filter, debouncedSearch, isRtl, selectedCourseId]);
+
+  useEffect(() => {
+    fetchStudents();
+  }, [fetchStudents]);
+
+  const toggleBlockStatus = async (student: StudentRow) => {
+    try {
+      setActionBusy(true);
+      const headers = await getAuthHeaders();
+      const res = await fetch("/api/admin/students", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...headers },
         body: JSON.stringify({
-          userId: selectedStudent.id,
-          studentEmail: selectedStudent.email,
-          courseId: enrollCourseId,
-          action: "enroll",
+          action: "toggle_block",
+          studentId: student.id,
+          isBlocked: !student.is_blocked,
         }),
       });
-
-      const data = await res.json();
-      if (!res.ok || data.error) {
-        throw new Error(data.error || "Enrollment failed");
-      }
-
-      await loadData();
-
-      // Update current selectedStudent modal
-      const matched = courses.find((c) => c.id === enrollCourseId);
-      const newEnrollment: StudentEnrollment = {
-        id: data.enrollment?.id || `enr_${Date.now()}`,
-        course_id: enrollCourseId,
-        status: "active",
-        enrolled_at: new Date().toISOString(),
-        course_title: matched ? (isRtl ? matched.title_ar : matched.title_en) : "Course",
-      };
-
-      setSelectedStudent({
-        ...selectedStudent,
-        enrollments: [newEnrollment, ...selectedStudent.enrollments],
-      });
-      setEnrollCourseId("");
+      const json = await res.json();
+      if (!res.ok || json.error) throw new Error(json.error || "Failed");
+      await fetchStudents();
     } catch (err: any) {
-      alert(isRtl ? `فشل التسجيل: ${err.message}` : `Enrollment failed: ${err.message}`);
+      alert(err.message);
     } finally {
-      setActionLoading(false);
+      setActionBusy(false);
     }
   };
 
-  // Manual Unenroll Student
-  const handleManualUnenroll = async (enrollmentId: string, courseId?: string) => {
-    if (!confirm(isRtl ? "إلغاء اشتراك هذا الطالب من الدورة؟" : "Revoke student enrollment?")) return;
+  const handleManualEnrollAction = async (
+    studentId: string,
+    courseId: string,
+    action: "enroll" | "unenroll"
+  ) => {
+    try {
+      setActionBusy(true);
+      const headers = await getAuthHeaders();
+      const res = await fetch("/api/admin/enroll", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({
+          userId: studentId,
+          courseId,
+          action,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok || json.error) throw new Error(json.error || "Failed");
+      await fetchStudents();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  const handleResetProgress = async (studentId: string, courseId?: string) => {
+    const confirmed = window.confirm(
+      courseId
+        ? isRtl
+          ? "هل تريد تصفير تقدم الطالب في هذه الدورة؟"
+          : "Reset progress for this course?"
+        : isRtl
+        ? "هل تريد تصفير جميع سجلات التقدم لهذا الطالب؟"
+        : "Reset ALL course progress for this student?"
+    );
+    if (!confirmed) return;
 
     try {
-      setActionLoading(true);
-
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      const headers: Record<string, string> = {
-        "Content-Type": "application/json",
-      };
-      if (session?.access_token) {
-        headers["Authorization"] = `Bearer ${session.access_token}`;
-      }
-
-      if (selectedStudent && courseId) {
-        await fetch("/api/admin/enroll", {
-          method: "POST",
-          headers,
-          body: JSON.stringify({
-            userId: selectedStudent.id,
-            courseId: courseId,
-            action: "unenroll",
-          }),
-        });
-      } else {
-        const { error } = await supabase.from("enrollments").delete().eq("id", enrollmentId);
-        if (error) throw error;
-      }
-
-      await loadData();
-      if (selectedStudent) {
-        setSelectedStudent({
-          ...selectedStudent,
-          enrollments: selectedStudent.enrollments.filter((e) => e.id !== enrollmentId),
-        });
-      }
+      setActionBusy(true);
+      const headers = await getAuthHeaders();
+      const res = await fetch("/api/admin/students", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json", ...headers },
+        body: JSON.stringify({
+          action: "reset_progress",
+          studentId,
+          courseId,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok || json.error) throw new Error(json.error || "Failed");
+      await fetchStudents();
     } catch (err: any) {
-      alert(`Error revoking: ${err.message}`);
+      alert(err.message);
     } finally {
-      setActionLoading(false);
+      setActionBusy(false);
     }
   };
 
-  // Export CSV
-  const exportCSV = () => {
-    const csvContent =
-      "data:text/csv;charset=utf-8,\uFEFF" +
-      ["ID,Name,Email,Phone,Role,EnrolledCourses,Progress,Status,JoinedDate"]
-        .concat(
-          students.map(
-            (s) =>
-              `"${s.id}","${s.full_name}","${s.email}","${s.phone || ""}","${s.role}",${
-                s.enrollments.length
-              },"${s.progressPercent}%","${s.is_blocked ? "Blocked" : "Active"}","${s.created_at}"`
-          )
-        )
-        .join("\n");
+  const handleDeleteStudent = async (student: StudentRow) => {
+    const confirmed = window.confirm(
+      isRtl
+        ? `هل أنت متأكد من حذف حساب "${student.full_name || student.email}" نهائياً؟ لا يمكن التراجع.`
+        : `Permanently delete student "${student.full_name || student.email}"? This cannot be undone.`
+    );
+    if (!confirmed) return;
 
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `fathy-geo-code-students-${Date.now()}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    try {
+      setActionBusy(true);
+      const headers = await getAuthHeaders();
+      const res = await fetch(
+        `/api/admin/students?studentId=${encodeURIComponent(student.id)}`,
+        {
+          method: "DELETE",
+          headers,
+        }
+      );
+      const json = await res.json();
+      if (!res.ok || json.error) throw new Error(json.error || "Failed");
+      setSelectedStudent(null);
+      await fetchStudents();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setActionBusy(false);
+    }
+  };
+
+  const handleExportCSV = async () => {
+    try {
+      const headers = await getAuthHeaders();
+      const params = new URLSearchParams({
+        export: "csv",
+        filter,
+        search: debouncedSearch,
+      });
+      const res = await fetch(`/api/admin/students?${params.toString()}`, {
+        headers,
+      });
+      if (!res.ok) throw new Error("Export failed");
+      const blob = await res.blob();
+      const downloadUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = downloadUrl;
+      a.download = `fathy-geo-code-students-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(downloadUrl);
+    } catch (err: any) {
+      alert(err.message);
+    }
   };
 
   return (
@@ -339,278 +308,427 @@ export default function AdminStudentsPage({
         <div>
           <h1 className="text-2xl font-extrabold text-foreground flex items-center gap-2">
             <Users className="w-6 h-6 text-brand-blue dark:text-brand-cyan" />
-            <span>{t("students")}</span>
+            <span>{isRtl ? "إدارة الطلاب المسجلين" : "Registered Students"}</span>
           </h1>
           <p className="text-xs text-muted-foreground mt-0.5">
             {isRtl
-              ? "قائمة الطلاب الحية من قاعدة البيانات، إدارة الاشتراكات، الحظر، وتصدير التقارير"
-              : "Live student roster from database, manual enrollment, access management, and CSV export"}
+              ? "بيانات حية من المصادقة والملفات الشخصية، متاحة للإدارة فقط"
+              : "Live roster joined with auth emails and real progress; admin-only access"}
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={loadData}
-            disabled={loading}
-            className="p-2 rounded-xl border border-border bg-card hover:bg-muted text-muted-foreground hover:text-foreground"
-            title={isRtl ? "تحديث حي" : "Refresh"}
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          </button>
-
-          <button
-            onClick={exportCSV}
-            disabled={students.length === 0}
-            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl border border-border bg-card hover:bg-muted text-foreground text-xs font-bold transition-colors"
-          >
-            <Download className="w-4 h-4 text-brand-cyan" />
-            <span>{isRtl ? "تصدير كملف CSV" : "Export CSV"}</span>
-          </button>
-        </div>
+        <button
+          onClick={handleExportCSV}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-card border border-border text-xs font-bold hover:border-brand-cyan/40 transition-colors self-start sm:self-auto"
+        >
+          <Download className="w-4 h-4 text-brand-cyan" />
+          <span>{isRtl ? "تصدير CSV" : "Export CSV"}</span>
+        </button>
       </div>
 
-      {/* Search Bar */}
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 absolute start-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+      {/* Filter Tabs + Search */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          {(
+            [
+              { id: "all", labelAr: "الكل", labelEn: "All", count: counts.all },
+              { id: "enrolled", labelAr: "مشتركون بدورات", labelEn: "Enrolled", count: counts.enrolled },
+              { id: "blocked", labelAr: "محظورون", labelEn: "Blocked", count: counts.blocked },
+            ] as const
+          ).map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => {
+                setFilter(tab.id);
+                setPage(1);
+              }}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all border ${
+                filter === tab.id
+                  ? "bg-brand-cyan/15 text-brand-cyan border-brand-cyan/40"
+                  : "bg-card text-muted-foreground border-border/70 hover:text-foreground"
+              }`}
+            >
+              {isRtl ? tab.labelAr : tab.labelEn} ({fmtNum(tab.count)})
+            </button>
+          ))}
+        </div>
+
+        <div className="relative w-full md:w-80">
+          <Search className="w-4 h-4 absolute left-3 rtl:right-3 rtl:left-auto top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder={isRtl ? "البحث بالاسم أو البريد الإلكتروني..." : "Search by name or email..."}
-            className="w-full ps-9 pe-4 py-2 rounded-xl border border-border bg-card text-xs font-medium focus:outline-none focus:border-brand-blue"
+            placeholder={isRtl ? "ابحث بالاسم، البريد، الهاتف..." : "Search name, email, phone..."}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-4 rtl:pr-9 rtl:pl-4 py-2 rounded-xl border border-border bg-background text-xs"
           />
         </div>
-
-        <span className="text-xs text-muted-foreground font-semibold">
-          {filtered.length} {isRtl ? "طالب مسجل" : "students"}
-        </span>
       </div>
 
-      {/* Students Table */}
-      <div className="rounded-3xl glass-panel border border-border/80 shadow-sm overflow-hidden">
-        {loading ? (
-          <div className="p-12 text-center text-muted-foreground space-y-3">
-            <RefreshCw className="w-8 h-8 mx-auto animate-spin text-brand-cyan" />
-            <p className="text-xs font-semibold">
-              {isRtl ? "جارٍ تحميل سجلات الطلاب..." : "Loading student records..."}
-            </p>
+      {/* Error State */}
+      {error && (
+        <div className="p-5 rounded-2xl border border-red-500/30 bg-red-500/10 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 text-xs font-bold text-red-500">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{error}</span>
           </div>
-        ) : filtered.length === 0 ? (
-          <div className="p-12 text-center text-xs text-muted-foreground space-y-2">
-            <Users className="w-10 h-10 mx-auto text-muted-foreground/40" />
-            <p className="font-bold text-foreground">
-              {isRtl ? "لم يتم العثور على طلاب مطابقين" : "No students found"}
-            </p>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-start border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-border/70 bg-muted/40 text-muted-foreground font-bold">
-                  <th className="p-4 text-start">{isRtl ? "اسم الطالب" : "Student"}</th>
-                  <th className="p-4 text-start">{isRtl ? "البريد الإلكتروني" : "Email"}</th>
-                  <th className="p-4 text-start">{isRtl ? "الدورات المشترك بها" : "Enrolled"}</th>
-                  <th className="p-4 text-start">{isRtl ? "التقدم" : "Progress"}</th>
-                  <th className="p-4 text-start">{isRtl ? "تاريخ الانضمام" : "Joined"}</th>
-                  <th className="p-4 text-start">{isRtl ? "الحالة" : "Status"}</th>
-                  <th className="p-4 text-end">{isRtl ? "الإجراءات" : "Actions"}</th>
+          <button
+            onClick={fetchStudents}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500 text-white text-xs font-bold"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>{isRtl ? "إعادة المحاولة" : "Retry"}</span>
+          </button>
+        </div>
+      )}
+
+      {/* Table */}
+      <div className="rounded-2xl glass-panel border border-border/70 overflow-hidden shadow-lg">
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs text-left rtl:text-right border-collapse">
+            <thead>
+              <tr className="bg-muted/50 border-b border-border/60 text-muted-foreground font-bold uppercase text-[11px]">
+                <th className="py-3.5 px-4">{isRtl ? "الطالب" : "Student"}</th>
+                <th className="py-3.5 px-4">{isRtl ? "تاريخ التسجيل" : "Signup Date"}</th>
+                <th className="py-3.5 px-4">{isRtl ? "آخر دخول" : "Last Sign-In"}</th>
+                <th className="py-3.5 px-4">{isRtl ? "الدورات" : "Enrolled"}</th>
+                <th className="py-3.5 px-4">{isRtl ? "التقدم الفعلي" : "Overall Progress"}</th>
+                <th className="py-3.5 px-4">{isRtl ? "الحالة" : "Status"}</th>
+                <th className="py-3.5 px-4 text-right rtl:text-left">
+                  {isRtl ? "إجراءات" : "Actions"}
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-border/40">
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <tr key={i} className="animate-pulse">
+                    <td className="py-4 px-4" colSpan={7}>
+                      <div className="h-6 bg-muted/60 rounded-lg w-full" />
+                    </td>
+                  </tr>
+                ))
+              ) : students.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-14 text-center text-muted-foreground">
+                    {isRtl
+                      ? "لا يوجد طلاب مطابقون للبحث أو الفلتر الحالي."
+                      : "No students match the current filter."}
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-border/50">
-                {filtered.map((student) => (
-                  <tr
-                    key={student.id}
-                    className="hover:bg-muted/30 transition-colors"
-                  >
-                    {/* Student Name */}
-                    <td className="p-4 font-bold text-foreground">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-full bg-brand-blue/10 text-brand-blue dark:text-brand-cyan font-extrabold flex items-center justify-center text-[10px]">
-                          {student.full_name.slice(0, 2).toUpperCase()}
+              ) : (
+                students.map((student) => (
+                  <tr key={student.id} className="hover:bg-muted/20 transition-colors">
+                    <td className="py-3.5 px-4">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-brand-blue to-brand-cyan text-white flex items-center justify-center font-bold text-xs shrink-0">
+                          {(student.full_name || student.email || "U").charAt(0).toUpperCase()}
                         </div>
-                        <div>
-                          <span>{student.full_name}</span>
-                          {student.role === "admin" && (
-                            <span className="ms-1.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-brand-cyan/20 text-brand-cyan">
-                              ADMIN
-                            </span>
-                          )}
+                        <div className="min-w-0">
+                          <div className="font-bold text-foreground truncate max-w-[180px]">
+                            {student.full_name || (isRtl ? "بدون اسم" : "Unnamed")}
+                          </div>
+                          <div className="text-[11px] text-muted-foreground font-mono truncate max-w-[200px]">
+                            {student.email}
+                          </div>
                         </div>
                       </div>
                     </td>
-
-                    {/* Email */}
-                    <td className="p-4 font-mono text-muted-foreground">
-                      {student.email}
+                    <td className="py-3.5 px-4 text-muted-foreground">
+                      {fmtDate(student.created_at)}
                     </td>
-
-                    {/* Enrolled Courses */}
-                    <td className="p-4">
-                      <span className="px-2 py-0.5 rounded-full font-bold bg-brand-blue/10 text-brand-blue dark:text-brand-cyan">
-                        {student.enrollments.length} {isRtl ? "دورات" : "courses"}
+                    <td className="py-3.5 px-4 text-muted-foreground">
+                      {fmtDate(student.last_sign_in_at)}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-brand-blue/10 text-brand-blue dark:text-brand-cyan">
+                        <BookOpen className="w-3 h-3" />
+                        <span>{fmtNum(student.enrolled_courses_count)}</span>
                       </span>
                     </td>
-
-                    {/* Progress */}
-                    <td className="p-4 font-mono font-bold text-foreground">
-                      {student.progressPercent}%
+                    <td className="py-3.5 px-4 w-36">
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-[10px] font-bold">
+                          <span>{fmtNum(student.overall_progress)}%</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-brand-cyan transition-all"
+                            style={{ width: `${student.overall_progress}%` }}
+                          />
+                        </div>
+                      </div>
                     </td>
-
-                    {/* Joined Date */}
-                    <td className="p-4 text-muted-foreground font-mono">
-                      {new Date(student.created_at).toLocaleDateString(
-                        isRtl ? "ar-EG" : "en-US",
-                        { day: "numeric", month: "short", year: "numeric" }
+                    <td className="py-3.5 px-4">
+                      {student.is_blocked ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/15 text-red-500">
+                          <ShieldAlert className="w-3 h-3" />
+                          <span>{isRtl ? "محظور" : "Blocked"}</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/15 text-emerald-500">
+                          <CheckCircle2 className="w-3 h-3" />
+                          <span>{isRtl ? "نشط" : "Active"}</span>
+                        </span>
                       )}
                     </td>
-
-                    {/* Status */}
-                    <td className="p-4">
-                      <span
-                        className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
-                          student.is_blocked
-                            ? "bg-red-500/15 text-red-500"
-                            : "bg-emerald-500/15 text-emerald-500"
-                        }`}
-                      >
-                        {student.is_blocked
-                          ? isRtl ? "محظور" : "Blocked"
-                          : isRtl ? "نشط" : "Active"}
-                      </span>
-                    </td>
-
-                    {/* Actions */}
-                    <td className="p-4 text-end">
-                      <div className="flex items-center justify-end gap-1.5">
+                    <td className="py-3.5 px-4">
+                      <div className="flex items-center justify-end rtl:justify-start gap-1.5">
                         <button
                           onClick={() => setSelectedStudent(student)}
-                          className="px-2.5 py-1 rounded-lg bg-brand-blue/10 text-brand-blue dark:text-brand-cyan hover:bg-brand-blue/20 font-bold transition-colors"
+                          className="p-1.5 rounded-lg bg-brand-cyan/10 hover:bg-brand-cyan/20 text-brand-cyan transition-colors"
+                          title={isRtl ? "عرض التفاصيل والتقدم" : "View Details"}
                         >
-                          {isRtl ? "تفاصيل واشتراكات" : "Manage"}
+                          <Eye className="w-3.5 h-3.5" />
                         </button>
-
                         <button
-                          onClick={() => toggleBlock(student.id, student.is_blocked)}
+                          disabled={actionBusy}
+                          onClick={() => toggleBlockStatus(student)}
                           className={`p-1.5 rounded-lg transition-colors ${
                             student.is_blocked
-                              ? "text-emerald-500 hover:bg-emerald-500/10"
-                              : "text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                              ? "bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-500"
+                              : "bg-amber-500/10 hover:bg-amber-500/20 text-amber-500"
                           }`}
-                          title={student.is_blocked ? (isRtl ? "إلغاء الحظر" : "Unblock") : (isRtl ? "حظر الطالب" : "Block")}
+                          title={
+                            student.is_blocked
+                              ? isRtl
+                                ? "إلغاء الحظر"
+                                : "Unblock"
+                              : isRtl
+                              ? "حظر الحساب"
+                              : "Block Student"
+                          }
                         >
-                          <Ban className="w-4 h-4" />
+                          {student.is_blocked ? (
+                            <UserCheck className="w-3.5 h-3.5" />
+                          ) : (
+                            <UserX className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                        <button
+                          disabled={actionBusy}
+                          onClick={() => handleDeleteStudent(student)}
+                          className="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-500 transition-colors"
+                          title={isRtl ? "حذف الحساب نهائياً" : "Delete Student"}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Pagination */}
+        {total > 0 && (
+          <div className="px-4 py-3 border-t border-border/50 flex items-center justify-between text-xs text-muted-foreground">
+            <span>
+              {isRtl
+                ? `إجمالي: ${fmtNum(total)} طالب | صفحة ${fmtNum(page)} من ${fmtNum(totalPages)}`
+                : `Total: ${fmtNum(total)} students | Page ${fmtNum(page)} of ${fmtNum(totalPages)}`}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                disabled={page <= 1 || loading}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="p-1.5 rounded-lg border border-border disabled:opacity-40 hover:bg-muted"
+              >
+                {isRtl ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+              </button>
+              <button
+                disabled={page >= totalPages || loading}
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                className="p-1.5 rounded-lg border border-border disabled:opacity-40 hover:bg-muted"
+              >
+                {isRtl ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
         )}
       </div>
 
-      {/* DETAILS & MANUAL ENROLL MODAL */}
+      {/* Student Details & Per-Course Actions Modal */}
       {selectedStudent && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="my-8 w-full max-w-lg rounded-3xl bg-card border border-border shadow-2xl p-6 space-y-5 animate-in fade-in zoom-in-95">
-            {/* Header */}
-            <div className="flex items-center justify-between pb-3 border-b border-border">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="rounded-3xl bg-card border border-border/80 max-w-xl w-full p-6 space-y-5 shadow-2xl max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-border/50 pb-3">
               <div>
                 <h3 className="text-base font-extrabold text-foreground">
-                  {selectedStudent.full_name}
+                  {selectedStudent.full_name || (isRtl ? "طالب" : "Student")}
                 </h3>
-                <p className="text-xs font-mono text-muted-foreground">
+                <p className="text-xs text-muted-foreground font-mono">
                   {selectedStudent.email}
                 </p>
               </div>
               <button
                 onClick={() => setSelectedStudent(null)}
-                className="p-1 rounded-lg text-muted-foreground hover:text-foreground"
+                className="p-1.5 rounded-lg hover:bg-muted"
               >
-                <X className="w-5 h-5" />
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Manual Enroll In Course Section */}
-            <div className="p-4 rounded-2xl bg-brand-blue/5 border border-brand-blue/20 space-y-2">
-              <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
-                <Plus className="w-4 h-4 text-brand-cyan" />
-                <span>{isRtl ? "تسجيل يدوي في دورة (Manual Enrollment)" : "Manual Course Enrollment"}</span>
-              </label>
-
-              <div className="flex items-center gap-2">
-                <select
-                  value={enrollCourseId}
-                  onChange={(e) => setEnrollCourseId(e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-xl border border-border bg-background text-xs font-medium"
-                >
-                  <option value="">{isRtl ? "-- اختر الدورة --" : "-- Select Course --"}</option>
-                  {courses.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {isRtl ? c.title_ar : c.title_en}
-                    </option>
-                  ))}
-                </select>
-
-                <button
-                  type="button"
-                  onClick={handleManualEnroll}
-                  disabled={!enrollCourseId || actionLoading}
-                  className="px-4 py-2 rounded-xl bg-brand-blue hover:bg-brand-blue/90 text-white text-xs font-bold disabled:opacity-50"
-                >
-                  {actionLoading ? "..." : isRtl ? "تفعيل" : "Enroll"}
-                </button>
+            {/* Metadata grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+              <div className="p-3 rounded-xl bg-muted/40 border border-border/40">
+                <p className="text-muted-foreground text-[10px]">
+                  {isRtl ? "تاريخ التسجيل" : "Signup Date"}
+                </p>
+                <p className="font-bold mt-0.5">{fmtDate(selectedStudent.created_at)}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-muted/40 border border-border/40">
+                <p className="text-muted-foreground text-[10px]">
+                  {isRtl ? "آخر تسجيل دخول" : "Last Sign-In"}
+                </p>
+                <p className="font-bold mt-0.5">{fmtDate(selectedStudent.last_sign_in_at)}</p>
+              </div>
+              <div className="p-3 rounded-xl bg-muted/40 border border-border/40">
+                <p className="text-muted-foreground text-[10px]">
+                  {isRtl ? "التقدم العام" : "Overall Progress"}
+                </p>
+                <p className="font-bold mt-0.5 text-brand-cyan">
+                  {fmtNum(selectedStudent.overall_progress)}%
+                </p>
               </div>
             </div>
 
-            {/* List of currently enrolled courses */}
-            <div className="space-y-2">
-              <h4 className="text-xs font-bold text-foreground">
-                {isRtl ? "الدورات المشترك بها حالياً:" : "Enrolled Courses:"}
-              </h4>
+            {/* Per-course progress */}
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs font-extrabold text-foreground">
+                  {isRtl ? "الدورات المشترك بها والتقدم التفصيلي" : "Enrolled Courses & Progress"}
+                </h4>
+                {selectedStudent.course_progress.length > 0 && (
+                  <button
+                    disabled={actionBusy}
+                    onClick={() => handleResetProgress(selectedStudent.id)}
+                    className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-500 hover:underline"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    <span>{isRtl ? "تصفير كل التقدم" : "Reset All Progress"}</span>
+                  </button>
+                )}
+              </div>
 
-              {selectedStudent.enrollments.length === 0 ? (
-                <p className="text-xs text-muted-foreground italic">
-                  {isRtl ? "لم يشترك الطالب في أي دورة بعد." : "No enrolled courses."}
-                </p>
+              {selectedStudent.course_progress.length === 0 ? (
+                <div className="p-4 rounded-xl border border-dashed border-border/60 text-center text-xs text-muted-foreground">
+                  {isRtl
+                    ? "هذا الطالب غير مشترك في أي دورة بعد."
+                    : "Not enrolled in any courses yet."}
+                </div>
               ) : (
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {selectedStudent.enrollments.map((enr) => (
+                <div className="space-y-2">
+                  {selectedStudent.course_progress.map((cp) => (
                     <div
-                      key={enr.id}
-                      className="flex items-center justify-between p-3 rounded-xl bg-background border border-border/60 text-xs"
+                      key={cp.enrollment_id}
+                      className="p-3.5 rounded-xl bg-muted/30 border border-border/50 space-y-2"
                     >
-                      <div className="space-y-0.5">
-                        <p className="font-bold text-foreground">{enr.course_title}</p>
-                        <p className="text-[10px] text-muted-foreground font-mono">
-                          {isRtl ? "تاريخ الاشتراك:" : "Enrolled:"} {new Date(enr.enrolled_at).toLocaleDateString()}
-                        </p>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-xs font-bold text-foreground">
+                          {isRtl ? cp.title_ar || cp.title_en : cp.title_en || cp.title_ar}
+                        </span>
+                        <span className="text-[11px] font-mono font-bold text-brand-cyan">
+                          {fmtNum(cp.completed_lessons)} / {fmtNum(cp.total_lessons)} (
+                          {fmtNum(cp.progress_pct)}%)
+                        </span>
                       </div>
-
-                      <button
-                        type="button"
-                        onClick={() => handleManualUnenroll(enr.id, enr.course_id)}
-                        disabled={actionLoading}
-                        className="p-1.5 rounded-lg text-red-500 hover:bg-red-500/10 transition-colors"
-                        title={isRtl ? "إلغاء الاشتراك" : "Unenroll"}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="w-full h-1.5 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full bg-brand-cyan"
+                          style={{ width: `${cp.progress_pct}%` }}
+                        />
+                      </div>
+                      <div className="flex items-center justify-end gap-2 pt-1">
+                        <button
+                          disabled={actionBusy}
+                          onClick={() => handleResetProgress(selectedStudent.id, cp.course_id)}
+                          className="px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-500 text-[10px] font-bold hover:bg-amber-500/20"
+                        >
+                          {isRtl ? "تصفير التقدم" : "Reset Progress"}
+                        </button>
+                        <button
+                          disabled={actionBusy}
+                          onClick={() =>
+                            handleManualEnrollAction(selectedStudent.id, cp.course_id, "unenroll")
+                          }
+                          className="px-2.5 py-1 rounded-lg bg-red-500/10 text-red-500 text-[10px] font-bold hover:bg-red-500/20"
+                        >
+                          {isRtl ? "إلغاء الاشتراك" : "Unenroll"}
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
             </div>
 
-            {/* Footer close */}
-            <div className="pt-2 border-t border-border flex justify-end">
+            {/* Manual Enroll New Course */}
+            <div className="p-4 rounded-2xl bg-muted/40 border border-border/60 space-y-3">
+              <h4 className="text-xs font-bold text-foreground">
+                {isRtl ? "فتح / تفعيل اشتراك في دورة" : "Manual Enroll in Course"}
+              </h4>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <select
+                  value={selectedCourseId}
+                  onChange={(e) => setSelectedCourseId(e.target.value)}
+                  className="flex-1 px-3 py-2 rounded-xl border border-border bg-background text-xs font-semibold"
+                >
+                  {courses.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {isRtl ? c.title_ar : c.title_en}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  disabled={actionBusy || !selectedCourseId}
+                  onClick={() =>
+                    handleManualEnrollAction(selectedStudent.id, selectedCourseId, "enroll")
+                  }
+                  className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-brand-blue text-white text-xs font-bold hover:bg-brand-blue/90 disabled:opacity-50"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>{isRtl ? "تفعيل" : "Enroll"}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Footer Dangerous / Account Actions */}
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-border/50">
               <button
-                onClick={() => setSelectedStudent(null)}
-                className="px-4 py-2 rounded-xl border border-border text-xs font-bold text-foreground hover:bg-muted"
+                disabled={actionBusy}
+                onClick={() => toggleBlockStatus(selectedStudent)}
+                className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold ${
+                  selectedStudent.is_blocked
+                    ? "bg-emerald-500/15 text-emerald-500"
+                    : "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                }`}
               >
-                {isRtl ? "إغلاق" : "Close"}
+                {selectedStudent.is_blocked ? (
+                  <UserCheck className="w-4 h-4" />
+                ) : (
+                  <UserX className="w-4 h-4" />
+                )}
+                <span>
+                  {selectedStudent.is_blocked
+                    ? isRtl
+                      ? "فك حظر الحساب"
+                      : "Unblock Account"
+                    : isRtl
+                    ? "حظر الحساب"
+                    : "Block Account"}
+                </span>
+              </button>
+
+              <button
+                disabled={actionBusy}
+                onClick={() => handleDeleteStudent(selectedStudent)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-500/15 text-red-500 text-xs font-bold hover:bg-red-500/25"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>{isRtl ? "حذف الطالب نهائياً" : "Delete Student"}</span>
               </button>
             </div>
           </div>
