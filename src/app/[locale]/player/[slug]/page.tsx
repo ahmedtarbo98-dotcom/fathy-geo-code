@@ -58,6 +58,7 @@ function CoursePlayerContent({
     userId: "STUDENT",
   });
   const [lessonResourcesList, setLessonResourcesList] = useState<any[]>([]);
+  const [courseResourcesList, setCourseResourcesList] = useState<any[]>([]);
 
   useEffect(() => {
     async function loadPlayerCourse() {
@@ -79,6 +80,8 @@ function CoursePlayerContent({
               id,
               title_ar,
               title_en,
+              description_ar,
+              description_en,
               duration_seconds,
               is_free_preview,
               order_index
@@ -141,6 +144,20 @@ function CoursePlayerContent({
             ...dbCourse,
             sections: sortedSections,
           });
+
+          // Fetch course-wide resources if available
+          supabase
+            .from("course_resources")
+            .select("*")
+            .eq("course_id", dbCourse.id)
+            .order("order_index", { ascending: true })
+            .then(({ data: cRes, error: cResErr }) => {
+              if (!cResErr && Array.isArray(cRes)) {
+                setCourseResourcesList(cRes);
+              } else {
+                setCourseResourcesList([]);
+              }
+            });
 
           // Check enrollment status
           try {
@@ -277,28 +294,6 @@ function CoursePlayerContent({
     setNotesSaved(true);
     setTimeout(() => setNotesSaved(false), 2500);
   };
-
-  // Sample lesson resources
-  const sampleResources = [
-    {
-      title_ar: "حزمة بيانات التدريب والطبقات الجغرافية (Shapefiles & DEM)",
-      title_en: "Practice Dataset Package (Shapefiles & DEM)",
-      type: "file",
-      size: "24.5 MB",
-    },
-    {
-      title_ar: "دليل واجهة ArcGIS Pro ومفاهيم الطوبولوجيا (PDF)",
-      title_en: "ArcGIS Pro Interface & Topology Cheat Sheet (PDF)",
-      type: "file",
-      size: "3.2 MB",
-    },
-    {
-      title_ar: "التوثيق الرسمي لنظم الإسقاط من Esri Documentation",
-      title_en: "Official Esri Coordinate Systems Documentation",
-      type: "link",
-      url: "https://pro.arcgis.com",
-    },
-  ];
 
   if (loading) {
     return (
@@ -492,72 +487,174 @@ function CoursePlayerContent({
                 {activeTab === "overview" && (
                   <div className="space-y-4 text-sm leading-relaxed text-muted-foreground">
                     <h3 className="font-bold text-base text-foreground">
-                      {locale === "ar" ? "أهداف ومحاور الدرس:" : "Lesson Learning Objectives:"}
+                      {locale === "ar" ? "نظرة عامة على الدرس:" : "Lesson Overview:"}
                     </h3>
-                    <p>
-                      {locale === "ar"
-                        ? "في هذا الدرس التطبيقي، نستعرض مع المهندس أحمد فتحي خطوات التنفيذ العملية خطوة بخطوة. يرجى تنزيل ملفات التدريب المرفقة من تبويب 'المرفقات' لمزامنة التطبيق المباشر داخل برنامجك."
-                        : "In this practical lesson guided by Eng. Ahmed Fathy, we dive straight into step-by-step geospatial execution. Please download the dataset package from the 'Datasets & Resources' tab to follow along inside your software."}
+                    <p className="whitespace-pre-line">
+                      {(locale === "ar"
+                        ? currentLesson?.description_ar || currentLesson?.description_en
+                        : currentLesson?.description_en || currentLesson?.description_ar) ||
+                        (locale === "ar"
+                          ? "في هذا الدرس التطبيقي نستعرض خطوات التنفيذ العملية خطوة بخطوة. يمكنك مراجعة تبويب المرفقات والبيانات الجغرافية في حال وجود ملفات أو روابط مرفقة."
+                          : "In this practical lesson we cover step-by-step geospatial execution. Check the Datasets & Resources tab if files or links are attached.")}
                     </p>
-                    <div className="p-4 rounded-xl bg-muted/40 border border-border/50 text-xs font-mono text-foreground/80 space-y-1">
-                      <div>DATUM: WGS 84 / UTM 36N</div>
-                      <div>SOFTWARE: ArcGIS Pro 3.x / Earth Engine</div>
-                      <div>INSTRUCTOR: Eng. Ahmed Fathy</div>
-                    </div>
                   </div>
                 )}
 
                 {activeTab === "resources" && (
-                  <div className="space-y-3">
-                    {(lessonResourcesList.length > 0 ? lessonResourcesList : sampleResources).map((res, rIdx) => {
-                      const resTitle = locale === "ar" ? res.title_ar : (res.title_en || res.title_ar);
-                      const resourceUrl = res.external_url || res.url;
+                  <div className="space-y-6">
+                    {lessonResourcesList.length === 0 && courseResourcesList.length === 0 ? (
+                      <div className="py-10 text-center rounded-2xl border border-dashed border-border bg-muted/20 space-y-2">
+                        <FileCode className="w-8 h-8 mx-auto text-muted-foreground/50" />
+                        <p className="text-sm font-bold text-foreground">
+                          {locale === "ar"
+                            ? "لا توجد مرفقات أو بيانات جغرافية مضافة بعد"
+                            : "No attachments or geographic datasets added yet"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {locale === "ar"
+                            ? "ستظهر هنا ملفات التدريب والروابط الخاصة بالدرس أو بالدورة فور إضافتها."
+                            : "Lesson and course files or reference links will appear here once added."}
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        {lessonResourcesList.length > 0 && (
+                          <div className="space-y-3">
+                            <h4 className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">
+                              {locale === "ar" ? "مرفقات هذا الدرس / الفيديو" : "Lesson / Video Attachments"}
+                            </h4>
+                            {lessonResourcesList.map((res, rIdx) => {
+                              const resTitle =
+                                locale === "ar"
+                                  ? res.title_ar || res.title_en
+                                  : res.title_en || res.title_ar;
+                              const resourceUrl = res.file_url || res.external_url || res.url;
+                              const isFile = (res.resource_type || res.type) === "file";
 
-                      return (
-                        <div
-                          key={res.id || rIdx}
-                          className="flex items-center justify-between p-3.5 rounded-xl border border-border bg-background/60 hover:bg-muted/40 transition-colors"
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="w-9 h-9 rounded-lg bg-brand-cyan/10 text-brand-cyan flex items-center justify-center">
-                              {res.type === "file" ? (
-                                <FileCode className="w-4 h-4" />
-                              ) : (
-                                <ExternalLink className="w-4 h-4" />
-                              )}
-                            </div>
-                            <div>
-                              <div className="text-xs sm:text-sm font-bold text-foreground">
-                                {resTitle}
-                              </div>
-                              <div className="text-[11px] text-muted-foreground font-mono">
-                                {resourceUrl ? resourceUrl.slice(0, 40) + "..." : (res.size || "GIS Resource")}
-                              </div>
-                            </div>
+                              return (
+                                <div
+                                  key={res.id || rIdx}
+                                  className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl border border-border bg-background/60 hover:bg-muted/40 transition-colors"
+                                >
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <div className="w-9 h-9 rounded-lg bg-brand-cyan/10 text-brand-cyan flex items-center justify-center shrink-0">
+                                      {isFile ? (
+                                        <FileCode className="w-4 h-4" />
+                                      ) : (
+                                        <ExternalLink className="w-4 h-4" />
+                                      )}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <div className="text-xs sm:text-sm font-bold text-foreground truncate">
+                                        {resTitle}
+                                      </div>
+                                      {resourceUrl && (
+                                        <div className="text-[11px] text-muted-foreground font-mono truncate max-w-[260px] sm:max-w-[380px]">
+                                          {resourceUrl}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {resourceUrl && (
+                                    <a
+                                      href={resourceUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-blue text-white hover:bg-brand-blue/90 shadow-sm transition-colors shrink-0"
+                                    >
+                                      {isFile ? (
+                                        <Download className="w-3.5 h-3.5" />
+                                      ) : (
+                                        <ExternalLink className="w-3.5 h-3.5" />
+                                      )}
+                                      <span>
+                                        {isFile
+                                          ? locale === "ar"
+                                            ? "تنزيل الملف"
+                                            : "Download File"
+                                          : locale === "ar"
+                                            ? "فتح الرابط / تحميل"
+                                            : "Open / Download"}
+                                      </span>
+                                    </a>
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
+                        )}
 
-                          {resourceUrl ? (
-                            <a
-                              href={resourceUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-blue text-white hover:bg-brand-blue/90 shadow-sm transition-colors"
-                            >
-                              <ExternalLink className="w-3.5 h-3.5" />
-                              <span>{locale === "ar" ? "فتح الرابط / تحميل" : "Open / Download"}</span>
-                            </a>
-                          ) : (
-                            <button
-                              onClick={() => alert(locale === "ar" ? "بدء تنزيل الملف التدريبي..." : "Downloading exercise files...")}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-secondary hover:bg-brand-blue hover:text-white transition-colors"
-                            >
-                              <Download className="w-3.5 h-3.5" />
-                              <span>{t("downloadFile")}</span>
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
+                        {courseResourcesList.length > 0 && (
+                          <div className="space-y-3">
+                            <h4 className="text-xs font-extrabold uppercase tracking-wider text-muted-foreground">
+                              {locale === "ar"
+                                ? "المرفقات والبيانات الجغرافية للدورة"
+                                : "Course-Wide Datasets & Attachments"}
+                            </h4>
+                            {courseResourcesList.map((res, rIdx) => {
+                              const resTitle =
+                                locale === "ar"
+                                  ? res.title_ar || res.title_en
+                                  : res.title_en || res.title_ar;
+                              const resourceUrl = res.file_url || res.external_url || res.url;
+                              const isFile = (res.resource_type || res.type) === "file";
+
+                              return (
+                                <div
+                                  key={res.id || rIdx}
+                                  className="flex flex-wrap items-center justify-between gap-3 p-3.5 rounded-xl border border-border bg-background/60 hover:bg-muted/40 transition-colors"
+                                >
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <div className="w-9 h-9 rounded-lg bg-brand-blue/10 text-brand-blue dark:text-brand-cyan flex items-center justify-center shrink-0">
+                                      {isFile ? (
+                                        <FileCode className="w-4 h-4" />
+                                      ) : (
+                                        <ExternalLink className="w-4 h-4" />
+                                      )}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <div className="text-xs sm:text-sm font-bold text-foreground truncate">
+                                        {resTitle}
+                                      </div>
+                                      {resourceUrl && (
+                                        <div className="text-[11px] text-muted-foreground font-mono truncate max-w-[260px] sm:max-w-[380px]">
+                                          {resourceUrl}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {resourceUrl && (
+                                    <a
+                                      href={resourceUrl}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-brand-blue text-white hover:bg-brand-blue/90 shadow-sm transition-colors shrink-0"
+                                    >
+                                      {isFile ? (
+                                        <Download className="w-3.5 h-3.5" />
+                                      ) : (
+                                        <ExternalLink className="w-3.5 h-3.5" />
+                                      )}
+                                      <span>
+                                        {isFile
+                                          ? locale === "ar"
+                                            ? "تنزيل الملف"
+                                            : "Download File"
+                                          : locale === "ar"
+                                            ? "فتح الرابط / تحميل"
+                                            : "Open / Download"}
+                                      </span>
+                                    </a>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
                 )}
 

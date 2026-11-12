@@ -38,9 +38,18 @@ interface LessonResource {
   id: string;
   title_ar: string;
   title_en: string;
-  external_url: string;
+  file_url?: string | null;
+  external_url: string | null;
   resource_type: "file" | "link";
   order_index: number;
+}
+
+interface EditableResourceItem {
+  id?: string;
+  title_ar: string;
+  title_en: string;
+  external_url: string;
+  resource_type: "file" | "link";
 }
 
 interface LessonItem {
@@ -113,13 +122,25 @@ function AdminCurriculumContent({
   const [lessonVideoUrl, setLessonVideoUrl] = useState("");
   const [lessonDurationMin, setLessonDurationMin] = useState("15");
   const [isFreePreview, setIsFreePreview] = useState(false);
-  const [lessonResources, setLessonResources] = useState<
-    { id?: string; title_ar: string; external_url: string }[]
-  >([]);
+  const [lessonResources, setLessonResources] = useState<EditableResourceItem[]>([]);
+  const [editingLessonResIdx, setEditingLessonResIdx] = useState<number | null>(null);
 
-  // Resource input row
+  // Resource input row (lesson)
   const [newResTitle, setNewResTitle] = useState("");
+  const [newResTitleEn, setNewResTitleEn] = useState("");
+  const [newResType, setNewResType] = useState<"file" | "link">("file");
   const [newResUrl, setNewResUrl] = useState("");
+
+  // Course-wide resources state
+  const [courseResources, setCourseResources] = useState<EditableResourceItem[]>([]);
+  const [courseResourcesTableMissing, setCourseResourcesTableMissing] = useState(false);
+  const [courseResOpen, setCourseResOpen] = useState(true);
+  const [savingCourseRes, setSavingCourseRes] = useState(false);
+  const [editingCourseResIdx, setEditingCourseResIdx] = useState<number | null>(null);
+  const [newCourseResTitle, setNewCourseResTitle] = useState("");
+  const [newCourseResTitleEn, setNewCourseResTitleEn] = useState("");
+  const [newCourseResType, setNewCourseResType] = useState<"file" | "link">("file");
+  const [newCourseResUrl, setNewCourseResUrl] = useState("");
 
   // 1. Fetch courses
   useEffect(() => {
@@ -218,6 +239,33 @@ function AdminCurriculumContent({
       }));
 
       setSections(assembled);
+
+      // Fetch course-wide resources (graceful if migration not yet run)
+      const { data: cResData, error: cResErr } = await supabase
+        .from("course_resources")
+        .select("*")
+        .eq("course_id", courseId)
+        .order("order_index", { ascending: true });
+
+      if (cResErr) {
+        const msg = String(cResErr.message || cResErr.code || "");
+        if (msg.includes("course_resources") || cResErr.code === "42P01" || cResErr.code === "PGRST205") {
+          setCourseResourcesTableMissing(true);
+        }
+        setCourseResources([]);
+      } else {
+        setCourseResourcesTableMissing(false);
+        setCourseResources(
+          (cResData || []).map((r: any) => ({
+            id: r.id,
+            title_ar: r.title_ar || "",
+            title_en: r.title_en || "",
+            external_url: r.external_url || r.file_url || "",
+            resource_type: r.resource_type === "link" ? "link" : "file",
+          }))
+        );
+      }
+      setEditingCourseResIdx(null);
     } catch (err: any) {
       console.error("Failed to load curriculum:", err);
     } finally {
@@ -300,7 +348,10 @@ function AdminCurriculumContent({
     setLessonDurationMin("15");
     setIsFreePreview(false);
     setLessonResources([]);
+    setEditingLessonResIdx(null);
     setNewResTitle("");
+    setNewResTitleEn("");
+    setNewResType("file");
     setNewResUrl("");
     setIsLessonModalOpen(true);
   };
@@ -320,11 +371,16 @@ function AdminCurriculumContent({
     setLessonResources(
       (lesson.resources || []).map((r) => ({
         id: r.id,
-        title_ar: r.title_ar,
-        external_url: r.external_url || "",
+        title_ar: r.title_ar || "",
+        title_en: r.title_en || "",
+        external_url: r.external_url || r.file_url || "",
+        resource_type: r.resource_type === "link" ? "link" : "file",
       }))
     );
+    setEditingLessonResIdx(null);
     setNewResTitle("");
+    setNewResTitleEn("");
+    setNewResType("file");
     setNewResUrl("");
     setIsLessonModalOpen(true);
   };
@@ -333,14 +389,109 @@ function AdminCurriculumContent({
     if (!newResTitle.trim() || !newResUrl.trim()) return;
     setLessonResources([
       ...lessonResources,
-      { title_ar: newResTitle.trim(), external_url: newResUrl.trim() },
+      {
+        title_ar: newResTitle.trim(),
+        title_en: newResTitleEn.trim() || newResTitle.trim(),
+        external_url: newResUrl.trim(),
+        resource_type: newResType,
+      },
     ]);
     setNewResTitle("");
+    setNewResTitleEn("");
+    setNewResType("file");
     setNewResUrl("");
+  };
+
+  const handleUpdateResourceItem = (index: number, patch: Partial<EditableResourceItem>) => {
+    setLessonResources((prev) =>
+      prev.map((item, idx) => (idx === index ? { ...item, ...patch } : item))
+    );
+  };
+
+  const handleMoveResourceItem = (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= lessonResources.length) return;
+    const next = [...lessonResources];
+    [next[index], next[target]] = [next[target], next[index]];
+    setLessonResources(next);
+    setEditingLessonResIdx(null);
   };
 
   const handleRemoveResourceItem = (index: number) => {
     setLessonResources(lessonResources.filter((_, idx) => idx !== index));
+    if (editingLessonResIdx === index) setEditingLessonResIdx(null);
+  };
+
+  // Course-wide resources persistence
+  const persistCourseResources = async (nextList: EditableResourceItem[]) => {
+    if (!selectedCourseId || courseResourcesTableMissing) return;
+    try {
+      setSavingCourseRes(true);
+      await supabase.from("course_resources").delete().eq("course_id", selectedCourseId);
+      if (nextList.length > 0) {
+        const rows = nextList.map((res, index) => ({
+          course_id: selectedCourseId,
+          title_ar: res.title_ar,
+          title_en: res.title_en || res.title_ar,
+          resource_type: res.resource_type,
+          file_url: res.resource_type === "file" ? res.external_url : null,
+          external_url: res.external_url,
+          order_index: index + 1,
+        }));
+        const { error } = await supabase.from("course_resources").insert(rows);
+        if (error) throw error;
+      }
+      setCourseResources(nextList);
+    } catch (err: any) {
+      console.error("Failed to save course resources:", err);
+      alert(isRtl ? `تعذر حفظ مرفقات الدورة: ${err.message}` : `Failed to save course resources: ${err.message}`);
+    } finally {
+      setSavingCourseRes(false);
+    }
+  };
+
+  const handleAddCourseResource = async () => {
+    if (!newCourseResTitle.trim() || !newCourseResUrl.trim()) return;
+    const nextList: EditableResourceItem[] = [
+      ...courseResources,
+      {
+        title_ar: newCourseResTitle.trim(),
+        title_en: newCourseResTitleEn.trim() || newCourseResTitle.trim(),
+        external_url: newCourseResUrl.trim(),
+        resource_type: newCourseResType,
+      },
+    ];
+    setNewCourseResTitle("");
+    setNewCourseResTitleEn("");
+    setNewCourseResType("file");
+    setNewCourseResUrl("");
+    await persistCourseResources(nextList);
+  };
+
+  const handleUpdateCourseResource = (index: number, patch: Partial<EditableResourceItem>) => {
+    setCourseResources((prev) =>
+      prev.map((item, idx) => (idx === index ? { ...item, ...patch } : item))
+    );
+  };
+
+  const handleSaveEditedCourseResource = async () => {
+    setEditingCourseResIdx(null);
+    await persistCourseResources(courseResources);
+  };
+
+  const handleMoveCourseResource = async (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= courseResources.length) return;
+    const next = [...courseResources];
+    [next[index], next[target]] = [next[target], next[index]];
+    setEditingCourseResIdx(null);
+    await persistCourseResources(next);
+  };
+
+  const handleRemoveCourseResource = async (index: number) => {
+    const next = courseResources.filter((_, idx) => idx !== index);
+    setEditingCourseResIdx(null);
+    await persistCourseResources(next);
   };
 
   const handleSaveLesson = async (e: React.FormEvent) => {
@@ -412,9 +563,10 @@ function AdminCurriculumContent({
           const resRows = lessonResources.map((res, index) => ({
             lesson_id: lessonId,
             title_ar: res.title_ar,
-            title_en: res.title_ar,
+            title_en: res.title_en || res.title_ar,
+            file_url: res.resource_type === "file" ? res.external_url : null,
             external_url: res.external_url,
-            resource_type: "link" as const,
+            resource_type: res.resource_type,
             order_index: index + 1,
           }));
 
@@ -496,6 +648,220 @@ function AdminCurriculumContent({
           </p>
         </div>
       </div>
+
+      {/* Course-Wide Attachments & Geographic Datasets */}
+      {selectedCourseId && (
+        <div className="rounded-3xl glass-panel border border-border/80 p-5 space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={() => setCourseResOpen((prev) => !prev)}
+              className="flex items-center gap-2.5 text-start"
+            >
+              <div className="w-9 h-9 rounded-xl bg-brand-cyan/15 text-brand-cyan flex items-center justify-center shrink-0">
+                <FileCode className="w-4 h-4" />
+              </div>
+              <div>
+                <h2 className="text-sm font-extrabold text-foreground flex items-center gap-2">
+                  <span>
+                    {isRtl
+                      ? "المرفقات والبيانات الجغرافية العامة للدورة"
+                      : "Course-Wide Attachments & Geographic Datasets"}
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-blue/10 text-brand-blue dark:text-brand-cyan">
+                    {courseResources.length}
+                  </span>
+                </h2>
+                <p className="text-[11px] text-muted-foreground">
+                  {isRtl
+                    ? "ملفات وروابط مشتركة تظهر للطلاب في جميع دروس هذه الدورة (مثل حزمة Shapefiles أو مراجع الدورة). أما مرفقات كل فيديو فتُعدّل من زر «تعديل الدرس» بالأسفل."
+                    : "Shared datasets and links shown across all lessons in this course. Per-video attachments can be edited inside each lesson."}
+                </p>
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCourseResOpen((prev) => !prev)}
+              className="p-2 rounded-xl hover:bg-muted text-muted-foreground"
+            >
+              {courseResOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </button>
+          </div>
+
+          {courseResOpen && (
+            <div className="space-y-3 pt-2 border-t border-border/50">
+              {courseResourcesTableMissing ? (
+                <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-700 dark:text-amber-300 flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                  <span>
+                    {isRtl
+                      ? "جدول مرفقات الدورة العامة (course_resources) غير مفعّل بعد في قاعدة البيانات. قم بتشغيل ملف الترحيل 00005_course_resources.sql في Supabase SQL Editor لتفعيل مرفقات الدورة العامة، بينما مرفقات كل درس/فيديو تعمل مباشرة من زر «تعديل الدرس»."
+                      : "The course_resources table is not enabled in Supabase yet. Run migration 00005_course_resources.sql to enable course-wide resources."}
+                  </span>
+                </div>
+              ) : (
+                <>
+                  {courseResources.length > 0 && (
+                    <div className="space-y-2">
+                      {courseResources.map((res, idx) => (
+                        <div
+                          key={res.id || idx}
+                          className="p-3 rounded-xl bg-background/80 border border-border/70 space-y-2"
+                        >
+                          {editingCourseResIdx === idx ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+                              <select
+                                value={res.resource_type}
+                                onChange={(e) =>
+                                  handleUpdateCourseResource(idx, {
+                                    resource_type: e.target.value as "file" | "link",
+                                  })
+                                }
+                                className="sm:col-span-2 px-2 py-1.5 rounded-lg border border-border bg-card text-xs font-bold"
+                              >
+                                <option value="file">{isRtl ? "ملف / بيانات" : "File"}</option>
+                                <option value="link">{isRtl ? "رابط" : "Link"}</option>
+                              </select>
+                              <input
+                                type="text"
+                                value={res.title_ar}
+                                onChange={(e) =>
+                                  handleUpdateCourseResource(idx, { title_ar: e.target.value })
+                                }
+                                placeholder={isRtl ? "العنوان بالعربية" : "Title (AR)"}
+                                className="sm:col-span-3 px-2.5 py-1.5 rounded-lg border border-border bg-card text-xs"
+                              />
+                              <input
+                                type="text"
+                                value={res.title_en}
+                                onChange={(e) =>
+                                  handleUpdateCourseResource(idx, { title_en: e.target.value })
+                                }
+                                placeholder={isRtl ? "العنوان بالإنجليزية" : "Title (EN)"}
+                                className="sm:col-span-3 px-2.5 py-1.5 rounded-lg border border-border bg-card text-xs"
+                              />
+                              <input
+                                type="url"
+                                value={res.external_url}
+                                onChange={(e) =>
+                                  handleUpdateCourseResource(idx, { external_url: e.target.value })
+                                }
+                                placeholder="https://..."
+                                className="sm:col-span-3 px-2.5 py-1.5 rounded-lg border border-border bg-card text-xs font-mono"
+                              />
+                              <button
+                                type="button"
+                                disabled={savingCourseRes}
+                                onClick={handleSaveEditedCourseResource}
+                                className="sm:col-span-1 px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 flex items-center justify-center"
+                                title={isRtl ? "حفظ" : "Save"}
+                              >
+                                <Save className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                              <div className="flex items-center gap-2 min-w-0">
+                                {res.resource_type === "file" ? (
+                                  <FileCode className="w-4 h-4 text-brand-cyan shrink-0" />
+                                ) : (
+                                  <ExternalLink className="w-4 h-4 text-brand-blue shrink-0" />
+                                )}
+                                <span className="font-bold text-foreground truncate">
+                                  {isRtl ? res.title_ar : res.title_en || res.title_ar}
+                                </span>
+                                <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[240px]">
+                                  {res.external_url}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  disabled={idx === 0 || savingCourseRes}
+                                  onClick={() => handleMoveCourseResource(idx, -1)}
+                                  className="p-1 rounded text-muted-foreground hover:text-foreground disabled:opacity-30"
+                                >
+                                  <ChevronUp className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={idx === courseResources.length - 1 || savingCourseRes}
+                                  onClick={() => handleMoveCourseResource(idx, 1)}
+                                  className="p-1 rounded text-muted-foreground hover:text-foreground disabled:opacity-30"
+                                >
+                                  <ChevronDown className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingCourseResIdx(idx)}
+                                  className="p-1 rounded text-muted-foreground hover:text-brand-blue hover:bg-brand-blue/10"
+                                  title={isRtl ? "تعديل" : "Edit"}
+                                >
+                                  <Edit className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={savingCourseRes}
+                                  onClick={() => handleRemoveCourseResource(idx)}
+                                  className="p-1 rounded text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                                  title={isRtl ? "حذف" : "Delete"}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 pt-1">
+                    <select
+                      value={newCourseResType}
+                      onChange={(e) => setNewCourseResType(e.target.value as "file" | "link")}
+                      className="sm:col-span-2 px-2.5 py-2 rounded-xl border border-border bg-background text-xs font-bold"
+                    >
+                      <option value="file">{isRtl ? "ملف / بيانات" : "File"}</option>
+                      <option value="link">{isRtl ? "رابط" : "Link"}</option>
+                    </select>
+                    <input
+                      type="text"
+                      value={newCourseResTitle}
+                      onChange={(e) => setNewCourseResTitle(e.target.value)}
+                      placeholder={isRtl ? "اسم المرفق بالعربية *" : "Title (AR) *"}
+                      className="sm:col-span-3 px-3 py-2 rounded-xl border border-border bg-background text-xs"
+                    />
+                    <input
+                      type="text"
+                      value={newCourseResTitleEn}
+                      onChange={(e) => setNewCourseResTitleEn(e.target.value)}
+                      placeholder={isRtl ? "الاسم بالإنجليزية (اختياري)" : "Title (EN, optional)"}
+                      className="sm:col-span-3 px-3 py-2 rounded-xl border border-border bg-background text-xs"
+                    />
+                    <input
+                      type="url"
+                      value={newCourseResUrl}
+                      onChange={(e) => setNewCourseResUrl(e.target.value)}
+                      placeholder={isRtl ? "رابط الملف أو المصدر (Drive / URL) *" : "File or link URL *"}
+                      className="sm:col-span-3 px-3 py-2 rounded-xl border border-border bg-background text-xs font-mono"
+                    />
+                    <button
+                      type="button"
+                      disabled={savingCourseRes || !newCourseResTitle.trim() || !newCourseResUrl.trim()}
+                      onClick={handleAddCourseResource}
+                      className="sm:col-span-1 px-3 py-2 rounded-xl bg-brand-blue text-white text-xs font-bold hover:bg-brand-blue/90 disabled:opacity-50 flex items-center justify-center gap-1"
+                    >
+                      <Plus className="w-4 h-4" />
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Sections & Lessons Content */}
       {loading ? (
@@ -881,63 +1247,168 @@ function AdminCurriculumContent({
                 <div className="flex items-center justify-between">
                   <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
                     <Link2 className="w-4 h-4 text-brand-blue dark:text-brand-cyan" />
-                    <span>{isRtl ? "مرفقات وروابط الدرس (Resources & Datasets)" : "Lesson Resources & Links"}</span>
+                    <span>
+                      {isRtl
+                        ? "مرفقات وبيانات الدرس/الفيديو (Resources & Datasets)"
+                        : "Lesson / Video Resources & Datasets"}
+                    </span>
                   </label>
                   <span className="text-[10px] text-muted-foreground">
-                    {lessonResources.length} {isRtl ? "روابط مضافة" : "added"}
+                    {lessonResources.length} {isRtl ? "مرفقات مضافة" : "added"}
                   </span>
                 </div>
 
                 {/* List of current resources */}
                 {lessonResources.length > 0 && (
-                  <div className="space-y-1.5 max-h-36 overflow-y-auto">
+                  <div className="space-y-2 max-h-56 overflow-y-auto">
                     {lessonResources.map((res, idx) => (
                       <div
-                        key={idx}
-                        className="flex items-center justify-between gap-2 p-2 rounded-xl bg-background border border-border/60 text-xs"
+                        key={res.id || idx}
+                        className="p-2.5 rounded-xl bg-background border border-border/60 text-xs space-y-2"
                       >
-                        <div className="flex items-center gap-2 truncate">
-                          <ExternalLink className="w-3.5 h-3.5 text-brand-cyan shrink-0" />
-                          <span className="font-bold text-foreground truncate">{res.title_ar}</span>
-                          <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[180px]">
-                            {res.external_url}
-                          </span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveResourceItem(idx)}
-                          className="p-1 rounded text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        {editingLessonResIdx === idx ? (
+                          <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-center">
+                            <select
+                              value={res.resource_type}
+                              onChange={(e) =>
+                                handleUpdateResourceItem(idx, {
+                                  resource_type: e.target.value as "file" | "link",
+                                })
+                              }
+                              className="sm:col-span-2 px-2 py-1.5 rounded-lg border border-border bg-card text-xs font-bold"
+                            >
+                              <option value="file">{isRtl ? "ملف" : "File"}</option>
+                              <option value="link">{isRtl ? "رابط" : "Link"}</option>
+                            </select>
+                            <input
+                              type="text"
+                              value={res.title_ar}
+                              onChange={(e) =>
+                                handleUpdateResourceItem(idx, { title_ar: e.target.value })
+                              }
+                              placeholder={isRtl ? "الاسم بالعربية" : "Title (AR)"}
+                              className="sm:col-span-3 px-2 py-1.5 rounded-lg border border-border bg-card text-xs"
+                            />
+                            <input
+                              type="text"
+                              value={res.title_en}
+                              onChange={(e) =>
+                                handleUpdateResourceItem(idx, { title_en: e.target.value })
+                              }
+                              placeholder={isRtl ? "الاسم بالإنجليزية" : "Title (EN)"}
+                              className="sm:col-span-3 px-2 py-1.5 rounded-lg border border-border bg-card text-xs"
+                            />
+                            <input
+                              type="url"
+                              value={res.external_url}
+                              onChange={(e) =>
+                                handleUpdateResourceItem(idx, { external_url: e.target.value })
+                              }
+                              placeholder="https://..."
+                              className="sm:col-span-3 px-2 py-1.5 rounded-lg border border-border bg-card text-xs font-mono"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setEditingLessonResIdx(null)}
+                              className="sm:col-span-1 px-2 py-1.5 rounded-lg bg-emerald-600 text-white text-xs font-bold hover:bg-emerald-500 flex items-center justify-center"
+                              title={isRtl ? "تم" : "Done"}
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              {res.resource_type === "file" ? (
+                                <FileCode className="w-3.5 h-3.5 text-brand-cyan shrink-0" />
+                              ) : (
+                                <ExternalLink className="w-3.5 h-3.5 text-brand-blue shrink-0" />
+                              )}
+                              <span className="font-bold text-foreground truncate">
+                                {isRtl ? res.title_ar : res.title_en || res.title_ar}
+                              </span>
+                              <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[180px]">
+                                {res.external_url}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                type="button"
+                                disabled={idx === 0}
+                                onClick={() => handleMoveResourceItem(idx, -1)}
+                                className="p-1 rounded text-muted-foreground hover:text-foreground disabled:opacity-30"
+                              >
+                                <ChevronUp className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                disabled={idx === lessonResources.length - 1}
+                                onClick={() => handleMoveResourceItem(idx, 1)}
+                                className="p-1 rounded text-muted-foreground hover:text-foreground disabled:opacity-30"
+                              >
+                                <ChevronDown className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditingLessonResIdx(idx)}
+                                className="p-1 rounded text-muted-foreground hover:text-brand-blue hover:bg-brand-blue/10"
+                                title={isRtl ? "تعديل" : "Edit"}
+                              >
+                                <Edit className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveResourceItem(idx)}
+                                className="p-1 rounded text-muted-foreground hover:text-red-500 hover:bg-red-500/10"
+                                title={isRtl ? "حذف" : "Delete"}
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
                 )}
 
                 {/* Add new resource inputs */}
-                <div className="grid grid-cols-1 sm:grid-cols-5 gap-2 pt-1 border-t border-border/50">
+                <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 pt-2 border-t border-border/50">
+                  <select
+                    value={newResType}
+                    onChange={(e) => setNewResType(e.target.value as "file" | "link")}
+                    className="sm:col-span-2 px-2 py-1.5 rounded-lg border border-border bg-background text-xs font-bold"
+                  >
+                    <option value="file">{isRtl ? "ملف / بيانات" : "File"}</option>
+                    <option value="link">{isRtl ? "رابط" : "Link"}</option>
+                  </select>
                   <input
                     type="text"
                     value={newResTitle}
                     onChange={(e) => setNewResTitle(e.target.value)}
-                    placeholder={isRtl ? "اسم المرفق (مثال: ملف بيانات Shapefile)" : "Resource title"}
-                    className="sm:col-span-2 px-2.5 py-1.5 rounded-lg border border-border bg-background text-xs font-medium"
+                    placeholder={isRtl ? "اسم المرفق بالعربية" : "Title (AR)"}
+                    className="sm:col-span-3 px-2.5 py-1.5 rounded-lg border border-border bg-background text-xs font-medium"
+                  />
+                  <input
+                    type="text"
+                    value={newResTitleEn}
+                    onChange={(e) => setNewResTitleEn(e.target.value)}
+                    placeholder={isRtl ? "الاسم بالإنجليزية (اختياري)" : "Title (EN, optional)"}
+                    className="sm:col-span-3 px-2.5 py-1.5 rounded-lg border border-border bg-background text-xs font-medium"
                   />
                   <input
                     type="url"
                     value={newResUrl}
                     onChange={(e) => setNewResUrl(e.target.value)}
-                    placeholder={isRtl ? "رابط التحميل (Google Drive / GitHub / URL)" : "URL (e.g. Drive / Dropbox)"}
-                    className="sm:col-span-2 px-2.5 py-1.5 rounded-lg border border-border bg-background text-xs font-mono"
+                    placeholder={isRtl ? "رابط التحميل (Drive / URL)" : "URL (Drive / Link)"}
+                    className="sm:col-span-3 px-2.5 py-1.5 rounded-lg border border-border bg-background text-xs font-mono"
                   />
                   <button
                     type="button"
                     onClick={handleAddResourceItem}
-                    className="px-3 py-1.5 rounded-lg bg-brand-cyan/20 text-brand-navy dark:text-brand-cyan text-xs font-bold hover:bg-brand-cyan/30 flex items-center justify-center gap-1"
+                    className="sm:col-span-1 px-3 py-1.5 rounded-lg bg-brand-cyan/20 text-brand-navy dark:text-brand-cyan text-xs font-bold hover:bg-brand-cyan/30 flex items-center justify-center gap-1"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>{isRtl ? "إضافة" : "Add"}</span>
                   </button>
                 </div>
               </div>

@@ -422,7 +422,7 @@ export default function AdminCoursesPage({
                       className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl bg-brand-blue/10 hover:bg-brand-blue hover:text-white text-brand-blue dark:text-brand-cyan text-xs font-bold transition-all border border-brand-blue/20"
                     >
                       <Layers className="w-3.5 h-3.5" />
-                      <span>{isRtl ? "إدارة الفيديوهات والمنهج (إضافة لينكات)" : "Manage Videos & Lessons"}</span>
+                      <span>{isRtl ? "إدارة الفيديوهات والمنهج والمرفقات" : "Manage Videos, Curriculum & Attachments"}</span>
                     </a>
 
                     <div className="flex items-center justify-between gap-2">
