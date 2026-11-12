@@ -11,7 +11,7 @@ export const PROJECT_CATEGORIES = [
 ] as const;
 
 export const PROJECT_IMAGE_BUCKET = "project-images";
-export const PROJECT_IMAGE_MAX_BYTES = 3 * 1024 * 1024; // 3 MB
+export const PROJECT_IMAGE_MAX_BYTES = 5 * 1024 * 1024; // 5 MB
 export const PROJECT_IMAGE_MIME_TYPES = [
   "image/jpeg",
   "image/jpg",

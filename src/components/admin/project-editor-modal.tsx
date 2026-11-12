@@ -165,8 +165,8 @@ export default function ProjectEditorModal({
     }
     if (file.size > PROJECT_IMAGE_MAX_BYTES) {
       return isRtl
-        ? `حجم الصورة "${file.name}" يتجاوز الحد الأقصى 3 ميجابايت.`
-        : `Image "${file.name}" exceeds the 3 MB limit.`;
+        ? `حجم الصورة "${file.name}" يتجاوز الحد الأقصى 5 ميجابايت.`
+        : `Image "${file.name}" exceeds the 5 MB limit.`;
     }
     return null;
   };
@@ -693,12 +693,12 @@ export default function ProjectEditorModal({
             )}
           </div>
 
-          {/* Cover Image Upload (Picker + Drag & Drop, max 3 MB) */}
+          {/* Cover Image Upload (Picker + Drag & Drop, max 5 MB) */}
           <div className="space-y-2">
             <label className="text-xs font-bold text-foreground block">
               {isRtl
-                ? "صورة الغلاف الرئيسية (JPG / PNG / WebP — بحد أقصى 3 ميجابايت)"
-                : "Cover Image (JPG / PNG / WebP — max 3 MB)"}
+                ? "صورة الغلاف الرئيسية (JPG / PNG / WebP — بحد أقصى 5 ميجابايت)"
+                : "Cover Image (JPG / PNG / WebP — max 5 MB)"}
             </label>
 
             {form.cover_image_url ? (
@@ -789,8 +789,8 @@ export default function ProjectEditorModal({
                 </h3>
                 <p className="text-[11px] text-muted-foreground">
                   {isRtl
-                    ? "يمكنك تحديد أو سحب عدة صور دفعة واحدة (JPG / PNG / WebP، حد أقصى 3 ميجابايت لكل صورة)."
-                    : "Select or drag multiple images at once (JPG/PNG/WebP, max 3 MB each)."}
+                    ? "يمكنك تحديد أو سحب عدة صور دفعة واحدة (JPG / PNG / WebP، حد أقصى 5 ميجابايت لكل صورة)."
+                    : "Select or drag multiple images at once (JPG/PNG/WebP, max 5 MB each)."}
                 </p>
               </div>
               <label className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-brand-blue hover:bg-brand-blue/90 text-white text-xs font-bold cursor-pointer self-start">

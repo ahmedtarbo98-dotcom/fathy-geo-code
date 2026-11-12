@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     if (bucket === PROJECT_IMAGE_BUCKET) {
       if (file.size > PROJECT_IMAGE_MAX_BYTES) {
         return NextResponse.json(
-          { error: "Image exceeds 3 MB maximum size limit." },
+          { error: "Image exceeds 5 MB maximum size limit." },
           { status: 400 }
         );
       }
