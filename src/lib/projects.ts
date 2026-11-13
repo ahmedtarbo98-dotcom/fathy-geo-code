@@ -17,6 +17,8 @@ export const PROJECT_IMAGE_MIME_TYPES = [
   "image/jpg",
   "image/png",
   "image/webp",
+  "image/x-png",
+  "image/pjpeg",
 ];
 
 export const projectMediaItemSchema = z

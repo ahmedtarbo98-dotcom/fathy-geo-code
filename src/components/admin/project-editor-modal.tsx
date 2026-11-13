@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { createClient } from "@/lib/supabase/client";
 import {
   X,
   Upload,
@@ -158,15 +159,23 @@ export default function ProjectEditorModal({
   }, [isDirty]);
 
   const validateImageFile = (file: File): string | null => {
-    if (!PROJECT_IMAGE_MIME_TYPES.includes(file.type.toLowerCase())) {
+    const ext = file.name.split(".").pop()?.toLowerCase() || "";
+    const isAllowedExt = ["jpg", "jpeg", "png", "webp"].includes(ext);
+    const mime = (file.type || "").toLowerCase();
+    const isAllowedMime =
+      !mime ||
+      PROJECT_IMAGE_MIME_TYPES.includes(mime) ||
+      mime.startsWith("image/");
+
+    if (!isAllowedExt && !isAllowedMime) {
       return isRtl
         ? `صيغة الملف "${file.name}" غير مدعومة (JPG / PNG / WebP فقط).`
         : `Unsupported format for "${file.name}" (JPG, PNG, WebP only).`;
     }
     if (file.size > PROJECT_IMAGE_MAX_BYTES) {
       return isRtl
-        ? `حجم الصورة "${file.name}" يتجاوز الحد الأقصى 5 ميجابايت.`
-        : `Image "${file.name}" exceeds the 5 MB limit.`;
+        ? `حجم الصورة "${file.name}" (${(file.size / (1024 * 1024)).toFixed(1)} ميجابايت) يتجاوز الحد الأقصى 5 ميجابايت.`
+        : `Image "${file.name}" (${(file.size / (1024 * 1024)).toFixed(1)} MB) exceeds the 5 MB limit.`;
     }
     return null;
   };
@@ -180,14 +189,28 @@ export default function ProjectEditorModal({
     body.append("bucket", PROJECT_IMAGE_BUCKET);
     body.append("folder", folder);
 
+    // Always fetch fresh session token
+    let headers: Record<string, string> = { ...authHeaders };
+    try {
+      const supabase = createClient();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+    } catch {
+      // Fall back to prop authHeaders
+    }
+
     const res = await fetch("/api/upload", {
       method: "POST",
-      headers: authHeaders,
+      headers,
       body,
     });
-    const json = await res.json();
+    const json = await res.json().catch(() => ({}));
     if (!res.ok || !json.url) {
-      throw new Error(json.error || "Upload failed");
+      throw new Error(json.error || `فشل رفع الصورة (HTTP ${res.status})`);
     }
     sessionUploadedUrlsRef.current.push(json.url);
     return json.url as string;
@@ -219,7 +242,9 @@ export default function ProjectEditorModal({
       }
       onNotify("success", isRtl ? "تم رفع صورة الغلاف بنجاح" : "Cover image uploaded");
     } catch (err: any) {
-      onNotify("error", err?.message || "Cover upload error");
+      const msg = err?.message || "Cover upload error";
+      setValidationError(msg);
+      onNotify("error", msg);
     } finally {
       setUploadingCover(false);
     }
@@ -230,7 +255,9 @@ export default function ProjectEditorModal({
     if (fileList.length === 0) return;
 
     setGalleryUploadProgress({ done: 0, total: fileList.length });
+    setValidationError(null);
     const uploaded: ProjectMediaItem[] = [];
+    const errors: string[] = [];
 
     for (let i = 0; i < fileList.length; i++) {
       try {
@@ -243,9 +270,15 @@ export default function ProjectEditorModal({
           sort_order: form.media.length + uploaded.length,
         });
       } catch (err: any) {
-        onNotify("error", err?.message || `Failed to upload ${fileList[i].name}`);
+        errors.push(err?.message || `Failed to upload ${fileList[i].name}`);
       }
       setGalleryUploadProgress({ done: i + 1, total: fileList.length });
+    }
+
+    if (errors.length > 0) {
+      const errorMsg = errors.join(" | ");
+      setValidationError(errorMsg);
+      onNotify("error", errorMsg);
     }
 
     if (uploaded.length > 0) {
@@ -714,9 +747,13 @@ export default function ProjectEditorModal({
                     <span>{isRtl ? "تغيير الغلاف" : "Replace Cover"}</span>
                     <input
                       type="file"
-                      accept="image/jpeg,image/png,image/webp"
+                      accept="image/png,image/jpeg,image/webp,image/jpg,.png,.jpg,.jpeg,.webp"
                       className="hidden"
-                      onChange={(e) => handleCoverUpload(e.target.files?.[0])}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        e.target.value = "";
+                        handleCoverUpload(file);
+                      }}
                     />
                   </label>
                   <button
@@ -767,9 +804,13 @@ export default function ProjectEditorModal({
                 </span>
                 <input
                   type="file"
-                  accept="image/jpeg,image/png,image/webp"
+                  accept="image/png,image/jpeg,image/webp,image/jpg,.png,.jpg,.jpeg,.webp"
                   className="hidden"
-                  onChange={(e) => handleCoverUpload(e.target.files?.[0])}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = "";
+                    handleCoverUpload(file);
+                  }}
                 />
               </label>
             )}
@@ -799,9 +840,15 @@ export default function ProjectEditorModal({
                 <input
                   type="file"
                   multiple
-                  accept="image/jpeg,image/png,image/webp"
+                  accept="image/png,image/jpeg,image/webp,image/jpg,.png,.jpg,.jpeg,.webp"
                   className="hidden"
-                  onChange={(e) => e.target.files && handleGalleryFilesUpload(e.target.files)}
+                  onChange={(e) => {
+                    const files = e.target.files;
+                    if (files && files.length > 0) {
+                      handleGalleryFilesUpload(files);
+                    }
+                    e.target.value = "";
+                  }}
                 />
               </label>
             </div>

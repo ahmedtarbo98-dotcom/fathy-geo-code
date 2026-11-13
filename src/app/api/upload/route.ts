@@ -24,6 +24,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
+    const rawExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
+    const safeExt = rawExt.replace(/[^a-z0-9]/g, "") || "jpg";
+    const isAllowedExt = ["jpg", "jpeg", "png", "webp"].includes(safeExt);
+
     if (bucket === PROJECT_IMAGE_BUCKET) {
       if (file.size > PROJECT_IMAGE_MAX_BYTES) {
         return NextResponse.json(
@@ -32,7 +36,11 @@ export async function POST(request: Request) {
         );
       }
       const normalizedType = (file.type || "").toLowerCase();
-      if (!PROJECT_IMAGE_MIME_TYPES.includes(normalizedType)) {
+      const isAllowedMime =
+        PROJECT_IMAGE_MIME_TYPES.includes(normalizedType) ||
+        normalizedType.startsWith("image/");
+
+      if (!isAllowedExt && !isAllowedMime) {
         return NextResponse.json(
           { error: "Only JPG, PNG, and WebP images are allowed." },
           { status: 400 }
@@ -45,16 +53,10 @@ export async function POST(request: Request) {
     if (!bucketData || bucketCheckErr) {
       await adminClient.storage.createBucket(bucket, {
         public: true,
-        fileSizeLimit: bucket === PROJECT_IMAGE_BUCKET ? PROJECT_IMAGE_MAX_BYTES : 5242880,
-        allowedMimeTypes:
-          bucket === PROJECT_IMAGE_BUCKET
-            ? PROJECT_IMAGE_MIME_TYPES
-            : ["image/jpeg", "image/png", "image/webp", "image/jpg", "image/svg+xml"],
+        fileSizeLimit: 10485760, // 10 MB
       });
     }
 
-    const rawExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
-    const safeExt = rawExt.replace(/[^a-z0-9]/g, "") || "jpg";
     const cleanFileName = `${folder}/${Date.now()}-${Math.random()
       .toString(36)
       .substring(2, 9)}.${safeExt}`;
@@ -62,10 +64,21 @@ export async function POST(request: Request) {
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
+    const mimeByExt: Record<string, string> = {
+      png: "image/png",
+      jpg: "image/jpeg",
+      jpeg: "image/jpeg",
+      webp: "image/webp",
+    };
+    const contentType =
+      file.type && file.type !== "application/octet-stream" && file.type.startsWith("image/")
+        ? file.type
+        : mimeByExt[safeExt] || "image/png";
+
     const { error: uploadError } = await adminClient.storage
       .from(bucket)
       .upload(cleanFileName, buffer, {
-        contentType: file.type || "image/jpeg",
+        contentType,
         upsert: true,
       });
 

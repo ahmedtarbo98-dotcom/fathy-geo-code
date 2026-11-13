@@ -562,6 +562,26 @@ export default function AdminProjectsPage() {
           </div>
         </div>
       )}
+
+      {/* Floating Toast Notification */}
+      {toast && (
+        <div
+          className={`fixed bottom-6 ${
+            isRtl ? "left-6" : "right-6"
+          } z-50 flex items-center gap-2.5 px-4 py-3 rounded-2xl shadow-2xl text-xs font-bold border backdrop-blur-md transition-all animate-in fade-in slide-in-from-bottom-5 ${
+            toast.type === "success"
+              ? "bg-emerald-600/95 text-white border-emerald-500 shadow-emerald-500/20"
+              : "bg-red-600/95 text-white border-red-500 shadow-red-500/20"
+          }`}
+        >
+          {toast.type === "success" ? (
+            <CheckCircle2 className="w-4 h-4 shrink-0" />
+          ) : (
+            <AlertCircle className="w-4 h-4 shrink-0" />
+          )}
+          <span>{toast.msg}</span>
+        </div>
+      )}
     </div>
   );
 }
