@@ -325,7 +325,7 @@ export default function AdminSettingsPage({
               bucket="platform-assets"
               folder="branding"
               locale={locale}
-              maxSizeMB={2}
+              maxSizeMB={5}
             />
           </div>
 

@@ -20,7 +20,7 @@ export default function ImageUpload({
   bucket = "course-images",
   folder = "thumbnails",
   locale = "ar",
-  maxSizeMB = 2,
+  maxSizeMB = 5,
 }: ImageUploadProps) {
   const isRtl = locale === "ar";
   const [isDragging, setIsDragging] = useState(false);
@@ -31,9 +31,16 @@ export default function ImageUpload({
   const handleFile = async (file: File) => {
     setError(null);
 
-    // Validate type: jpg, png, webp
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/jpg"];
-    if (!allowedTypes.includes(file.type)) {
+    // Validate type: jpg, png, webp (by extension and MIME)
+    const ext = file.name.split(".").pop()?.toLowerCase() || "";
+    const isAllowedExt = ["jpg", "jpeg", "png", "webp"].includes(ext);
+    const mime = (file.type || "").toLowerCase();
+    const isAllowedMime =
+      !mime ||
+      ["image/jpeg", "image/png", "image/webp", "image/jpg", "image/x-png", "image/pjpeg"].includes(mime) ||
+      mime.startsWith("image/");
+
+    if (!isAllowedExt && !isAllowedMime) {
       setError(
         isRtl
           ? "يرجى اختيار صورة بصيغة JPG أو PNG أو WebP فقط."
@@ -42,7 +49,7 @@ export default function ImageUpload({
       return;
     }
 
-    // Validate size (max 2 MB)
+    // Validate size (maxSizeMB)
     const maxBytes = maxSizeMB * 1024 * 1024;
     if (file.size > maxBytes) {
       setError(
@@ -123,6 +130,7 @@ export default function ImageUpload({
     if (e.target.files && e.target.files[0]) {
       handleFile(e.target.files[0]);
     }
+    e.target.value = "";
   };
 
   const handleRemove = () => {
@@ -137,7 +145,7 @@ export default function ImageUpload({
       <input
         ref={fileInputRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp"
+        accept="image/png,image/jpeg,image/webp,image/jpg,.png,.jpg,.jpeg,.webp"
         onChange={onInputChange}
         className="hidden"
       />

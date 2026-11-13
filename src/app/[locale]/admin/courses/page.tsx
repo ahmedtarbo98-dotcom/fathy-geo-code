@@ -523,7 +523,7 @@ export default function AdminCoursesPage({
                   bucket="course-images"
                   folder="courses"
                   locale={locale}
-                  maxSizeMB={2}
+                  maxSizeMB={5}
                 />
               </div>
 

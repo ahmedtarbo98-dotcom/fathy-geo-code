@@ -26,26 +26,27 @@ export async function POST(request: Request) {
 
     const rawExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
     const safeExt = rawExt.replace(/[^a-z0-9]/g, "") || "jpg";
-    const isAllowedExt = ["jpg", "jpeg", "png", "webp"].includes(safeExt);
+    const isAllowedExt = ["jpg", "jpeg", "png", "webp", "svg"].includes(safeExt);
 
-    if (bucket === PROJECT_IMAGE_BUCKET) {
-      if (file.size > PROJECT_IMAGE_MAX_BYTES) {
-        return NextResponse.json(
-          { error: "Image exceeds 5 MB maximum size limit." },
-          { status: 400 }
-        );
-      }
-      const normalizedType = (file.type || "").toLowerCase();
-      const isAllowedMime =
-        PROJECT_IMAGE_MIME_TYPES.includes(normalizedType) ||
-        normalizedType.startsWith("image/");
+    const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
+    if (file.size > MAX_IMAGE_BYTES) {
+      return NextResponse.json(
+        { error: "Image exceeds 5 MB maximum size limit." },
+        { status: 400 }
+      );
+    }
 
-      if (!isAllowedExt && !isAllowedMime) {
-        return NextResponse.json(
-          { error: "Only JPG, PNG, and WebP images are allowed." },
-          { status: 400 }
-        );
-      }
+    const normalizedType = (file.type || "").toLowerCase();
+    const isAllowedMime =
+      PROJECT_IMAGE_MIME_TYPES.includes(normalizedType) ||
+      normalizedType === "image/svg+xml" ||
+      normalizedType.startsWith("image/");
+
+    if (!isAllowedExt && !isAllowedMime) {
+      return NextResponse.json(
+        { error: "Only JPG, PNG, and WebP images are allowed." },
+        { status: 400 }
+      );
     }
 
     const { data: bucketData, error: bucketCheckErr } =
