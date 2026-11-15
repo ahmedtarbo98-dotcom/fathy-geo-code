@@ -1,83 +1,44 @@
 import { NextResponse } from "next/server";
-import { revalidatePath, revalidateTag } from "next/cache";
+import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
 
+/**
+ * Secure profile sync endpoint: Only allows authenticated users to sync their own profile data
+ */
 export async function POST(request: Request) {
   try {
-    const { email, fullName, userId } = await request.json();
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
-    if (!email) {
-      return NextResponse.json({ error: "Email is required" }, { status: 400 });
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const cleanEmail = String(email).trim().toLowerCase();
-    const cleanName = String(fullName || cleanEmail.split("@")[0]).trim();
+    const { fullName } = await request.json().catch(() => ({}));
+    const cleanName = typeof fullName === "string" ? fullName.trim().slice(0, 100) : "";
 
     const adminClient = createAdminClient();
 
-    // Check if auth user exists
-    let targetUserId = userId;
-    if (!targetUserId) {
-      const { data: usersData } = await adminClient.auth.admin.listUsers();
-      const matched = usersData?.users?.find(
-        (u) => u.email?.toLowerCase() === cleanEmail
-      );
-      if (matched) targetUserId = matched.id;
+    // Prevent any role modification - role is controlled exclusively by database triggers/admin
+    const updateData: Record<string, any> = {
+      updated_at: new Date().toISOString(),
+    };
+    if (cleanName) {
+      updateData.full_name = cleanName;
     }
 
-    if (targetUserId) {
-      const { data: existingRoleRow } = await adminClient
-        .from("profiles")
-        .select("role")
-        .eq("id", targetUserId)
-        .maybeSingle();
-      const role =
-        existingRoleRow?.role === "admin" || cleanEmail === "ahmedtarbo98@gmail.com"
-          ? "admin"
-          : "student";
-
-      await adminClient.from("profiles").upsert(
-        {
-          id: targetUserId,
-          full_name: cleanName,
-          email: cleanEmail,
-          role,
-          language: "ar",
-        },
-        { onConflict: "id" }
-      );
-    } else {
-      // Check if profile exists by email
-      const { data: prof } = await adminClient
-        .from("profiles")
-        .select("id")
-        .ilike("email", cleanEmail)
-        .maybeSingle();
-
-      if (!prof) {
-        await adminClient.from("profiles").insert({
-          id: crypto.randomUUID(),
-          full_name: cleanName,
-          email: cleanEmail,
-          role: "student",
-          language: "ar",
-        });
-      }
-    }
-
-    try {
-      revalidateTag("public-stats");
-      revalidatePath("/ar");
-      revalidatePath("/en");
-    } catch {
-      // Ignore cache revalidation error
-    }
+    await adminClient
+      .from("profiles")
+      .update(updateData)
+      .eq("id", user.id);
 
     return NextResponse.json({ success: true });
   } catch (err: any) {
     console.error("Sync profile error:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

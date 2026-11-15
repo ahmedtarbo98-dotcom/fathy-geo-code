@@ -1,64 +1,73 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { checkRateLimit, getClientIp } from "@/lib/security/rate-limit";
+import { verifyTurnstileToken } from "@/lib/security/turnstile";
+import { enrollmentRequestSchema, sanitizeText } from "@/lib/security/validation";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { courseId, fullName, email, phone, notes } = body;
+    const clientIp = getClientIp(request);
 
-    if (!courseId || !email) {
+    // 1. IP rate limiting: 5 enrollment requests per 10 minutes
+    const rateCheck = await checkRateLimit(`enroll-req:${clientIp}`, 5, 10 * 60);
+    if (!rateCheck.success) {
       return NextResponse.json(
-        { error: "Course ID and email are required" },
+        { error: "Too many requests. Please wait a few minutes before submitting again." },
+        { status: 429, headers: { "Retry-After": "600" } }
+      );
+    }
+
+    // 2. Validate input schema
+    const rawBody = await request.json().catch(() => ({}));
+    const parseResult = enrollmentRequestSchema.safeParse(rawBody);
+
+    if (!parseResult.success) {
+      const issue = parseResult.error.issues[0]?.message || "Invalid submission data";
+      return NextResponse.json({ error: issue }, { status: 400 });
+    }
+
+    const { courseId, fullName, email, phone, notes, turnstileToken } = parseResult.data;
+
+    // 3. Cloudflare Turnstile verification
+    const turnstileCheck = await verifyTurnstileToken(turnstileToken, clientIp);
+    if (!turnstileCheck.success) {
+      return NextResponse.json(
+        { error: turnstileCheck.error || "Turnstile verification failed" },
         { status: 400 }
       );
     }
 
-    const cleanEmail = String(email).trim().toLowerCase();
-    const cleanName = String(fullName || cleanEmail.split("@")[0]).trim();
-    const cleanPhone = phone ? String(phone).trim() : null;
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanName = sanitizeText(fullName);
+    const cleanPhone = phone ? sanitizeText(phone) : null;
+    const cleanNotes = notes ? sanitizeText(notes) : null;
 
     const adminClient = createAdminClient();
 
-    // 1. Check if course exists
+    // 4. Verify course exists and is published
     const { data: course, error: cErr } = await adminClient
       .from("courses")
-      .select("id, title_ar, title_en, price, currency")
+      .select("id, title_ar, title_en, price, currency, is_free, status")
       .eq("id", courseId)
       .maybeSingle();
 
-    if (cErr || !course) {
-      return NextResponse.json(
-        { error: "Course not found" },
-        { status: 404 }
-      );
+    if (cErr || !course || course.status !== "published") {
+      return NextResponse.json({ error: "Course not found or inactive" }, { status: 404 });
     }
 
-    // 2. Resolve or create user profile in public.profiles
-    let targetUserId: string | null = null;
+    // 5. Check if user is already logged in
+    const supabase = createClient();
+    const {
+      data: { user: currentUser },
+    } = await supabase.auth.getUser();
 
-    // Check in auth.users first
-    const { data: usersData } = await adminClient.auth.admin.listUsers();
-    const matchedAuthUser = usersData?.users?.find(
-      (u) => u.email?.toLowerCase() === cleanEmail
-    );
+    let targetUserId = currentUser?.id;
 
-    if (matchedAuthUser) {
-      targetUserId = matchedAuthUser.id;
-      // Ensure profile exists
-      await adminClient.from("profiles").upsert(
-        {
-          id: matchedAuthUser.id,
-          full_name: cleanName || matchedAuthUser.user_metadata?.full_name || "طالب جديد",
-          email: cleanEmail,
-          phone: cleanPhone,
-          role: "student",
-        },
-        { onConflict: "id" }
-      );
-    } else {
-      // Check in public.profiles
+    if (!targetUserId) {
+      // Find existing profile by email or create a new student record
       const { data: existingProfile } = await adminClient
         .from("profiles")
         .select("id")
@@ -68,9 +77,8 @@ export async function POST(request: Request) {
       if (existingProfile?.id) {
         targetUserId = existingProfile.id;
       } else {
-        // Create new profile record with generated UUID
         const newId = crypto.randomUUID();
-        const { error: insProfErr } = await adminClient.from("profiles").insert({
+        const { error: insErr } = await adminClient.from("profiles").insert({
           id: newId,
           full_name: cleanName,
           email: cleanEmail,
@@ -79,7 +87,7 @@ export async function POST(request: Request) {
           language: "ar",
         });
 
-        if (!insProfErr) {
+        if (!insErr) {
           targetUserId = newId;
         }
       }
@@ -87,41 +95,60 @@ export async function POST(request: Request) {
 
     if (!targetUserId) {
       return NextResponse.json(
-        { error: "Could not create or resolve student profile" },
+        { error: "Could not associate student account." },
         { status: 500 }
       );
     }
 
-    // 3. Insert into enrollment_requests
+    // 6. Check for duplicate pending request
+    const { data: existingPending } = await adminClient
+      .from("enrollment_requests")
+      .select("id")
+      .eq("course_id", course.id)
+      .eq("user_id", targetUserId)
+      .eq("status", "pending")
+      .maybeSingle();
+
+    if (existingPending) {
+      return NextResponse.json(
+        {
+          error: "طلب الانضمام لهذه الدورة قيد المراجعة بالفعل من قبل الإدارة.",
+          code: "DUPLICATE_PENDING",
+        },
+        { status: 409 }
+      );
+    }
+
+    // 7. Insert enrollment request
     const { data: newRequest, error: reqErr } = await adminClient
       .from("enrollment_requests")
       .insert({
         user_id: targetUserId,
         course_id: course.id,
-        full_name: cleanName,
-        email: cleanEmail,
-        phone: cleanPhone,
         status: "pending",
-        notes: notes || `طلب اشتراك في دورة: ${course.title_ar} (${course.price} ${course.currency})`,
-        created_at: new Date().toISOString(),
+        phone: cleanPhone,
+        notes: cleanNotes,
       })
       .select()
       .single();
 
     if (reqErr) {
-      console.error("Insert enrollment_requests error:", reqErr);
-      throw reqErr;
+      console.error("Enrollment request insert error:", reqErr);
+      return NextResponse.json(
+        { error: "Failed to submit request. Please try again." },
+        { status: 500 }
+      );
     }
 
     return NextResponse.json({
       success: true,
-      request: newRequest,
-      message: "تم حفظ طلب الاشتراك بنجاح وفي انتظار مراجعة وتفعيل الإدارة",
+      requestId: newRequest.id,
+      courseTitle: course.title_ar,
     });
   } catch (err: any) {
-    console.error("enroll-request API error:", err);
+    console.error("Enroll request API error:", err);
     return NextResponse.json(
-      { error: err.message || "Failed to submit enrollment request" },
+      { error: "Internal server error." },
       { status: 500 }
     );
   }

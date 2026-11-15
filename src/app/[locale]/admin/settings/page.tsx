@@ -8,6 +8,9 @@ import { getYouTubeThumbnails } from "@/lib/youtube";
 import {
   Settings,
   ShieldAlert,
+  ShieldCheck,
+  KeyRound,
+  QrCode,
   Save,
   CheckCircle2,
   Users,
@@ -70,6 +73,110 @@ export default function AdminSettingsPage({
       thumbnail_url?: string;
     }[]
   >([]);
+
+  // MFA (TOTP 2FA) state
+  const [mfaFactors, setMfaFactors] = useState<any[]>([]);
+  const [mfaLoading, setMfaLoading] = useState(false);
+  const [enrollingFactor, setEnrollingFactor] = useState<{ id: string; qrCode: string; secret: string } | null>(null);
+  const [totpCode, setTotpCode] = useState("");
+  const [mfaMsg, setMfaMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+  // Load existing settings and MFA factors
+  useEffect(() => {
+    async function checkMfaFactors() {
+      try {
+        const { data } = await supabase.auth.mfa.listFactors();
+        if (data?.totp) {
+          setMfaFactors(data.totp.filter((f: any) => f.status === "verified"));
+        }
+      } catch {}
+    }
+    checkMfaFactors();
+  }, [supabase]);
+
+  const handleStartMfaEnroll = async () => {
+    setMfaLoading(true);
+    setMfaMsg(null);
+    try {
+      const { data, error } = await supabase.auth.mfa.enroll({
+        factorType: "totp",
+        issuer: "FATHY GEO CODE",
+      });
+      if (error) throw error;
+      if (data?.totp) {
+        setEnrollingFactor({
+          id: data.id,
+          qrCode: data.totp.qr_code,
+          secret: data.totp.secret,
+        });
+      }
+    } catch (err: any) {
+      setMfaMsg({ type: "error", text: err.message || "Failed to start MFA enrollment" });
+    } finally {
+      setMfaLoading(false);
+    }
+  };
+
+  const handleVerifyMfa = async () => {
+    if (!enrollingFactor || !totpCode) return;
+    setMfaLoading(true);
+    setMfaMsg(null);
+    try {
+      const { data: challenge, error: chErr } = await supabase.auth.mfa.challenge({
+        factorId: enrollingFactor.id,
+      });
+      if (chErr) throw chErr;
+
+      const { error: vErr } = await supabase.auth.mfa.verify({
+        factorId: enrollingFactor.id,
+        challengeId: challenge.id,
+        code: totpCode.trim(),
+      });
+      if (vErr) throw vErr;
+
+      setMfaMsg({
+        type: "success",
+        text: isRtl
+          ? "تم تفعيل المصادقة الثنائية (TOTP 2FA) بنجاح لحساب الإدارة!"
+          : "Two-Factor Authentication (TOTP 2FA) has been successfully activated!",
+      });
+      setEnrollingFactor(null);
+      setTotpCode("");
+      const { data } = await supabase.auth.mfa.listFactors();
+      if (data?.totp) setMfaFactors(data.totp.filter((f: any) => f.status === "verified"));
+    } catch (err: any) {
+      setMfaMsg({ type: "error", text: err.message || "Invalid verification code" });
+    } finally {
+      setMfaLoading(false);
+    }
+  };
+
+  const handleDisableMfa = async (factorId: string) => {
+    if (
+      !confirm(
+        isRtl
+          ? "هل أنت متأكد من رغبتك في إلغاء تفعيل المصادقة الثنائية؟"
+          : "Are you sure you want to disable two-factor authentication?"
+      )
+    )
+      return;
+    setMfaLoading(true);
+    setMfaMsg(null);
+    try {
+      const { error } = await supabase.auth.mfa.unenroll({ factorId });
+      if (error) throw error;
+      setMfaMsg({
+        type: "success",
+        text: isRtl ? "تم إلغاء تفعيل المصادقة الثنائية." : "Two-factor authentication disabled.",
+      });
+      const { data } = await supabase.auth.mfa.listFactors();
+      setMfaFactors(data?.totp?.filter((f: any) => f.status === "verified") || []);
+    } catch (err: any) {
+      setMfaMsg({ type: "error", text: err.message || "Failed to disable MFA" });
+    } finally {
+      setMfaLoading(false);
+    }
+  };
 
   // Load existing settings
   useEffect(() => {
@@ -531,6 +638,122 @@ export default function AdminSettingsPage({
                   : "Pause video automatically when browser tab is inactive"}
               </label>
             </div>
+          </div>
+
+          {/* Admin Two-Factor Authentication (MFA / TOTP) */}
+          <div className="pt-4 border-t border-border/60 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <h3 className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <KeyRound className="w-4 h-4 text-brand-cyan" />
+                  <span>{isRtl ? "المصادقة الثنائية لحساب المدير (TOTP 2FA)" : "Admin Two-Factor Auth (TOTP 2FA)"}</span>
+                </h3>
+                <p className="text-[11px] text-muted-foreground">
+                  {isRtl
+                    ? "تأمين حساب المدير برمز تحقق إضافي عبر Google Authenticator أو 1Password."
+                    : "Protect admin access with Google Authenticator or any TOTP authenticator app."}
+                </p>
+              </div>
+
+              {mfaFactors.length > 0 ? (
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
+                    <ShieldCheck className="w-3.5 h-3.5" />
+                    <span>{isRtl ? "مفعّلة" : "Active"}</span>
+                  </span>
+                  <button
+                    type="button"
+                    disabled={mfaLoading}
+                    onClick={() => handleDisableMfa(mfaFactors[0].id)}
+                    className="text-[11px] text-red-500 hover:underline font-bold disabled:opacity-50"
+                  >
+                    {isRtl ? "إلغاء التفعيل" : "Disable"}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  disabled={mfaLoading || !!enrollingFactor}
+                  onClick={handleStartMfaEnroll}
+                  className="px-3 py-1.5 rounded-xl bg-brand-cyan/15 hover:bg-brand-cyan/25 text-brand-cyan border border-brand-cyan/30 text-xs font-bold flex items-center gap-1.5 transition-colors disabled:opacity-50"
+                >
+                  <QrCode className="w-3.5 h-3.5" />
+                  <span>{mfaLoading ? (isRtl ? "جارٍ الإعداد..." : "Setting up...") : (isRtl ? "تفعيل 2FA الآن" : "Enable 2FA")}</span>
+                </button>
+              )}
+            </div>
+
+            {mfaMsg && (
+              <div
+                className={`p-2.5 rounded-xl text-xs font-medium ${
+                  mfaMsg.type === "success"
+                    ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20"
+                    : "bg-red-500/10 text-red-500 border border-red-500/20"
+                }`}
+              >
+                {mfaMsg.text}
+              </div>
+            )}
+
+            {enrollingFactor && (
+              <div className="p-4 rounded-2xl bg-card border border-brand-cyan/30 space-y-4">
+                <p className="text-xs font-semibold text-foreground">
+                  {isRtl
+                    ? "1. امسح رمز الـ QR التالي باستخدام تطبيق المصادقة في هاتفك (Google Authenticator / Authy):"
+                    : "1. Scan this QR code using your authenticator app (Google Authenticator / Authy):"}
+                </p>
+
+                <div className="flex flex-col sm:flex-row items-center gap-4 bg-white p-3 rounded-xl w-fit">
+                  {/* Render QR code */}
+                  <img
+                    src={enrollingFactor.qrCode}
+                    alt="TOTP QR Code"
+                    className="w-36 h-36"
+                  />
+                  <div className="text-slate-800 text-left space-y-1">
+                    <span className="text-[10px] text-slate-500 block">
+                      {isRtl ? "أو أدخل الرمز يدوياً:" : "Or enter secret manually:"}
+                    </span>
+                    <code className="text-xs font-mono font-bold bg-slate-100 p-1 rounded select-all block break-all">
+                      {enrollingFactor.secret}
+                    </code>
+                  </div>
+                </div>
+
+                <div className="space-y-1 max-w-xs">
+                  <label className="text-xs font-semibold text-foreground block">
+                    {isRtl
+                      ? "2. أدخل الرمز المكون من 6 أرقام للتحقق والتفعيل:"
+                      : "2. Enter the 6-digit verification code:"}
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      maxLength={6}
+                      placeholder="123456"
+                      value={totpCode}
+                      onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ""))}
+                      className="px-3 py-1.5 rounded-xl border border-border bg-background text-sm font-mono tracking-widest text-center w-32"
+                    />
+                    <button
+                      type="button"
+                      disabled={totpCode.length !== 6 || mfaLoading}
+                      onClick={handleVerifyMfa}
+                      className="px-4 py-1.5 rounded-xl bg-brand-cyan text-brand-navy font-bold text-xs hover:brightness-110 disabled:opacity-40 transition-all"
+                    >
+                      {mfaLoading ? (isRtl ? "جارٍ التحقق..." : "Verifying...") : (isRtl ? "تأكيد وتفعيل" : "Confirm & Enable")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEnrollingFactor(null)}
+                      className="text-xs text-muted-foreground hover:underline"
+                    >
+                      {isRtl ? "إلغاء" : "Cancel"}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

@@ -50,11 +50,11 @@ export default function RegisterPage({
       return;
     }
 
-    if (password.length < 6) {
+    if (password.length < 8 || !/[A-Z0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
       setError(
         locale === "ar"
-          ? "يجب أن تتكون كلمة المرور من 6 أحرف على الأقل"
-          : "Password must be at least 6 characters"
+          ? "يجب أن تتكون كلمة المرور من 8 أحرف على الأقل، وتحتوي على رقم أو حرف كبير أو رمز خاص."
+          : "Password must be at least 8 characters and include an uppercase letter, number, or symbol."
       );
       return;
     }

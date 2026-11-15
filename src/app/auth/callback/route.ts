@@ -2,11 +2,13 @@ import { NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { isValidRedirectUrl } from "@/lib/security/validation";
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/ar/dashboard";
+  const rawNext = searchParams.get("next") ?? "/ar/dashboard";
+  const next = isValidRedirectUrl(rawNext) ? rawNext : "/ar/dashboard";
   const oauthError = searchParams.get("error_description") || searchParams.get("error");
   const locale = next.startsWith("/en") ? "en" : "ar";
 

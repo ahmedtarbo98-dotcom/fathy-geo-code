@@ -3,7 +3,7 @@ import { setRequestLocale } from "next-intl/server";
 import ProjectsGallery from "@/components/projects-gallery";
 import { getPublishedProjects } from "@/lib/projects-server";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 300;
 
 export async function generateMetadata({
   params: { locale },

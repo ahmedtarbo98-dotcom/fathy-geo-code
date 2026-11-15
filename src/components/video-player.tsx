@@ -45,6 +45,22 @@ export default function VideoPlayer({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const iframeContainerRef = useRef<HTMLDivElement | null>(null);
   const playerRef = useRef<any>(null);
+  const lastProgressReportRef = useRef<number>(0);
+
+  // Throttled progress reporter (every 20s or forced on pause/stop)
+  const reportProgress = useCallback((force: boolean = false) => {
+    if (!playerRef.current || !onProgress) return;
+    try {
+      const curr = playerRef.current.getCurrentTime() || 0;
+      const dur = playerRef.current.getDuration() || 0;
+      if (dur <= 0) return;
+      const now = Date.now();
+      if (force || now - lastProgressReportRef.current >= 20000) {
+        lastProgressReportRef.current = now;
+        onProgress((curr / dur) * 100);
+      }
+    } catch {}
+  }, [onProgress]);
 
   // Watermark and visibility state
   const [watermarkPos, setWatermarkPos] = useState({ top: "25%", left: "30%" });
@@ -123,8 +139,10 @@ export default function VideoPlayer({
               setIsPlaying(true);
             } else if (event.data === 2) {
               setIsPlaying(false);
+              reportProgress(true);
             } else if (event.data === 0) {
               setIsPlaying(false);
+              reportProgress(true);
               if (onComplete) onComplete();
             }
           },
@@ -152,9 +170,7 @@ export default function VideoPlayer({
           const dur = playerRef.current.getDuration() || 0;
           setCurrentTime(curr);
           if (dur > 0 && dur !== duration) setDuration(dur);
-          if (dur > 0 && onProgress) {
-            onProgress((curr / dur) * 100);
-          }
+          reportProgress(false);
         } catch {}
       }
     }, 500);

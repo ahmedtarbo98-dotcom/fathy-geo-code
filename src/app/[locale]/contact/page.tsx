@@ -43,20 +43,22 @@ export default function ContactPage({
     setSuccess(false);
 
     try {
-      const supabase = createClient();
-      const { error: insertError } = await supabase.from("contact_messages").insert([
-        {
-          name,
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fullName: name,
           email,
           phone,
           subject,
           message,
-        },
-      ]);
+        }),
+      });
 
-      if (insertError) {
-        // Fallback: If database is unreachable in demo mode, treat as successful for user UX
-        console.warn("Contact submission logged (demo fallback):", insertError.message);
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data?.error || (isRtl ? "فشل إرسال الرسالة، يرجى المحاولة لاحقاً" : "Failed to send message"));
       }
 
       setSuccess(true);
@@ -66,7 +68,7 @@ export default function ContactPage({
       setSubject("");
       setMessage("");
     } catch (err: any) {
-      setError(err?.message || "Failed to send message. Please try WhatsApp directly.");
+      setError(err?.message || (isRtl ? "تعذر إرسال الرسالة، يمكنك التواصل مباشرة عبر واتساب" : "Failed to send message. Please try WhatsApp directly."));
     } finally {
       setLoading(false);
     }

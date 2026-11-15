@@ -82,7 +82,7 @@ export async function GET(request: Request) {
           .select("id, status")
           .eq("course_id", courseId)
           .eq("status", "pending")
-          .or(`user_id.in.(${userIds.join(",")}),email.ilike.${user.email || "none"}`)
+          .in("user_id", userIds)
           .limit(1);
 
         if (reqs && reqs.length > 0) {

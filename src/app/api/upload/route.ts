@@ -9,6 +9,15 @@ import {
 
 export const dynamic = "force-dynamic";
 
+const ALLOWED_BUCKETS = new Set(["course-images", "platform-assets", "project-media"]);
+const ALLOWED_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp"]);
+const ALLOWED_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+]);
+
 export async function POST(request: Request) {
   try {
     const auth = await requireAdminRequest(request);
@@ -17,18 +26,43 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
-    const bucket = (formData.get("bucket") as string) || "course-images";
-    const folder = (formData.get("folder") as string) || "thumbnails";
+    const rawBucket = (formData.get("bucket") as string) || "course-images";
+    const rawFolder = (formData.get("folder") as string) || "thumbnails";
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    const rawExt = file.name.split(".").pop()?.toLowerCase() || "jpg";
-    const safeExt = rawExt.replace(/[^a-z0-9]/g, "") || "jpg";
-    const isAllowedExt = ["jpg", "jpeg", "png", "webp", "svg"].includes(safeExt);
+    // 1. Whitelist bucket
+    const bucket = rawBucket.trim().toLowerCase();
+    if (!ALLOWED_BUCKETS.has(bucket)) {
+      return NextResponse.json({ error: "Target storage bucket not allowed" }, { status: 403 });
+    }
 
-    const MAX_IMAGE_BYTES = 5 * 1024 * 1024; // 5 MB
+    // 2. Sanitize folder path (prevent directory traversal)
+    const folder = rawFolder.replace(/[^a-zA-Z0-9_-]/g, "") || "uploads";
+
+    // 3. Strict extension and MIME validation
+    const rawExt = file.name.split(".").pop()?.toLowerCase() || "";
+    const safeExt = rawExt.replace(/[^a-z0-9]/g, "");
+
+    if (!ALLOWED_EXTENSIONS.has(safeExt)) {
+      return NextResponse.json(
+        { error: "Invalid file extension. Only JPG, PNG, and WebP are allowed." },
+        { status: 400 }
+      );
+    }
+
+    const normalizedType = (file.type || "").toLowerCase();
+    if (!ALLOWED_MIME_TYPES.has(normalizedType)) {
+      return NextResponse.json(
+        { error: "Invalid file MIME type. Only JPG, PNG, and WebP are allowed." },
+        { status: 400 }
+      );
+    }
+
+    // 4. File size limit check (5 MB)
+    const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
     if (file.size > MAX_IMAGE_BYTES) {
       return NextResponse.json(
         { error: "Image exceeds 5 MB maximum size limit." },
@@ -36,51 +70,28 @@ export async function POST(request: Request) {
       );
     }
 
-    const normalizedType = (file.type || "").toLowerCase();
-    const isAllowedMime =
-      PROJECT_IMAGE_MIME_TYPES.includes(normalizedType) ||
-      normalizedType === "image/svg+xml" ||
-      normalizedType.startsWith("image/");
-
-    if (!isAllowedExt && !isAllowedMime) {
-      return NextResponse.json(
-        { error: "Only JPG, PNG, and WebP images are allowed." },
-        { status: 400 }
-      );
-    }
-
+    // 5. Ensure bucket exists
     const { data: bucketData, error: bucketCheckErr } =
       await adminClient.storage.getBucket(bucket);
     if (!bucketData || bucketCheckErr) {
       await adminClient.storage.createBucket(bucket, {
         public: true,
-        fileSizeLimit: 10485760, // 10 MB
+        fileSizeLimit: 5242880, // 5 MB
       });
     }
 
-    const cleanFileName = `${folder}/${Date.now()}-${Math.random()
-      .toString(36)
-      .substring(2, 9)}.${safeExt}`;
+    // 6. Generate cryptographically random clean file name
+    const randomHex = crypto.randomUUID().replace(/-/g, "");
+    const cleanFileName = `${folder}/${Date.now()}-${randomHex}.${safeExt}`;
 
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    const mimeByExt: Record<string, string> = {
-      png: "image/png",
-      jpg: "image/jpeg",
-      jpeg: "image/jpeg",
-      webp: "image/webp",
-    };
-    const contentType =
-      file.type && file.type !== "application/octet-stream" && file.type.startsWith("image/")
-        ? file.type
-        : mimeByExt[safeExt] || "image/png";
-
     const { error: uploadError } = await adminClient.storage
       .from(bucket)
       .upload(cleanFileName, buffer, {
-        contentType,
-        upsert: true,
+        contentType: normalizedType,
+        upsert: false,
       });
 
     if (uploadError) throw uploadError;
@@ -97,7 +108,7 @@ export async function POST(request: Request) {
   } catch (err: any) {
     console.error("API upload error:", err);
     return NextResponse.json(
-      { error: err?.message || "Failed to upload file to storage" },
+      { error: "Failed to upload file to storage." },
       { status: 500 }
     );
   }
@@ -109,23 +120,30 @@ export async function DELETE(request: Request) {
     if (!auth.ok) return auth.response;
     const { adminClient } = auth;
 
-    const url = new URL(request.url);
-    const fileUrl = url.searchParams.get("url");
-    const bucket = url.searchParams.get("bucket") || PROJECT_IMAGE_BUCKET;
+    const { searchParams } = new URL(request.url);
+    const path = searchParams.get("path");
+    const rawBucket = searchParams.get("bucket") || "course-images";
 
-    const path = extractStoragePathFromUrl(fileUrl, bucket);
     if (!path) {
-      return NextResponse.json({ success: true, skipped: true });
+      return NextResponse.json({ error: "Missing file path" }, { status: 400 });
     }
 
-    const { error } = await adminClient.storage.from(bucket).remove([path]);
+    const bucket = rawBucket.trim().toLowerCase();
+    if (!ALLOWED_BUCKETS.has(bucket)) {
+      return NextResponse.json({ error: "Invalid bucket" }, { status: 403 });
+    }
+
+    // Clean path to prevent traversing out
+    const cleanPath = path.replace(/\.\./g, "").trim();
+
+    const { error } = await adminClient.storage.from(bucket).remove([cleanPath]);
     if (error) throw error;
 
-    return NextResponse.json({ success: true, deletedPath: path });
+    return NextResponse.json({ success: true });
   } catch (err: any) {
-    console.error("API upload delete error:", err);
+    console.error("API file delete error:", err);
     return NextResponse.json(
-      { error: err?.message || "Failed to delete file from storage" },
+      { error: "Failed to delete file from storage." },
       { status: 500 }
     );
   }

@@ -1,50 +1,19 @@
 import { NextResponse } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
-import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAdminRequest } from "@/lib/admin-auth";
+import { logAdminAction } from "@/lib/security/audit-logger";
+import { getClientIp } from "@/lib/security/rate-limit";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
-    const supabase = createClient();
-    let {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const auth = await requireAdminRequest(request);
+    if (!auth.ok) return auth.response;
+    const { user: adminUser, adminClient } = auth;
+    const clientIp = getClientIp(request);
 
-    if (!user) {
-      const authHeader = request.headers.get("authorization");
-      if (authHeader && authHeader.startsWith("Bearer ")) {
-        const token = authHeader.substring(7);
-        const { data: tokenUser } = await supabase.auth.getUser(token);
-        user = tokenUser.user;
-      }
-    }
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Verify admin
-    const isAdmin =
-      user.email === "ahmedtarbo98@gmail.com" ||
-      user.email === process.env.ADMIN_EMAIL;
-
-    const adminClient = createAdminClient();
-
-    if (!isAdmin) {
-      const { data: profile } = await adminClient
-        .from("profiles")
-        .select("role, is_blocked")
-        .eq("id", user.id)
-        .single();
-
-      if (profile?.role !== "admin" || profile?.is_blocked) {
-        return NextResponse.json({ error: "Forbidden - Admin access required" }, { status: 403 });
-      }
-    }
-
-    const body = await request.json();
+    const body = await request.json().catch(() => ({}));
     const { platform_stats, instructor_profile, site_identity, youtube_featured_videos } = body;
 
     // 1. Update platform_stats
@@ -91,6 +60,16 @@ export async function POST(request: Request) {
       if (err4) throw err4;
     }
 
+    await logAdminAction({
+      adminId: adminUser.id,
+      action: "update_site_settings",
+      targetType: "site_settings",
+      details: {
+        keysUpdated: Object.keys(body).filter((k) => !!body[k]),
+      },
+      ipAddress: clientIp,
+    });
+
     try {
       revalidateTag("site-branding");
       revalidateTag("public-stats");
@@ -106,7 +85,7 @@ export async function POST(request: Request) {
   } catch (err: any) {
     console.error("Save settings API error:", err);
     return NextResponse.json(
-      { error: err.message || "Failed to save settings" },
+      { error: "Failed to save settings" },
       { status: 500 }
     );
   }

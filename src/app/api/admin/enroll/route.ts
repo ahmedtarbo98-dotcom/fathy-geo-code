@@ -1,52 +1,18 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
+import { requireAdminRequest } from "@/lib/admin-auth";
+import { logAdminAction } from "@/lib/security/audit-logger";
+import { getClientIp } from "@/lib/security/rate-limit";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   try {
-    const supabase = createClient();
-    let {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const auth = await requireAdminRequest(request);
+    if (!auth.ok) return auth.response;
+    const { user: adminUser, adminClient } = auth;
+    const clientIp = getClientIp(request);
 
-    if (!user) {
-      const authHeader = request.headers.get("authorization");
-      if (authHeader && authHeader.startsWith("Bearer ")) {
-        const token = authHeader.substring(7);
-        const { data: tokenUser } = await supabase.auth.getUser(token);
-        user = tokenUser.user;
-      }
-    }
-
-    if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Verify admin
-    const isAdmin =
-      user.email === "ahmedtarbo98@gmail.com" ||
-      user.email === process.env.ADMIN_EMAIL;
-
-    const adminClient = createAdminClient();
-
-    if (!isAdmin) {
-      const { data: profile } = await adminClient
-        .from("profiles")
-        .select("role, is_blocked")
-        .eq("id", user.id)
-        .single();
-
-      if (profile?.role !== "admin" || profile?.is_blocked) {
-        return NextResponse.json(
-          { error: "Forbidden - Admin access required" },
-          { status: 403 }
-        );
-      }
-    }
-
-    const body = await request.json();
+    const body = await request.json().catch(() => ({}));
     const { userId, studentEmail, courseId, requestId, action = "enroll" } = body;
 
     if (!courseId) {
@@ -58,35 +24,16 @@ export async function POST(request: Request) {
 
     let targetUserId = userId;
 
-    // Always prefer the real auth.users ID if studentEmail matches a registered account
     if (studentEmail) {
-      const { data: usersList } = await adminClient.auth.admin.listUsers();
-      const foundAuth = usersList?.users?.find(
-        (u) => u.email?.toLowerCase() === studentEmail.trim().toLowerCase()
-      );
+      const cleanEmail = String(studentEmail).trim().toLowerCase();
+      const { data: prof } = await adminClient
+        .from("profiles")
+        .select("id")
+        .ilike("email", cleanEmail)
+        .maybeSingle();
 
-      if (foundAuth) {
-        targetUserId = foundAuth.id;
-        // Ensure profile exists for this auth user
-        await adminClient.from("profiles").upsert(
-          {
-            id: foundAuth.id,
-            full_name: foundAuth.user_metadata?.full_name || studentEmail.split("@")[0],
-            email: foundAuth.email,
-            role: "student",
-          },
-          { onConflict: "id" }
-        );
-      } else if (!targetUserId) {
-        const { data: prof } = await adminClient
-          .from("profiles")
-          .select("id")
-          .ilike("email", studentEmail.trim())
-          .maybeSingle();
-
-        if (prof?.id) {
-          targetUserId = prof.id;
-        }
+      if (prof?.id) {
+        targetUserId = prof.id;
       }
     }
 
@@ -109,10 +56,19 @@ export async function POST(request: Request) {
 
       if (delErr) throw delErr;
 
+      await logAdminAction({
+        adminId: adminUser.id,
+        action: "revoke_enrollment",
+        targetType: "enrollment",
+        targetId: `${targetUserId}:${courseId}`,
+        details: { courseId, targetUserId, studentEmail },
+        ipAddress: clientIp,
+      });
+
       return NextResponse.json({ success: true, action: "unenrolled" });
     }
 
-    // 1. Activate enrollment using service role (bypasses RLS)
+    // Activate enrollment
     const { data: enrollment, error: enrollErr } = await adminClient
       .from("enrollments")
       .upsert(
@@ -129,7 +85,6 @@ export async function POST(request: Request) {
 
     if (enrollErr) throw enrollErr;
 
-    // 2. If requestId provided, mark enrollment_request as approved
     if (requestId) {
       await adminClient
         .from("enrollment_requests")
@@ -140,6 +95,15 @@ export async function POST(request: Request) {
         .eq("id", requestId);
     }
 
+    await logAdminAction({
+      adminId: adminUser.id,
+      action: "approve_enrollment",
+      targetType: "enrollment",
+      targetId: enrollment?.id,
+      details: { courseId, targetUserId, requestId, studentEmail },
+      ipAddress: clientIp,
+    });
+
     return NextResponse.json({
       success: true,
       enrollment,
@@ -148,7 +112,7 @@ export async function POST(request: Request) {
   } catch (err: any) {
     console.error("Admin enroll API error:", err);
     return NextResponse.json(
-      { error: err.message || "Failed to process enrollment" },
+      { error: "Failed to process enrollment" },
       { status: 500 }
     );
   }

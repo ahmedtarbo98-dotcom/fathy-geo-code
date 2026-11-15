@@ -60,16 +60,60 @@ export default function LoginPage({
     e.preventDefault();
     setError(null);
     setSuccess(null);
+
+    // Check account lockout
+    if (typeof window !== "undefined") {
+      const lockUntilStr = localStorage.getItem("fgc_lockout_until");
+      if (lockUntilStr) {
+        const lockUntil = parseInt(lockUntilStr, 10);
+        if (Date.now() < lockUntil) {
+          const remainingMinutes = Math.ceil((lockUntil - Date.now()) / 60000);
+          setError(
+            locale === "ar"
+              ? `تم قفل محاولات تسجيل الدخول مؤقتاً لحماية الحساب. يرجى الانتظار لمدة ${remainingMinutes} دقيقة.`
+              : `Too many failed login attempts. Temporarily locked for ${remainingMinutes} minute(s).`
+          );
+          return;
+        } else {
+          localStorage.removeItem("fgc_lockout_until");
+          localStorage.removeItem("fgc_failed_attempts");
+        }
+      }
+    }
+
     setLoading(true);
 
     try {
       await signInWithEmail(email.trim().toLowerCase(), password);
+
+      if (typeof window !== "undefined") {
+        localStorage.removeItem("fgc_lockout_until");
+        localStorage.removeItem("fgc_failed_attempts");
+      }
+
       setSuccess(t("loginSuccess"));
       router.refresh();
       setTimeout(() => {
         router.push("/dashboard");
       }, 700);
     } catch (err: any) {
+      if (typeof window !== "undefined") {
+        const currentAttempts =
+          parseInt(localStorage.getItem("fgc_failed_attempts") || "0", 10) + 1;
+        localStorage.setItem("fgc_failed_attempts", String(currentAttempts));
+        if (currentAttempts >= 5) {
+          const lockUntil = Date.now() + 15 * 60 * 1000;
+          localStorage.setItem("fgc_lockout_until", String(lockUntil));
+          setError(
+            locale === "ar"
+              ? "تم قفل تسجيل الدخول مؤقتاً لمدة 15 دقيقة بعد 5 محاولات خاطئة."
+              : "Too many failed login attempts. Login locked for 15 minutes."
+          );
+          setLoading(false);
+          return;
+        }
+      }
+
       const msg = String(err?.message || "");
       const lower = msg.toLowerCase();
       if (lower.includes("invalid login credentials")) {
@@ -86,10 +130,9 @@ export default function LoginPage({
         );
       } else {
         setError(
-          msg ||
-            (locale === "ar"
-              ? "فشل تسجيل الدخول. يرجى التحقق من البيانات."
-              : "Failed to sign in. Please verify your credentials.")
+          locale === "ar"
+            ? "البيانات المدخلة غير صحيحة. يرجى التأكد والمحاولة مجدداً."
+            : "Invalid credentials. Please verify your details."
         );
       }
     } finally {
