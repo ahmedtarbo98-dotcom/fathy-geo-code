@@ -25,6 +25,9 @@ import {
   ShieldAlert,
   ChevronDown,
   ChevronUp,
+  GripVertical,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 
 interface CourseOption {
@@ -141,6 +144,11 @@ function AdminCurriculumContent({
   const [newCourseResTitleEn, setNewCourseResTitleEn] = useState("");
   const [newCourseResType, setNewCourseResType] = useState<"file" | "link">("file");
   const [newCourseResUrl, setNewCourseResUrl] = useState("");
+
+  // Drag and drop / reorder state
+  const [draggedLessonId, setDraggedLessonId] = useState<string | null>(null);
+  const [dragOverLessonId, setDragOverLessonId] = useState<string | null>(null);
+  const [reordering, setReordering] = useState(false);
 
   // 1. Fetch courses
   useEffect(() => {
@@ -594,6 +602,153 @@ function AdminCurriculumContent({
     }
   };
 
+  // --- Lesson & Section Reordering Handlers ---
+  const persistLessonOrder = async (sectionId: string, reorderedLessons: LessonItem[]) => {
+    setReordering(true);
+    try {
+      const updates = reorderedLessons.map((les, idx) =>
+        supabase
+          .from("lessons")
+          .update({ order_index: idx + 1, section_id: sectionId })
+          .eq("id", les.id)
+      );
+      await Promise.all(updates);
+    } catch (err: any) {
+      console.error("Failed to persist lesson order:", err);
+      alert(isRtl ? "تعذر حفظ الترتيب الجديد للدروس" : "Failed to save lesson order");
+      if (selectedCourseId) await loadCurriculum(selectedCourseId);
+    } finally {
+      setReordering(false);
+    }
+  };
+
+  const handleLessonDragStart = (e: React.DragEvent, lessonId: string) => {
+    e.dataTransfer.setData("text/plain", lessonId);
+    e.dataTransfer.effectAllowed = "move";
+    setDraggedLessonId(lessonId);
+  };
+
+  const handleLessonDragOver = (e: React.DragEvent, targetLessonId: string) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (dragOverLessonId !== targetLessonId) {
+      setDragOverLessonId(targetLessonId);
+    }
+  };
+
+  const handleLessonDrop = async (
+    e: React.DragEvent,
+    targetSectionId: string,
+    targetLessonId: string
+  ) => {
+    e.preventDefault();
+    const sourceLessonId = draggedLessonId || e.dataTransfer.getData("text/plain");
+    setDraggedLessonId(null);
+    setDragOverLessonId(null);
+
+    if (!sourceLessonId || sourceLessonId === targetLessonId) return;
+
+    const targetSection = sections.find((s) => s.id === targetSectionId);
+    if (!targetSection) return;
+
+    let sourceSectionId: string | null = null;
+    let movedLesson: LessonItem | null = null;
+
+    for (const sec of sections) {
+      const found = sec.lessons.find((l) => l.id === sourceLessonId);
+      if (found) {
+        sourceSectionId = sec.id;
+        movedLesson = { ...found, section_id: targetSectionId };
+        break;
+      }
+    }
+
+    if (!movedLesson || !sourceSectionId) return;
+
+    if (sourceSectionId === targetSectionId) {
+      // Reordering within the same section
+      const fromIdx = targetSection.lessons.findIndex((l) => l.id === sourceLessonId);
+      const toIdx = targetSection.lessons.findIndex((l) => l.id === targetLessonId);
+      if (fromIdx === -1 || toIdx === -1) return;
+
+      const nextLessons = [...targetSection.lessons];
+      const [item] = nextLessons.splice(fromIdx, 1);
+      nextLessons.splice(toIdx, 0, item);
+
+      setSections((prev) =>
+        prev.map((s) => (s.id === targetSectionId ? { ...s, lessons: nextLessons } : s))
+      );
+
+      await persistLessonOrder(targetSectionId, nextLessons);
+    } else {
+      // Moving across different sections
+      const sourceSection = sections.find((s) => s.id === sourceSectionId);
+      if (!sourceSection) return;
+
+      const newSourceLessons = sourceSection.lessons.filter((l) => l.id !== sourceLessonId);
+      const toIdx = targetSection.lessons.findIndex((l) => l.id === targetLessonId);
+      const newTargetLessons = [...targetSection.lessons];
+      newTargetLessons.splice(toIdx >= 0 ? toIdx : newTargetLessons.length, 0, movedLesson);
+
+      setSections((prev) =>
+        prev.map((s) => {
+          if (s.id === sourceSectionId) return { ...s, lessons: newSourceLessons };
+          if (s.id === targetSectionId) return { ...s, lessons: newTargetLessons };
+          return s;
+        })
+      );
+
+      await Promise.all([
+        persistLessonOrder(sourceSectionId, newSourceLessons),
+        persistLessonOrder(targetSectionId, newTargetLessons),
+      ]);
+    }
+  };
+
+  const handleMoveLesson = async (sectionId: string, lessonIndex: number, direction: -1 | 1) => {
+    const sec = sections.find((s) => s.id === sectionId);
+    if (!sec) return;
+    const targetIndex = lessonIndex + direction;
+    if (targetIndex < 0 || targetIndex >= sec.lessons.length) return;
+
+    const nextLessons = [...sec.lessons];
+    const [moved] = nextLessons.splice(lessonIndex, 1);
+    nextLessons.splice(targetIndex, 0, moved);
+
+    setSections((prev) =>
+      prev.map((s) => (s.id === sectionId ? { ...s, lessons: nextLessons } : s))
+    );
+
+    await persistLessonOrder(sectionId, nextLessons);
+  };
+
+  const handleMoveSection = async (sectionIndex: number, direction: -1 | 1) => {
+    const targetIndex = sectionIndex + direction;
+    if (targetIndex < 0 || targetIndex >= sections.length) return;
+
+    const nextSections = [...sections];
+    const [moved] = nextSections.splice(sectionIndex, 1);
+    nextSections.splice(targetIndex, 0, moved);
+
+    setSections(nextSections);
+
+    try {
+      setReordering(true);
+      const updates = nextSections.map((sec, idx) =>
+        supabase
+          .from("course_sections")
+          .update({ order_index: idx + 1 })
+          .eq("id", sec.id)
+      );
+      await Promise.all(updates);
+    } catch (err: any) {
+      console.error("Failed to reorder sections:", err);
+      if (selectedCourseId) await loadCurriculum(selectedCourseId);
+    } finally {
+      setReordering(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -909,6 +1064,25 @@ function AdminCurriculumContent({
 
                   <div className="flex items-center gap-1.5">
                     <button
+                      type="button"
+                      disabled={sIdx === 0 || reordering}
+                      onClick={() => handleMoveSection(sIdx, -1)}
+                      className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-20 disabled:pointer-events-none transition-colors"
+                      title={isRtl ? "رفع القسم للأعلى" : "Move section up"}
+                    >
+                      <ChevronUp className="w-4 h-4" />
+                    </button>
+                    <button
+                      type="button"
+                      disabled={sIdx === sections.length - 1 || reordering}
+                      onClick={() => handleMoveSection(sIdx, 1)}
+                      className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted disabled:opacity-20 disabled:pointer-events-none transition-colors"
+                      title={isRtl ? "خفض القسم للأسفل" : "Move section down"}
+                    >
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
+
+                    <button
                       onClick={() => handleOpenAddLesson(section.id)}
                       className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-brand-blue/10 hover:bg-brand-blue/20 text-brand-blue dark:text-brand-cyan text-xs font-bold transition-colors"
                     >
@@ -943,20 +1117,47 @@ function AdminCurriculumContent({
                   <div className="space-y-2">
                     {section.lessons.map((lesson, lIdx) => {
                       const lesTitle = isRtl ? lesson.title_ar : lesson.title_en;
+                      const isBeingDragged = draggedLessonId === lesson.id;
+                      const isDragOver = dragOverLessonId === lesson.id;
 
                       return (
                         <div
                           key={lesson.id}
-                          className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-2xl bg-background/60 border border-border/60 hover:border-brand-blue/40 transition-colors"
+                          draggable
+                          onDragStart={(e) => handleLessonDragStart(e, lesson.id)}
+                          onDragOver={(e) => handleLessonDragOver(e, lesson.id)}
+                          onDragLeave={() => {
+                            if (dragOverLessonId === lesson.id) setDragOverLessonId(null);
+                          }}
+                          onDrop={(e) => handleLessonDrop(e, section.id, lesson.id)}
+                          onDragEnd={() => {
+                            setDraggedLessonId(null);
+                            setDragOverLessonId(null);
+                          }}
+                          className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 rounded-2xl transition-all select-none ${
+                            isBeingDragged
+                              ? "opacity-40 border-2 border-dashed border-brand-cyan scale-[0.99] bg-brand-cyan/5"
+                              : isDragOver
+                              ? "border-2 border-brand-cyan bg-brand-cyan/15 ring-2 ring-brand-cyan/30 scale-[1.01]"
+                              : "bg-background/70 border border-border/70 hover:border-brand-blue/50 hover:bg-muted/30 shadow-sm"
+                          }`}
                         >
-                          <div className="flex items-center gap-3">
-                            <span className="text-xs font-mono text-muted-foreground w-6">
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            {/* Grip handle for mouse dragging */}
+                            <div
+                              className="cursor-grab active:cursor-grabbing text-muted-foreground/60 hover:text-brand-cyan transition-colors p-1 shrink-0"
+                              title={isRtl ? "اضغط بالماوس واسحب لتغيير ترتيب الدرس" : "Click and drag to reorder lesson"}
+                            >
+                              <GripVertical className="w-4 h-4" />
+                            </div>
+
+                            <span className="text-xs font-mono font-bold text-muted-foreground w-6 text-center shrink-0">
                               {sIdx + 1}.{lIdx + 1}
                             </span>
                             <PlayCircle className="w-4 h-4 text-brand-cyan shrink-0" />
-                            <div>
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs font-bold text-foreground">
+                            <div className="min-w-0">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-xs font-bold text-foreground truncate">
                                   {lesTitle}
                                 </span>
                                 {lesson.is_free_preview && (
@@ -965,7 +1166,7 @@ function AdminCurriculumContent({
                                   </span>
                                 )}
                               </div>
-                              <div className="flex items-center gap-3 text-[10px] text-muted-foreground mt-0.5">
+                              <div className="flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground mt-0.5">
                                 <span className="flex items-center gap-1 font-mono">
                                   <Clock className="w-3 h-3" />
                                   <span>{Math.round(lesson.duration_seconds / 60)} {isRtl ? "دقيقة" : "min"}</span>
@@ -990,8 +1191,29 @@ function AdminCurriculumContent({
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-1 self-end sm:self-auto">
+                          <div className="flex items-center gap-1 self-end sm:self-auto shrink-0">
+                            {/* Up / Down Reorder buttons */}
                             <button
+                              type="button"
+                              disabled={lIdx === 0 || reordering}
+                              onClick={() => handleMoveLesson(section.id, lIdx, -1)}
+                              className="p-1.5 rounded-lg text-muted-foreground hover:text-brand-cyan hover:bg-brand-cyan/10 disabled:opacity-20 disabled:pointer-events-none transition-colors"
+                              title={isRtl ? "رفع الدرس للأعلى (الأول)" : "Move lesson up"}
+                            >
+                              <ChevronUp className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
+                              disabled={lIdx === section.lessons.length - 1 || reordering}
+                              onClick={() => handleMoveLesson(section.id, lIdx, 1)}
+                              className="p-1.5 rounded-lg text-muted-foreground hover:text-brand-cyan hover:bg-brand-cyan/10 disabled:opacity-20 disabled:pointer-events-none transition-colors"
+                              title={isRtl ? "خفض الدرس للأسفل" : "Move lesson down"}
+                            >
+                              <ChevronDown className="w-4 h-4" />
+                            </button>
+
+                            <button
+                              type="button"
                               onClick={() => handleOpenEditLesson(lesson)}
                               className="px-2.5 py-1 rounded-lg text-xs font-bold text-brand-blue dark:text-brand-cyan hover:bg-brand-blue/10 flex items-center gap-1 transition-colors"
                             >
@@ -999,6 +1221,7 @@ function AdminCurriculumContent({
                               <span>{isRtl ? "تعديل الدرس" : "Edit"}</span>
                             </button>
                             <button
+                              type="button"
                               onClick={() => handleDeleteLesson(lesson.id, lesTitle)}
                               className="p-1 rounded-lg text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-colors"
                               title={isRtl ? "حذف الدرس" : "Delete lesson"}
