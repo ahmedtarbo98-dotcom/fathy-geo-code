@@ -63,7 +63,7 @@ export const videoTokenSchema = z.object({
 });
 
 export const enrollmentRequestSchema = z.object({
-  courseId: z.string().uuid({ message: "Invalid course ID" }),
+  courseId: z.string().min(1, { message: "Course ID is required" }).max(128),
   fullName: z.string().min(2).max(100),
   email: z.string().email().max(255),
   phone: z.string().max(30).optional().nullable(),

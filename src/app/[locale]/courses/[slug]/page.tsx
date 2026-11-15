@@ -291,31 +291,48 @@ export default function CourseDetailsPage({
     try {
       setSubmittingRequest(true);
 
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
+
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (session?.access_token) {
+          headers["Authorization"] = `Bearer ${session.access_token}`;
+        }
+      } catch {}
+
       // Call dedicated API endpoint with Service Role bypass
       const res = await fetch("/api/enroll-request", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         body: JSON.stringify({
           courseId: course.id,
-          fullName: studentName,
-          email: studentEmail,
-          phone: studentPhone,
-          notes: `Requested via Course Details page (${course.price} ${course.currency})`,
+          fullName: studentName.trim(),
+          email: studentEmail.trim().toLowerCase(),
+          phone: studentPhone ? studentPhone.trim() : null,
+          notes: `طلب اشتراك عبر صفحة الدورة (${course.price} ${course.currency})`,
         }),
       });
 
-      const result = await res.json();
-      if (!res.ok || result.error) {
+      const result = await res.json().catch(() => ({}));
+
+      if (!res.ok && result.error && !result.alreadyPending) {
         console.warn("Backend enroll request warning:", result.error);
+        alert(result.error);
+        return;
       }
 
       setRequestSuccess(true);
+      setHasPendingRequest(true);
 
-      // Open WhatsApp automatically
+      // Open WhatsApp automatically with prefilled student message
       window.open(generateWhatsAppUrl(), "_blank");
     } catch (err: any) {
       console.error("Enrollment request error:", err);
-      // Still open WhatsApp as fallback
+      // Fallback open WhatsApp
       window.open(generateWhatsAppUrl(), "_blank");
       setRequestSuccess(true);
     } finally {

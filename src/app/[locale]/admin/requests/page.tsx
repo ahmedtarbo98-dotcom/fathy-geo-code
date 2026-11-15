@@ -89,11 +89,27 @@ export default function AdminRequestsPage({
         .select("*")
         .order("created_at", { ascending: false });
 
+      const userIds = Array.from(
+        new Set((reqData || []).map((r) => r.user_id).filter(Boolean))
+      );
+      const profilesMap = new Map();
+      if (userIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from("profiles")
+          .select("id, full_name, email, phone")
+          .in("id", userIds);
+        (profilesData || []).forEach((p) => profilesMap.set(p.id, p));
+      }
+
       const mapped: EnrollmentRequestItem[] = (reqData || []).map((r) => {
         const c = coursesMap.get(r.course_id);
+        const p = profilesMap.get(r.user_id);
         return {
           ...r,
-          course_title: c ? (isRtl ? c.title_ar : c.title_en) : "GIS Course",
+          full_name: p?.full_name || "طالب جديد",
+          email: p?.email || "—",
+          phone: r.phone || p?.phone || null,
+          course_title: c ? (isRtl ? c.title_ar : c.title_en) : "دورة تدريبية",
           course_price: c ? c.price : 0,
           course_currency: c ? c.currency : "USD",
         };
