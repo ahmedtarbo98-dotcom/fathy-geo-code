@@ -49,8 +49,8 @@ export async function GET(request: Request) {
       const p = profilesMap.get(r.user_id);
       return {
         ...r,
-        full_name: p?.full_name || "طالب جديد",
-        email: p?.email || "—",
+        full_name: r.full_name || p?.full_name || "طالب جديد",
+        email: r.email || p?.email || "—",
         phone: r.phone || p?.phone || null,
         course_title: c ? c.title_ar : "دورة تدريبية",
         course_title_en: c ? c.title_en : "GIS Course",

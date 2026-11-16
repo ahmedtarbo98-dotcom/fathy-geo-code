@@ -167,10 +167,12 @@ export async function POST(request: Request) {
       .maybeSingle();
 
     if (existingPending) {
-      // Update phone / notes on existing pending request
+      // Update info on existing pending request
       await adminClient
         .from("enrollment_requests")
         .update({
+          full_name: cleanName,
+          email: cleanEmail,
           phone: cleanPhone,
           notes: cleanNotes,
         })
@@ -190,6 +192,8 @@ export async function POST(request: Request) {
       .insert({
         user_id: targetUserId,
         course_id: targetCourse.id,
+        full_name: cleanName,
+        email: cleanEmail,
         status: "pending",
         phone: cleanPhone,
         notes: cleanNotes,
@@ -200,7 +204,7 @@ export async function POST(request: Request) {
     if (reqErr) {
       console.error("Enrollment request insert error:", reqErr);
       return NextResponse.json(
-        { error: "فشل حفظ طلب التفعيل في قاعدة البيانات." },
+        { error: reqErr.message || "فشل حفظ طلب التفعيل في قاعدة البيانات." },
         { status: 500 }
       );
     }
