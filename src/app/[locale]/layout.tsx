@@ -130,6 +130,9 @@ export async function generateMetadata({
       icon: iconUrl,
       apple: iconUrl,
     },
+    verification: {
+      google: "UA51m1DgeA7QBYX_31aLHc7KTFA33GifpD9EIDJh0Ws",
+    },
   };
 }
 
@@ -204,6 +207,10 @@ export default async function LocaleLayout({
       className={`${inter.variable} ${cairo.variable}`}
     >
       <head>
+        <meta
+          name="google-site-verification"
+          content="UA51m1DgeA7QBYX_31aLHc7KTFA33GifpD9EIDJh0Ws"
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
