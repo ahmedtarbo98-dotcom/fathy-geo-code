@@ -9,13 +9,20 @@ import {
 
 export const dynamic = "force-dynamic";
 
-const ALLOWED_BUCKETS = new Set(["course-images", "platform-assets", "project-media"]);
+const ALLOWED_BUCKETS = new Set([
+  "course-images",
+  "platform-assets",
+  "project-images",
+  "project-media",
+]);
 const ALLOWED_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp"]);
 const ALLOWED_MIME_TYPES = new Set([
   "image/jpeg",
   "image/jpg",
   "image/png",
   "image/webp",
+  "image/x-png",
+  "image/pjpeg",
 ]);
 
 export async function POST(request: Request) {
@@ -53,13 +60,31 @@ export async function POST(request: Request) {
       );
     }
 
+    const mimeByExt: Record<string, string> = {
+      png: "image/png",
+      jpg: "image/jpeg",
+      jpeg: "image/jpeg",
+      webp: "image/webp",
+    };
+
     const normalizedType = (file.type || "").toLowerCase();
-    if (!ALLOWED_MIME_TYPES.has(normalizedType)) {
+    const isAllowedMime =
+      ALLOWED_MIME_TYPES.has(normalizedType) ||
+      normalizedType === "" ||
+      normalizedType === "application/octet-stream" ||
+      normalizedType.startsWith("image/");
+
+    if (!isAllowedMime) {
       return NextResponse.json(
         { error: "Invalid file MIME type. Only JPG, PNG, and WebP are allowed." },
         { status: 400 }
       );
     }
+
+    const contentType =
+      normalizedType && normalizedType.startsWith("image/") && !normalizedType.includes("octet")
+        ? normalizedType
+        : mimeByExt[safeExt] || "image/jpeg";
 
     // 4. File size limit check (5 MB)
     const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
@@ -90,7 +115,7 @@ export async function POST(request: Request) {
     const { error: uploadError } = await adminClient.storage
       .from(bucket)
       .upload(cleanFileName, buffer, {
-        contentType: normalizedType,
+        contentType,
         upsert: false,
       });
 
