@@ -5,7 +5,7 @@ import { getPublishedProjects } from "@/lib/projects-server";
 export const revalidate = 300;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://fathygeocode.com";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://fathy-geo-code.vercel.app";
   const courses = getCourses();
   const projects = await getPublishedProjects();
   const locales = ["ar", "en"];
