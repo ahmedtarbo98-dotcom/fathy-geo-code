@@ -101,6 +101,8 @@ export default function VideoPlayer({
   const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const progressBarRef = useRef<HTMLDivElement | null>(null);
 
+  const feedbackTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const resetControlsTimeout = useCallback(() => {
     setShowControls(true);
     if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
@@ -117,9 +119,20 @@ export default function VideoPlayer({
       text?: string
     ) => {
       setFeedback({ type, text, id: Date.now() });
+      if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
+      feedbackTimeoutRef.current = setTimeout(() => {
+        setFeedback(null);
+      }, 650);
     },
     []
   );
+
+  useEffect(() => {
+    return () => {
+      if (feedbackTimeoutRef.current) clearTimeout(feedbackTimeoutRef.current);
+      if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+    };
+  }, []);
 
   const activeFullscreen = isFullscreen || isPseudoFullscreen;
 
@@ -240,9 +253,11 @@ export default function VideoPlayer({
     try {
       if (isPlaying) {
         playerRef.current.pauseVideo();
+        setIsPlaying(false);
         triggerFeedback("pause");
       } else {
         playerRef.current.playVideo();
+        setIsPlaying(true);
         triggerFeedback("play");
       }
     } catch {}
@@ -318,10 +333,26 @@ export default function VideoPlayer({
     setQuality(newQuality);
     if (!playerRef.current) return;
     try {
+      const ytQuality = newQuality === "auto" ? "default" : newQuality;
+      const curr = Math.floor(playerRef.current.getCurrentTime?.() || currentTime || 0);
+
       if (typeof playerRef.current.setPlaybackQuality === "function") {
-        playerRef.current.setPlaybackQuality(newQuality);
+        playerRef.current.setPlaybackQuality(ytQuality);
       }
-    } catch {}
+
+      // Force YouTube stream switch by reloading at current second with suggestedQuality
+      if (typeof playerRef.current.loadVideoById === "function") {
+        playerRef.current.loadVideoById({
+          videoId: videoId,
+          startSeconds: curr,
+          suggestedQuality: ytQuality,
+        });
+      }
+
+      triggerFeedback("volume", newQuality.toUpperCase());
+    } catch (err) {
+      console.warn("Quality switch error:", err);
+    }
   };
 
   // 6. Fullscreen (with iOS / mobile WebView pseudo-fullscreen fallback)
@@ -638,6 +669,7 @@ export default function VideoPlayer({
   return (
     <div
       ref={containerRef}
+      dir="ltr"
       onMouseMove={resetControlsTimeout}
       onMouseEnter={resetControlsTimeout}
       onTouchStart={resetControlsTimeout}
@@ -650,7 +682,7 @@ export default function VideoPlayer({
               !showControls && isPlaying ? "cursor-none" : "cursor-default"
             }`
       }
-      style={{ userSelect: "none", WebkitUserSelect: "none" }}
+      style={{ userSelect: "none", WebkitUserSelect: "none", direction: "ltr" }}
     >
       {/* Video Frame Layer — crops out YouTube top header (title/copy link/share) and bottom YouTube logo */}
       <div className="absolute inset-0 w-full h-full flex items-center justify-center bg-black pointer-events-none overflow-hidden">
@@ -708,29 +740,29 @@ export default function VideoPlayer({
       {feedback && (
         <div
           key={feedback.id}
-          className="absolute inset-0 m-auto w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-white flex flex-col items-center justify-center pointer-events-none z-30 animate-out fade-out zoom-out duration-700 fill-mode-forwards shadow-2xl"
+          className="absolute inset-0 m-auto w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-black/80 backdrop-blur-md border border-white/20 text-white flex flex-col items-center justify-center pointer-events-none z-30 transition-all duration-300 shadow-2xl animate-in fade-in zoom-in-90"
         >
-          {feedback.type === "play" && <Play className="w-7 h-7 sm:w-8 sm:h-8 fill-white ml-0.5" />}
-          {feedback.type === "pause" && <Pause className="w-7 h-7 sm:w-8 sm:h-8 fill-white" />}
+          {feedback.type === "play" && <Play className="w-6 h-6 sm:w-7 sm:h-7 fill-white ml-0.5" />}
+          {feedback.type === "pause" && <Pause className="w-6 h-6 sm:w-7 sm:h-7 fill-white" />}
           {feedback.type === "forward" && (
             <>
-              <RotateCw className="w-5 h-5 sm:w-6 sm:h-6 text-brand-cyan" />
-              <span className="text-[10px] font-mono font-bold text-brand-cyan mt-0.5">{feedback.text}</span>
+              <RotateCw className="w-5 h-5 text-brand-cyan" />
+              <span className="text-[9px] font-mono font-bold text-brand-cyan mt-0.5">{feedback.text}</span>
             </>
           )}
           {feedback.type === "rewind" && (
             <>
-              <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6 text-brand-cyan" />
-              <span className="text-[10px] font-mono font-bold text-brand-cyan mt-0.5">{feedback.text}</span>
+              <RotateCcw className="w-5 h-5 text-brand-cyan" />
+              <span className="text-[9px] font-mono font-bold text-brand-cyan mt-0.5">{feedback.text}</span>
             </>
           )}
           {feedback.type === "volume" && (
             <>
-              <Volume2 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
-              <span className="text-[10px] font-mono font-bold mt-0.5">{feedback.text}</span>
+              <Volume2 className="w-5 h-5 text-white" />
+              <span className="text-[9px] font-mono font-bold mt-0.5">{feedback.text}</span>
             </>
           )}
-          {feedback.type === "mute" && <VolumeX className="w-7 h-7 sm:w-8 sm:h-8 text-red-400" />}
+          {feedback.type === "mute" && <VolumeX className="w-6 h-6 text-red-400" />}
         </div>
       )}
 
@@ -818,7 +850,7 @@ export default function VideoPlayer({
       )}
 
       {/* Big Center Play Button when Paused */}
-      {!isPlaying && !isBuffering && (
+      {!isPlaying && !isBuffering && isReady && (
         <button
           type="button"
           onClick={togglePlay}
@@ -927,7 +959,10 @@ export default function VideoPlayer({
             </button>
 
             {/* Time Display */}
-            <span className="font-mono text-[10px] sm:text-xs text-white/85 whitespace-nowrap pl-1">
+            <span
+              className="font-mono text-[10px] sm:text-xs text-white/85 whitespace-nowrap px-1"
+              style={{ direction: "ltr" }}
+            >
               {formatTime(currentTime)} / {formatTime(duration)}
             </span>
           </div>
@@ -971,10 +1006,10 @@ export default function VideoPlayer({
                 className="bg-black/60 border border-white/20 text-white text-[10px] sm:text-[11px] font-bold rounded-lg px-1.5 sm:px-2 py-1 outline-none hover:bg-black/80 transition-colors cursor-pointer"
                 title="جودة الفيديو"
               >
-                <option value="auto" className="bg-slate-900">Auto</option>
-                <option value="hd1080" className="bg-slate-900">1080p</option>
-                <option value="hd720" className="bg-slate-900">720p</option>
-                <option value="large" className="bg-slate-900">480p</option>
+                <option value="auto" className="bg-slate-900">Auto (تلقائي)</option>
+                <option value="hd1080" className="bg-slate-900">1080p FHD</option>
+                <option value="hd720" className="bg-slate-900">720p HD</option>
+                <option value="large" className="bg-slate-900">480p SD</option>
                 <option value="medium" className="bg-slate-900">360p</option>
               </select>
             </div>
