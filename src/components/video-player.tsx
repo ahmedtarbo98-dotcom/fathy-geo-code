@@ -22,6 +22,7 @@ interface VideoPlayerProps {
   userEmail?: string;
   userId?: string;
   isProtected?: boolean;
+  isPaidCourse?: boolean;
   onComplete?: () => void;
   onProgress?: (percent: number) => void;
 }
@@ -39,6 +40,7 @@ export default function VideoPlayer({
   userEmail = "student@fathygeocode.com",
   userId = "FGC-STUDENT",
   isProtected = true,
+  isPaidCourse = false,
   onComplete,
   onProgress,
 }: VideoPlayerProps) {
@@ -64,7 +66,11 @@ export default function VideoPlayer({
 
   // Watermark and visibility state
   const [watermarkPos, setWatermarkPos] = useState({ top: "25%", left: "30%" });
+  const [watermarkPos2, setWatermarkPos2] = useState({ top: "70%", left: "65%" });
   const [isTabHidden, setIsTabHidden] = useState(false);
+  const [isWindowBlurred, setIsWindowBlurred] = useState(false);
+  const [isScreenshotAttempted, setIsScreenshotAttempted] = useState(false);
+  const [isDevToolsDetected, setIsDevToolsDetected] = useState(false);
 
   // Player controls state
   const [isPlaying, setIsPlaying] = useState(false);
@@ -324,18 +330,31 @@ export default function VideoPlayer({
     };
   }, []);
 
-  // 7. Dynamic Moving Watermark
+  // 7. Dynamic Moving Watermarks
   useEffect(() => {
     if (!isProtected) return;
     const interval = setInterval(() => {
       const top = `${Math.floor(Math.random() * 65 + 15)}%`;
       const left = `${Math.floor(Math.random() * 60 + 10)}%`;
       setWatermarkPos({ top, left });
-    }, 20000);
-    return () => clearInterval(interval);
-  }, [isProtected]);
+    }, isPaidCourse ? 12000 : 20000);
 
-  // 8. Tab Visibility Security (Auto Pause when tab is inactive)
+    let interval2: NodeJS.Timeout | null = null;
+    if (isPaidCourse) {
+      interval2 = setInterval(() => {
+        const top = `${Math.floor(Math.random() * 60 + 20)}%`;
+        const left = `${Math.floor(Math.random() * 55 + 20)}%`;
+        setWatermarkPos2({ top, left });
+      }, 15000);
+    }
+
+    return () => {
+      clearInterval(interval);
+      if (interval2) clearInterval(interval2);
+    };
+  }, [isProtected, isPaidCourse]);
+
+  // 8. Tab Visibility & Anti-Recording Window Blur (Strict on Paid Courses)
   useEffect(() => {
     const handleVisibility = () => {
       if (document.hidden) {
@@ -349,9 +368,140 @@ export default function VideoPlayer({
         setIsTabHidden(false);
       }
     };
+
+    const handleBlur = () => {
+      if (!isProtected || !isPaidCourse) return;
+      setIsWindowBlurred(true);
+      if (playerRef.current && isPlaying) {
+        try {
+          playerRef.current.pauseVideo();
+        } catch {}
+      }
+    };
+
+    const handleFocus = () => {
+      setIsWindowBlurred(false);
+    };
+
+    const handlePageHide = () => {
+      if (!isProtected || !isPaidCourse) return;
+      setIsWindowBlurred(true);
+      if (playerRef.current && isPlaying) {
+        try {
+          playerRef.current.pauseVideo();
+        } catch {}
+      }
+    };
+
     document.addEventListener("visibilitychange", handleVisibility);
-    return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, [isPlaying]);
+    window.addEventListener("blur", handleBlur);
+    window.addEventListener("focus", handleFocus);
+    window.addEventListener("pagehide", handlePageHide);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibility);
+      window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("focus", handleFocus);
+      window.removeEventListener("pagehide", handlePageHide);
+    };
+  }, [isProtected, isPaidCourse, isPlaying]);
+
+  // 8.1 Anti-Screenshot & Screen-Recording Shortcut Interceptor (Paid Courses)
+  useEffect(() => {
+    if (!isProtected || !isPaidCourse) return;
+
+    let timeoutId: NodeJS.Timeout;
+
+    const triggerBlackout = () => {
+      setIsScreenshotAttempted(true);
+      if (playerRef.current && isPlaying) {
+        try {
+          playerRef.current.pauseVideo();
+        } catch {}
+      }
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText("");
+        }
+      } catch {}
+
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        setIsScreenshotAttempted(false);
+      }, 4000);
+    };
+
+    const handleKeyDownCapture = (e: KeyboardEvent) => {
+      // PrintScreen / PrtScn
+      if (e.key === "PrintScreen") {
+        e.preventDefault();
+        triggerBlackout();
+        return false;
+      }
+
+      // Windows Snipping Tool: Win + Shift + S or Ctrl + Shift + S
+      if ((e.metaKey || e.ctrlKey) && e.shiftKey && (e.key === "S" || e.key === "s")) {
+        e.preventDefault();
+        triggerBlackout();
+        return false;
+      }
+
+      // Mac screenshot: Cmd + Shift + 3, 4, 5
+      if (e.metaKey && e.shiftKey && ["3", "4", "5"].includes(e.key)) {
+        e.preventDefault();
+        triggerBlackout();
+        return false;
+      }
+
+      // Print dialog: Ctrl + P / Cmd + P
+      if ((e.ctrlKey || e.metaKey) && (e.key === "p" || e.key === "P")) {
+        e.preventDefault();
+        triggerBlackout();
+        return false;
+      }
+    };
+
+    const handleKeyUpCapture = (e: KeyboardEvent) => {
+      if (e.key === "PrintScreen") {
+        e.preventDefault();
+        triggerBlackout();
+        return false;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDownCapture, true);
+    window.addEventListener("keyup", handleKeyUpCapture, true);
+
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener("keydown", handleKeyDownCapture, true);
+      window.removeEventListener("keyup", handleKeyUpCapture, true);
+    };
+  }, [isProtected, isPaidCourse, isPlaying]);
+
+  // 8.2 DevTools & External Overlay Detection (Paid Courses)
+  useEffect(() => {
+    if (!isProtected || !isPaidCourse) return;
+
+    const checkDimensions = () => {
+      const threshold = 160;
+      const widthDiff = window.outerWidth - window.innerWidth > threshold;
+      const heightDiff = window.outerHeight - window.innerHeight > threshold;
+      if (widthDiff || heightDiff) {
+        setIsDevToolsDetected(true);
+      } else {
+        setIsDevToolsDetected(false);
+      }
+    };
+
+    const interval = setInterval(checkDimensions, 1500);
+    window.addEventListener("resize", checkDimensions);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("resize", checkDimensions);
+    };
+  }, [isProtected, isPaidCourse]);
 
   // 9. Disable Right Click & DevTools shortcuts
   useEffect(() => {
@@ -429,7 +579,7 @@ export default function VideoPlayer({
         title={isPlaying ? "انقر للإيقاف المؤقت" : "انقر للتشغيل"}
       />
 
-      {/* Dynamic Moving Watermark */}
+      {/* Dynamic Moving Watermark 1 */}
       {isProtected && (
         <div
           className="absolute pointer-events-none transition-all duration-1000 ease-in-out z-20"
@@ -444,8 +594,58 @@ export default function VideoPlayer({
         </div>
       )}
 
-      {/* Tab Hidden Shield Overlay */}
-      {isTabHidden && isProtected && (
+      {/* Dynamic Moving Watermark 2 (Strict Paid Courses - Diagonal Ghost) */}
+      {isProtected && isPaidCourse && (
+        <div
+          className="absolute pointer-events-none transition-all duration-1000 ease-in-out z-20 select-none opacity-30 hover:opacity-10"
+          style={{
+            top: watermarkPos2.top,
+            left: watermarkPos2.left,
+          }}
+        >
+          <div className="px-2 py-0.5 rounded text-white/40 text-[9px] sm:text-[11px] font-mono tracking-widest uppercase">
+            FGC • {userEmail.split("@")[0]}
+          </div>
+        </div>
+      )}
+
+      {/* Strict Anti-Recording & Screenshot Blackout Overlay (Paid Courses) */}
+      {isPaidCourse && (isScreenshotAttempted || isWindowBlurred || isDevToolsDetected) && (
+        <div className="absolute inset-0 z-40 bg-black flex flex-col items-center justify-center p-6 text-center text-white space-y-3.5 select-none animate-in fade-in duration-200">
+          <div className="w-14 h-14 rounded-full bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-500 animate-pulse shadow-lg shadow-red-500/20">
+            <ShieldAlert className="w-8 h-8" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-base sm:text-lg font-bold text-red-400">
+              {isScreenshotAttempted
+                ? "محاولة تصوير محظورة!"
+                : isDevToolsDetected
+                ? "تم حظر الشاشة لاكتشاف أدوات خارجية"
+                : "تم إيقاف الشاشة مؤقتاً لحماية الفيديو"}
+            </h3>
+            <p className="text-xs text-slate-300 max-w-sm leading-relaxed">
+              {isScreenshotAttempted
+                ? "يمنع تصوير أو تسجيل شاشة الدروس المدفوعة. تم حظر اللقطة وتعتيم الشاشة للحفاظ على حقوق الملكية الفكرية."
+                : "تم تعتيم وإيقاف الفيديو تلقائياً بسبب مغادرة النافذة أو فتح برنامج تسجيل خارجي. انقر بالأسفل للمتابعة."}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsWindowBlurred(false);
+              setIsScreenshotAttempted(false);
+              setIsDevToolsDetected(false);
+            }}
+            className="px-5 py-2 text-xs font-semibold rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all border border-white/10 shadow-sm"
+          >
+            العودة لمتابعة الدرس
+          </button>
+        </div>
+      )}
+
+      {/* Tab Hidden Shield Overlay (Free & Standard Courses) */}
+      {!isPaidCourse && isTabHidden && isProtected && (
         <div className="absolute inset-0 z-30 bg-black/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center text-white space-y-3">
           <ShieldAlert className="w-12 h-12 text-brand-cyan animate-pulse" />
           <h3 className="text-lg font-bold">تم إيقاف العرض مؤقتاً</h3>

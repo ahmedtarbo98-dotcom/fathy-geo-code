@@ -360,6 +360,7 @@ function CoursePlayerContent({
                 userEmail={videoTokenData.email}
                 userId={videoTokenData.userId}
                 isProtected={true}
+                isPaidCourse={!course?.is_free}
                 onComplete={() => toggleComplete(currentLesson?.id)}
               />
             ) : (
