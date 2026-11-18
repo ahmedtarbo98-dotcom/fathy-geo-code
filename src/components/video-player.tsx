@@ -6,12 +6,15 @@ import {
   Play,
   Pause,
   Volume2,
+  Volume1,
   VolumeX,
   Maximize,
   Minimize,
   RotateCcw,
+  RotateCw,
   Sparkles,
   SlidersHorizontal,
+  Loader2,
 } from "lucide-react";
 
 export type VideoProvider = "youtube" | "bunny" | "vimeo";
@@ -74,6 +77,7 @@ export default function VideoPlayer({
 
   // Player controls state
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isBuffering, setIsBuffering] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(80);
@@ -83,6 +87,39 @@ export default function VideoPlayer({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
   const [isReady, setIsReady] = useState(false);
+
+  // Modern UI & Interaction states
+  const [showControls, setShowControls] = useState(true);
+  const [hoverTime, setHoverTime] = useState<number | null>(null);
+  const [hoverPos, setHoverPos] = useState<number>(0);
+  const [feedback, setFeedback] = useState<{
+    type: "play" | "pause" | "forward" | "rewind" | "volume" | "mute";
+    text?: string;
+    id: number;
+  } | null>(null);
+
+  const controlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const progressBarRef = useRef<HTMLDivElement | null>(null);
+
+  const resetControlsTimeout = useCallback(() => {
+    setShowControls(true);
+    if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+    if (isPlaying) {
+      controlsTimeoutRef.current = setTimeout(() => {
+        setShowControls(false);
+      }, 3500);
+    }
+  }, [isPlaying]);
+
+  const triggerFeedback = useCallback(
+    (
+      type: "play" | "pause" | "forward" | "rewind" | "volume" | "mute",
+      text?: string
+    ) => {
+      setFeedback({ type, text, id: Date.now() });
+    },
+    []
+  );
 
   const activeFullscreen = isFullscreen || isPseudoFullscreen;
 
@@ -140,14 +177,19 @@ export default function VideoPlayer({
             event.target.setVolume(volume);
           },
           onStateChange: (event: any) => {
-            // YT.PlayerState: PLAYING = 1, PAUSED = 2, ENDED = 0
+            // YT.PlayerState: PLAYING = 1, PAUSED = 2, BUFFERING = 3, CUED = 5, ENDED = 0
             if (event.data === 1) {
               setIsPlaying(true);
+              setIsBuffering(false);
             } else if (event.data === 2) {
               setIsPlaying(false);
+              setIsBuffering(false);
               reportProgress(true);
+            } else if (event.data === 3) {
+              setIsBuffering(true);
             } else if (event.data === 0) {
               setIsPlaying(false);
+              setIsBuffering(false);
               reportProgress(true);
               if (onComplete) onComplete();
             }
@@ -198,50 +240,69 @@ export default function VideoPlayer({
     try {
       if (isPlaying) {
         playerRef.current.pauseVideo();
+        triggerFeedback("pause");
       } else {
         playerRef.current.playVideo();
+        triggerFeedback("play");
       }
     } catch {}
-  }, [isPlaying]);
+    resetControlsTimeout();
+  }, [isPlaying, triggerFeedback, resetControlsTimeout]);
 
   // 3. Seek Control
-  const handleSeek = (newTime: number) => {
-    if (!playerRef.current) return;
-    try {
-      playerRef.current.seekTo(newTime, true);
-      setCurrentTime(newTime);
-    } catch {}
-  };
+  const handleSeek = useCallback(
+    (newTime: number, showVisual: boolean = false, type?: "forward" | "rewind") => {
+      if (!playerRef.current) return;
+      const clamped = Math.max(0, Math.min(duration || 10000, newTime));
+      try {
+        playerRef.current.seekTo(clamped, true);
+        setCurrentTime(clamped);
+        if (showVisual && type) {
+          triggerFeedback(type, type === "forward" ? "+10s" : "-10s");
+        }
+      } catch {}
+      resetControlsTimeout();
+    },
+    [duration, triggerFeedback, resetControlsTimeout]
+  );
 
   // 4. Volume Control
-  const handleVolumeChange = (newVol: number) => {
-    setVolume(newVol);
-    if (!playerRef.current) return;
-    try {
-      playerRef.current.setVolume(newVol);
-      if (newVol === 0) {
-        playerRef.current.mute();
-        setIsMuted(true);
-      } else if (isMuted) {
-        playerRef.current.unMute();
-        setIsMuted(false);
-      }
-    } catch {}
-  };
+  const handleVolumeChange = useCallback(
+    (newVol: number) => {
+      const clamped = Math.max(0, Math.min(100, newVol));
+      setVolume(clamped);
+      if (!playerRef.current) return;
+      try {
+        playerRef.current.setVolume(clamped);
+        if (clamped === 0) {
+          playerRef.current.mute();
+          setIsMuted(true);
+        } else if (isMuted) {
+          playerRef.current.unMute();
+          setIsMuted(false);
+        }
+      } catch {}
+      resetControlsTimeout();
+    },
+    [isMuted, resetControlsTimeout]
+  );
 
-  const toggleMute = () => {
+  const toggleMute = useCallback(() => {
     if (!playerRef.current) return;
     try {
       if (isMuted) {
         playerRef.current.unMute();
         setIsMuted(false);
         playerRef.current.setVolume(volume || 50);
+        triggerFeedback("volume", `${volume || 50}%`);
       } else {
         playerRef.current.mute();
         setIsMuted(true);
+        triggerFeedback("mute");
       }
     } catch {}
-  };
+    resetControlsTimeout();
+  }, [isMuted, volume, triggerFeedback, resetControlsTimeout]);
 
   // 5. Playback Speed
   const handleSpeedChange = (rate: number) => {
@@ -329,6 +390,46 @@ export default function VideoPlayer({
       window.removeEventListener("keydown", handleEsc);
     };
   }, []);
+
+  // 6.1 Keyboard Shortcuts for Power Users (Space/K = Play, J/L or Arrows = Seek, M = Mute, F = Fullscreen)
+  useEffect(() => {
+    const handleGlobalShortcuts = (e: KeyboardEvent) => {
+      const activeTag = (document.activeElement?.tagName || "").toLowerCase();
+      if (activeTag === "input" || activeTag === "textarea" || activeTag === "select") {
+        return;
+      }
+
+      if (e.code === "Space" || e.key === "k" || e.key === "K") {
+        e.preventDefault();
+        togglePlay();
+      } else if (e.key === "ArrowRight" || e.key === "l" || e.key === "L") {
+        e.preventDefault();
+        handleSeek(currentTime + 10, true, "forward");
+      } else if (e.key === "ArrowLeft" || e.key === "j" || e.key === "J") {
+        e.preventDefault();
+        handleSeek(currentTime - 10, true, "rewind");
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        const next = Math.min(100, volume + 5);
+        handleVolumeChange(next);
+        triggerFeedback("volume", `${next}%`);
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        const next = Math.max(0, volume - 5);
+        handleVolumeChange(next);
+        triggerFeedback("volume", `${next}%`);
+      } else if (e.key === "m" || e.key === "M") {
+        e.preventDefault();
+        toggleMute();
+      } else if (e.key === "f" || e.key === "F") {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalShortcuts);
+    return () => window.removeEventListener("keydown", handleGlobalShortcuts);
+  }, [currentTime, volume, togglePlay, handleSeek, handleVolumeChange, toggleMute, triggerFeedback]);
 
   // 7. Dynamic Moving Watermarks
   useEffect(() => {
@@ -537,10 +638,17 @@ export default function VideoPlayer({
   return (
     <div
       ref={containerRef}
+      onMouseMove={resetControlsTimeout}
+      onMouseEnter={resetControlsTimeout}
+      onTouchStart={resetControlsTimeout}
       className={
         isPseudoFullscreen
-          ? "fixed inset-0 z-[9999] w-screen h-[100dvh] bg-black select-none group flex flex-col justify-end overflow-hidden"
-          : "relative w-full aspect-video rounded-2xl overflow-hidden bg-black select-none shadow-2xl border border-border/80 group flex flex-col justify-end"
+          ? `fixed inset-0 z-[9999] w-screen h-[100dvh] bg-black select-none group flex flex-col justify-end overflow-hidden ${
+              !showControls && isPlaying ? "cursor-none" : "cursor-default"
+            }`
+          : `relative w-full aspect-video rounded-2xl overflow-hidden bg-black select-none shadow-2xl border border-border/80 group flex flex-col justify-end ${
+              !showControls && isPlaying ? "cursor-none" : "cursor-default"
+            }`
       }
       style={{ userSelect: "none", WebkitUserSelect: "none" }}
     >
@@ -572,12 +680,66 @@ export default function VideoPlayer({
         </div>
       </div>
 
-      {/* CLICK-SHIELD OVERLAY (Protects against clicking YouTube UI, title, share, etc.) */}
+      {/* Interactive Overlay with Single & Double-Click Support */}
       <div
-        onClick={togglePlay}
+        onClick={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const clickX = e.clientX - rect.left;
+          const width = rect.width;
+
+          if (e.detail === 2) {
+            // Double click: Rewind on left 35%, Forward on right 35%, Fullscreen in middle
+            if (clickX < width * 0.35) {
+              handleSeek(currentTime - 10, true, "rewind");
+            } else if (clickX > width * 0.65) {
+              handleSeek(currentTime + 10, true, "forward");
+            } else {
+              toggleFullscreen();
+            }
+          } else if (e.detail === 1) {
+            togglePlay();
+          }
+        }}
         className="absolute inset-0 z-10 cursor-pointer bg-transparent"
-        title={isPlaying ? "انقر للإيقاف المؤقت" : "انقر للتشغيل"}
+        title={isPlaying ? "انقر للإيقاف المؤقت (نقر مزدوج للتقديم/الترجيع)" : "انقر للتشغيل"}
       />
+
+      {/* Visual Feedback Badge (Center Ripple) */}
+      {feedback && (
+        <div
+          key={feedback.id}
+          className="absolute inset-0 m-auto w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-black/70 backdrop-blur-md border border-white/20 text-white flex flex-col items-center justify-center pointer-events-none z-30 animate-out fade-out zoom-out duration-700 fill-mode-forwards shadow-2xl"
+        >
+          {feedback.type === "play" && <Play className="w-7 h-7 sm:w-8 sm:h-8 fill-white ml-0.5" />}
+          {feedback.type === "pause" && <Pause className="w-7 h-7 sm:w-8 sm:h-8 fill-white" />}
+          {feedback.type === "forward" && (
+            <>
+              <RotateCw className="w-5 h-5 sm:w-6 sm:h-6 text-brand-cyan" />
+              <span className="text-[10px] font-mono font-bold text-brand-cyan mt-0.5">{feedback.text}</span>
+            </>
+          )}
+          {feedback.type === "rewind" && (
+            <>
+              <RotateCcw className="w-5 h-5 sm:w-6 sm:h-6 text-brand-cyan" />
+              <span className="text-[10px] font-mono font-bold text-brand-cyan mt-0.5">{feedback.text}</span>
+            </>
+          )}
+          {feedback.type === "volume" && (
+            <>
+              <Volume2 className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
+              <span className="text-[10px] font-mono font-bold mt-0.5">{feedback.text}</span>
+            </>
+          )}
+          {feedback.type === "mute" && <VolumeX className="w-7 h-7 sm:w-8 sm:h-8 text-red-400" />}
+        </div>
+      )}
+
+      {/* Buffering Spinner */}
+      {isBuffering && (
+        <div className="absolute inset-0 m-auto w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center pointer-events-none z-20 shadow-2xl">
+          <Loader2 className="w-7 h-7 sm:w-8 sm:h-8 text-brand-cyan animate-spin" />
+        </div>
+      )}
 
       {/* Dynamic Moving Watermark 1 */}
       {isProtected && (
@@ -656,39 +818,84 @@ export default function VideoPlayer({
       )}
 
       {/* Big Center Play Button when Paused */}
-      {!isPlaying && (
+      {!isPlaying && !isBuffering && (
         <button
+          type="button"
           onClick={togglePlay}
-          className="absolute inset-0 z-20 m-auto w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-brand-blue/90 text-white shadow-2xl flex items-center justify-center hover:scale-110 hover:bg-brand-blue transition-all backdrop-blur-sm"
+          className="absolute inset-0 z-20 m-auto w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-brand-blue/90 hover:bg-brand-blue text-white shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all backdrop-blur-sm group/playbtn border border-white/20"
           aria-label="Play Video"
         >
-          <Play className="w-8 h-8 sm:w-10 sm:h-10 ml-1 fill-white" />
+          <Play className="w-8 h-8 sm:w-10 sm:h-10 ml-1 fill-white drop-shadow" />
         </button>
       )}
 
-      {/* CUSTOM CONTROLS BAR (Responsive on mobile + opaque bottom mask hides any YouTube link/chrome) */}
-      <div className="relative z-20 w-full bg-gradient-to-t from-black via-black/90 to-transparent px-2.5 py-2 sm:p-4 space-y-1.5 sm:space-y-2 opacity-95 group-hover:opacity-100 transition-opacity">
-        {/* Progress / Seek bar */}
-        <div className="w-full flex items-center gap-2">
-          <input
-            type="range"
-            min="0"
-            max={duration || 100}
-            value={currentTime}
-            onChange={(e) => handleSeek(parseFloat(e.target.value))}
-            className="w-full h-1.5 bg-white/25 rounded-lg appearance-none cursor-pointer accent-brand-cyan hover:h-2 transition-all"
+      {/* MODERN GLASS CONTROLS BAR (Auto-fades on inactivity) */}
+      <div
+        className={`relative z-20 w-full bg-gradient-to-t from-black via-black/85 to-transparent px-3 py-2 sm:px-4 sm:py-3 space-y-1.5 sm:space-y-2 transition-all duration-300 ${
+          showControls || !isPlaying
+            ? "opacity-100 translate-y-0 pointer-events-auto"
+            : "opacity-0 translate-y-2 pointer-events-none"
+        }`}
+      >
+        {/* Custom Sleek Progress Bar with Hover Preview Time */}
+        <div
+          ref={progressBarRef}
+          onMouseMove={(e) => {
+            if (!progressBarRef.current || duration <= 0) return;
+            const rect = progressBarRef.current.getBoundingClientRect();
+            const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+            setHoverPos(pos * 100);
+            setHoverTime(pos * duration);
+          }}
+          onMouseLeave={() => setHoverTime(null)}
+          onClick={(e) => {
+            if (!progressBarRef.current || duration <= 0) return;
+            const rect = progressBarRef.current.getBoundingClientRect();
+            const pos = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+            handleSeek(pos * duration);
+          }}
+          className="group/seek relative w-full py-2 cursor-pointer flex items-center select-none"
+        >
+          {/* Hover Time Tooltip */}
+          {hoverTime !== null && (
+            <div
+              className="absolute -top-7 -translate-x-1/2 px-2 py-0.5 rounded-md bg-black/90 backdrop-blur-md border border-white/20 text-white font-mono text-[10px] pointer-events-none shadow-xl z-30 whitespace-nowrap"
+              style={{ left: `${hoverPos}%` }}
+            >
+              {formatTime(hoverTime)}
+            </div>
+          )}
+
+          {/* Track container */}
+          <div className="relative w-full h-1.5 group-hover/seek:h-2.5 bg-white/20 rounded-full overflow-hidden transition-all duration-200">
+            {/* Played Gradient Fill */}
+            <div
+              className="h-full bg-gradient-to-r from-brand-blue via-brand-cyan to-cyan-300 rounded-full transition-[width] duration-75"
+              style={{
+                width: `${Math.min(100, (currentTime / (duration || 1)) * 100)}%`,
+              }}
+            />
+          </div>
+
+          {/* Glowing Thumb Handle */}
+          <div
+            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-white border-2 border-brand-cyan shadow-lg shadow-cyan-500/50 scale-0 group-hover/seek:scale-100 transition-transform duration-150 pointer-events-none"
+            style={{
+              left: `${Math.min(100, (currentTime / (duration || 1)) * 100)}%`,
+            }}
           />
         </div>
 
         {/* Buttons Row */}
-        <div className="flex items-center justify-between gap-1 sm:gap-2 text-white text-xs">
-          {/* Start: Play/Pause, Replay 10s, Time */}
-          <div className="flex items-center gap-1 sm:gap-3 min-w-0">
+        <div className="flex items-center justify-between gap-1.5 sm:gap-2 text-white text-xs">
+          {/* Start: Play/Pause, Rewind 10s, Forward 10s, Time */}
+          <div className="flex items-center gap-1 sm:gap-2.5 min-w-0">
             <button
               type="button"
               onClick={togglePlay}
-              className="p-1 sm:p-1.5 rounded-lg hover:bg-white/10 text-white transition-colors shrink-0"
+              className="p-1 sm:p-1.5 rounded-lg hover:bg-white/10 active:scale-95 text-white transition-all shrink-0"
               aria-label={isPlaying ? "Pause" : "Play"}
+              title={isPlaying ? "إيقاف مؤقت (Space)" : "تشغيل (Space)"}
             >
               {isPlaying ? (
                 <Pause className="w-4 h-4 sm:w-5 sm:h-5 fill-white" />
@@ -697,33 +904,49 @@ export default function VideoPlayer({
               )}
             </button>
 
+            {/* Rewind 10s */}
             <button
               type="button"
-              onClick={() => handleSeek(Math.max(0, currentTime - 10))}
-              className="p-1 sm:p-1.5 rounded-lg hover:bg-white/10 text-white/85 hover:text-white transition-colors text-[10px] sm:text-[11px] font-mono flex items-center gap-0.5 shrink-0"
-              title="-10 ثوانٍ"
+              onClick={() => handleSeek(currentTime - 10, true, "rewind")}
+              className="p-1 sm:p-1.5 rounded-lg hover:bg-white/10 active:scale-95 text-white/85 hover:text-white transition-all text-[10px] sm:text-[11px] font-mono flex items-center gap-0.5 shrink-0"
+              title="ترجيع 10 ثوانٍ (J)"
             >
-              <RotateCcw className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
-              <span>10s</span>
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">10s</span>
             </button>
 
-            <span className="font-mono text-[10px] sm:text-xs text-white/85 whitespace-nowrap">
+            {/* Forward 10s */}
+            <button
+              type="button"
+              onClick={() => handleSeek(currentTime + 10, true, "forward")}
+              className="p-1 sm:p-1.5 rounded-lg hover:bg-white/10 active:scale-95 text-white/85 hover:text-white transition-all text-[10px] sm:text-[11px] font-mono flex items-center gap-0.5 shrink-0"
+              title="تقديم 10 ثوانٍ (L)"
+            >
+              <span className="hidden sm:inline">10s</span>
+              <RotateCw className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Time Display */}
+            <span className="font-mono text-[10px] sm:text-xs text-white/85 whitespace-nowrap pl-1">
               {formatTime(currentTime)} / {formatTime(duration)}
             </span>
           </div>
 
           {/* End: Volume, Quality, Speed, Fullscreen */}
           <div className="flex items-center gap-1 sm:gap-2.5 shrink-0">
-            {/* Volume (Slider hidden on narrow mobile so Fullscreen always fits cleanly) */}
+            {/* Volume Control */}
             <div className="flex items-center gap-1 group/vol">
               <button
                 type="button"
                 onClick={toggleMute}
                 className="p-1 sm:p-1.5 rounded-lg hover:bg-white/10 text-white transition-colors shrink-0"
                 aria-label="Mute"
+                title="كتم / تشغيل الصوت (M)"
               >
                 {isMuted || volume === 0 ? (
                   <VolumeX className="w-4 h-4 text-red-400" />
+                ) : volume < 50 ? (
+                  <Volume1 className="w-4 h-4" />
                 ) : (
                   <Volume2 className="w-4 h-4" />
                 )}
@@ -734,7 +957,8 @@ export default function VideoPlayer({
                 max="100"
                 value={isMuted ? 0 : volume}
                 onChange={(e) => handleVolumeChange(parseInt(e.target.value))}
-                className="hidden sm:block w-16 md:w-20 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-brand-cyan"
+                className="hidden sm:block w-14 md:w-20 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-brand-cyan"
+                title={`مستوى الصوت: ${isMuted ? 0 : volume}%`}
               />
             </div>
 
@@ -769,13 +993,13 @@ export default function VideoPlayer({
               <option value="2" className="bg-slate-900">2x</option>
             </select>
 
-            {/* Fullscreen (Always visible & prominent on mobile) */}
+            {/* Fullscreen Button */}
             <button
               type="button"
               onClick={toggleFullscreen}
-              className="p-1.5 rounded-lg bg-white/15 hover:bg-white/25 border border-white/20 text-white transition-colors shrink-0"
+              className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-white active:scale-95 transition-all shrink-0"
               aria-label="Fullscreen"
-              title={activeFullscreen ? "تصغير الشاشة" : "تكبير الشاشة"}
+              title={activeFullscreen ? "تصغير الشاشة (F)" : "تكبير الشاشة (F)"}
             >
               {activeFullscreen ? (
                 <Minimize className="w-4 h-4" />
