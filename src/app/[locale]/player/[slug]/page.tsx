@@ -732,10 +732,10 @@ function CoursePlayerContent({
                                 );
                                 if (idx !== -1) setCurrentLessonIndex(idx);
                               }}
-                              className={`w-full flex items-center justify-between p-3 text-start transition-colors ${
+                              className={`w-full flex items-center justify-between p-3 text-start transition-all ${
                                 isActive
-                                  ? "bg-brand-blue/15 text-brand-blue dark:text-brand-cyan font-bold"
-                                  : "hover:bg-muted/30 text-foreground"
+                                  ? "bg-brand-cyan/15 text-brand-blue dark:text-brand-cyan font-bold border-s-4 border-brand-cyan"
+                                  : "hover:bg-muted/40 text-foreground"
                               }`}
                             >
                               <div className="flex items-center gap-2.5">

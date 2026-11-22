@@ -88,7 +88,7 @@ export default function WhatYouLearn({ currentLocale }: { currentLocale: string 
             return (
               <div
                 key={item.key}
-                className={`group relative p-7 rounded-2xl glass-panel border border-border/60 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-brand-blue/10 ${item.border}`}
+                className={`group relative p-7 rounded-2xl glass-panel border border-border/60 transition-all duration-300 card-hover-modern hover:shadow-xl hover:shadow-brand-blue/10 ${item.border}`}
               >
                 {/* Background soft glow on hover */}
                 <div

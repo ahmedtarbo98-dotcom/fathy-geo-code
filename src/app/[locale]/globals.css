@@ -75,21 +75,55 @@
   * {
     @apply border-border;
   }
-  html,
-  body {
+  html {
+    scroll-behavior: smooth;
     overflow-x: hidden;
     max-width: 100%;
     width: 100%;
     -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   body {
     @apply bg-background text-foreground transition-colors duration-300;
+    overflow-x: hidden;
+    max-width: 100%;
+    width: 100%;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
   img,
   video,
   iframe {
     max-width: 100%;
+  }
+
+  /* Custom sleek scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.3);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(20, 184, 196, 0.5);
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+  }
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: rgba(20, 184, 196, 0.4);
+  }
+
+  /* Accessible focus indicators */
+  :focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
   }
 }
 
@@ -139,4 +173,51 @@
 ::selection {
   background-color: #14B8C4;
   color: #060E21;
+}
+
+/* Modern Minimalist Card Hover & Elevation */
+.card-hover-modern {
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-hover-modern:hover {
+  transform: translateY(-4px);
+}
+
+/* Subtle Shimmer for High-Priority Buttons */
+@keyframes shimmer-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shimmer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.2) 50%,
+    transparent 100%
+  );
+  transform: translateX(-100%);
+  transition: transform 0.6s ease;
+}
+
+.btn-shimmer:hover::after {
+  animation: shimmer-sweep 1.2s infinite;
 }

@@ -192,9 +192,9 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
         {/* Brand Logo & Title */}
         <Link
           href="/"
-          className="group flex items-center gap-2 sm:gap-3 transition-transform duration-300 hover:scale-[1.02] min-w-0"
+          className="group flex items-center gap-2 sm:gap-3 transition-transform duration-300 hover:scale-[1.02] shrink-0"
         >
-          <div className="relative w-10 h-10 sm:w-12 sm:h-12 shrink-0 rounded-xl overflow-hidden p-0.5 bg-gradient-to-tr from-brand-navy via-brand-blue to-brand-cyan shadow-md shadow-brand-blue/20 group-hover:shadow-brand-cyan/40 transition-shadow">
+          <div className="relative w-9 h-9 sm:w-11 sm:h-11 shrink-0 rounded-xl overflow-hidden p-0.5 bg-gradient-to-tr from-brand-navy via-brand-blue to-brand-cyan shadow-md shadow-brand-blue/20 group-hover:shadow-brand-cyan/40 transition-shadow">
             <div className="relative w-full h-full rounded-[10px] overflow-hidden bg-background">
               <SiteLogoImage
                 alt="FATHY GEO CODE Logo"
@@ -203,8 +203,8 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
               />
             </div>
           </div>
-          <div className="flex flex-col min-w-0">
-            <span className="font-extrabold tracking-tight text-sm sm:text-lg lg:text-xl truncate bg-gradient-to-r from-brand-navy via-brand-blue to-brand-cyan dark:from-white dark:via-blue-400 dark:to-cyan-400 bg-clip-text text-transparent">
+          <div className="flex flex-col shrink-0">
+            <span className="font-extrabold tracking-tight text-sm sm:text-base lg:text-xl whitespace-nowrap bg-gradient-to-r from-brand-navy via-brand-blue to-brand-cyan dark:from-white dark:via-blue-400 dark:to-cyan-400 bg-clip-text text-transparent">
               {tBrand("name")}
             </span>
             <span className="hidden sm:flex text-[10px] sm:text-xs font-medium text-muted-foreground tracking-wide items-center gap-1 truncate">
@@ -362,19 +362,24 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
         </div>
 
         {/* Mobile & Tablet menu button */}
-        <div className="flex md:hidden items-center gap-1.5 shrink-0">
+        <div className="flex md:hidden items-center gap-1.5 sm:gap-2 shrink-0">
           {currentUser ? (
             <Link
               href={currentUser.role === "admin" ? "/admin" : "/dashboard"}
-              className="flex items-center gap-1.5 ps-1 pe-2 py-1 rounded-full bg-brand-cyan/10 border border-brand-cyan/30 max-w-[120px]"
+              className="w-8 h-8 rounded-full bg-gradient-to-tr from-brand-navy via-brand-blue to-brand-cyan flex items-center justify-center text-white text-[11px] font-bold border border-brand-cyan/40 shrink-0 shadow-sm overflow-hidden"
               title={currentUser.email || currentUser.full_name}
             >
-              <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-brand-navy via-brand-blue to-brand-cyan flex items-center justify-center text-white text-[10px] font-bold shrink-0">
-                {getInitials(currentUser.full_name)}
-              </div>
-              <span className="text-xs font-bold text-foreground truncate">
-                {currentUser.full_name}
-              </span>
+              {currentUser.avatar_url ? (
+                <Image
+                  src={currentUser.avatar_url}
+                  alt={currentUser.full_name}
+                  width={32}
+                  height={32}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span>{getInitials(currentUser.full_name)}</span>
+              )}
             </Link>
           ) : (
             <Link
@@ -385,11 +390,10 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
             </Link>
           )}
           <ThemeToggle />
-          <LanguageSwitcher currentLocale={currentLocale} />
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
-            className="p-2 rounded-lg border border-border/60 text-foreground hover:bg-muted"
+            className="p-2 rounded-lg border border-border/60 text-foreground hover:bg-muted active:scale-95 transition-all"
           >
             {mobileMenuOpen ? (
               <X className="w-5 h-5" />
@@ -403,6 +407,16 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
       {/* Mobile & Tablet Drawer Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden border-b border-border bg-background/95 backdrop-blur-xl px-4 pt-3 pb-6 space-y-3 transition-all animate-in slide-in-from-top-4">
+          {/* Quick Language & Theme switch on Mobile */}
+          <div className="flex items-center justify-between p-2.5 rounded-xl bg-card border border-border">
+            <span className="text-xs font-medium text-muted-foreground">
+              {currentLocale === "ar" ? "اللغة والمظهر" : "Language & Theme"}
+            </span>
+            <div className="flex items-center gap-2">
+              <LanguageSwitcher currentLocale={currentLocale} />
+              <ThemeToggle />
+            </div>
+          </div>
           {/* User Info Header on Mobile */}
           {currentUser && (
             <div className="p-3 rounded-xl bg-card border border-border flex items-center justify-between">

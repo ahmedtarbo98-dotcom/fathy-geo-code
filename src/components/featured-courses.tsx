@@ -110,7 +110,7 @@ export default function FeaturedCourses({
             return (
               <div
                 key={course.id}
-                className="group relative rounded-3xl glass-panel border border-border/80 overflow-hidden shadow-lg hover:shadow-2xl hover:border-brand-blue/50 transition-all duration-300 flex flex-col justify-between"
+                className="group relative rounded-3xl glass-panel border border-border/80 overflow-hidden shadow-lg card-hover-modern hover:shadow-2xl hover:border-brand-blue/50 transition-all duration-300 flex flex-col justify-between"
               >
                 {/* Course Thumbnail */}
                 <div className="relative aspect-video w-full overflow-hidden bg-muted">

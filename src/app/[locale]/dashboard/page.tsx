@@ -332,7 +332,7 @@ export default function StudentDashboardPage({
 
               <Link
                 href={`/player/${continueCourse.slug}`}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-bold text-brand-navy bg-brand-cyan hover:bg-cyan-300 hover:scale-105 active:scale-95 transition-all shadow-lg shrink-0"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-bold text-brand-navy bg-brand-cyan hover:bg-cyan-300 hover:scale-105 active:scale-95 transition-all shadow-lg shrink-0 btn-shimmer"
               >
                 <PlayCircle className="w-4 h-4" />
                 <span>{t("resumeLesson")}</span>
@@ -421,7 +421,7 @@ export default function StudentDashboardPage({
                 return (
                   <div
                     key={course.id}
-                    className="rounded-2xl bg-card border border-border/70 overflow-hidden shadow-sm hover:shadow-lg transition-all flex flex-col justify-between"
+                    className="rounded-2xl bg-card border border-border/70 overflow-hidden shadow-sm hover:shadow-xl hover:border-brand-cyan/40 card-hover-modern transition-all flex flex-col justify-between"
                   >
                     <div className="h-44 bg-slate-900 p-4 flex flex-col justify-between relative overflow-hidden group">
                       <Image

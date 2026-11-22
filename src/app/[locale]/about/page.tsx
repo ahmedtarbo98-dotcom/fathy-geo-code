@@ -169,7 +169,7 @@ export default function AboutPage({
                   href={whatsappProjectUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl text-sm sm:text-base font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-xl shadow-emerald-600/25 hover:scale-105 active:scale-95 transition-all"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl text-sm sm:text-base font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-xl shadow-emerald-600/25 hover:scale-105 active:scale-95 transition-all btn-shimmer"
                 >
                   <PhoneCall className="w-5 h-5" />
                   <span>{t("hireBtn")}</span>
@@ -236,7 +236,7 @@ export default function AboutPage({
               return (
                 <div
                   key={sIdx}
-                  className="rounded-2xl glass-panel p-6 border border-border/70 space-y-3 hover:-translate-y-1 hover:border-brand-blue/40 transition-all duration-300"
+                  className="rounded-2xl glass-panel p-6 border border-border/70 space-y-3 card-hover-modern hover:border-brand-blue/40 transition-all duration-300"
                 >
                   <div className="flex items-center gap-3">
                     <div

@@ -224,7 +224,7 @@ export default function ProjectsGallery({
                 <Link
                   key={project.id}
                   href={`/projects/${project.slug}`}
-                  className="group flex flex-col rounded-2xl glass-panel overflow-hidden border border-border/70 hover:border-brand-cyan/50 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl hover:shadow-brand-cyan/10"
+                  className="group flex flex-col rounded-2xl glass-panel overflow-hidden border border-border/70 hover:border-brand-cyan/50 transition-all duration-300 card-hover-modern hover:shadow-2xl hover:shadow-brand-cyan/10"
                 >
                   <div className="relative h-52 w-full bg-gradient-to-br from-brand-navy via-brand-blue/80 to-slate-900 overflow-hidden">
                     {project.cover_image_url ? (

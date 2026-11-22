@@ -342,7 +342,7 @@ export default function CoursesPage({
               return (
                 <div
                   key={course.id}
-                  className="group flex flex-col rounded-2xl bg-card border border-border/70 overflow-hidden shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-brand-blue/15 hover:border-brand-cyan/40"
+                  className="group flex flex-col rounded-2xl bg-card border border-border/70 overflow-hidden shadow-md transition-all duration-300 card-hover-modern hover:shadow-2xl hover:shadow-brand-blue/15 hover:border-brand-cyan/40"
                 >
                   {/* Thumbnail */}
                   <div className="relative aspect-video w-full bg-muted overflow-hidden">

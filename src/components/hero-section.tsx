@@ -68,7 +68,7 @@ export default function HeroSection({
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
               <Link
                 href="/courses"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl text-base font-bold text-white shadow-xl shadow-brand-blue/25 bg-gradient-to-r from-brand-navy via-brand-blue to-brand-cyan hover:shadow-brand-cyan/30 hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 group"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl text-base font-bold text-white shadow-xl shadow-brand-blue/25 bg-gradient-to-r from-brand-navy via-brand-blue to-brand-cyan hover:shadow-brand-cyan/30 hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 group btn-shimmer"
               >
                 <Compass className="w-5 h-5 text-brand-cyan transition-transform group-hover:rotate-45" />
                 <span>{t("ctaCourses")}</span>

@@ -863,6 +863,7 @@ export default function VideoPlayer({
 
       {/* MODERN GLASS CONTROLS BAR (Auto-fades on inactivity) */}
       <div
+        style={{ direction: "ltr" }}
         className={`relative z-20 w-full bg-gradient-to-t from-black via-black/85 to-transparent px-3 py-2 sm:px-4 sm:py-3 space-y-1.5 sm:space-y-2 transition-all duration-300 ${
           showControls || !isPlaying
             ? "opacity-100 translate-y-0 pointer-events-auto"
@@ -872,6 +873,7 @@ export default function VideoPlayer({
         {/* Custom Sleek Progress Bar with Hover Preview Time */}
         <div
           ref={progressBarRef}
+          style={{ direction: "ltr" }}
           onMouseMove={(e) => {
             if (!progressBarRef.current || duration <= 0) return;
             const rect = progressBarRef.current.getBoundingClientRect();
