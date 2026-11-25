@@ -8,7 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 interface ImageUploadProps {
   value?: string;
   onChange: (url: string) => void;
-  bucket?: "course-images" | "platform-assets";
+  bucket?: "course-images" | "platform-assets" | "testimonial-media";
   folder?: string;
   locale?: string;
   maxSizeMB?: number;

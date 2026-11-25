@@ -30,6 +30,7 @@ import {
   Home,
   RefreshCw,
   Briefcase,
+  MessageSquareQuote,
 } from "lucide-react";
 
 export default function AdminLayout({
@@ -163,6 +164,7 @@ export default function AdminLayout({
     { href: "/admin", label: t("overview"), icon: LayoutDashboard },
     { href: "/admin/courses", label: t("courses"), icon: BookOpen },
     { href: "/admin/projects", label: t("projects"), icon: Briefcase },
+    { href: "/admin/testimonials", label: t("testimonials"), icon: MessageSquareQuote },
     { href: "/admin/curriculum", label: t("curriculum"), icon: Layers },
     { href: "/admin/quizzes", label: t("quizzes"), icon: HelpCircle },
     { href: "/admin/students", label: t("students"), icon: Users },

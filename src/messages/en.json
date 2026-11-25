@@ -99,9 +99,13 @@
     "channelSubscribers": "A thriving community of spatial thinkers"
   },
   "Testimonials": {
-    "badge": "Student Reviews",
-    "title": "What Our Students Say",
-    "subtitle": "Hear directly from GIS practitioners, researchers, and engineers who accelerated their careers."
+    "badge": "Community Voices",
+    "title": "Fathy Geo Code Community Reviews",
+    "subtitle": "Hear directly from GIS practitioners, researchers, and engineers who accelerated their careers with us.",
+    "shareExperience": "Share Your Experience",
+    "emptyState": "Be the first to share your learning experience with Fathy Geo Code!",
+    "generalPlatform": "General Platform Experience",
+    "featured": "Featured"
   },
   "CTA": {
     "title": "Ready to Elevate Your Geospatial Career?",
@@ -295,6 +299,7 @@
     "overview": "Overview",
     "courses": "Courses Management",
     "projects": "Projects Portfolio",
+    "testimonials": "Trainees Reviews",
     "curriculum": "Curriculum Builder",
     "quizzes": "Quizzes & Questions",
     "students": "Students Management",

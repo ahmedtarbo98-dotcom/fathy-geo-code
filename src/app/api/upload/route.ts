@@ -14,6 +14,7 @@ const ALLOWED_BUCKETS = new Set([
   "platform-assets",
   "project-images",
   "project-media",
+  "testimonial-media",
 ]);
 const ALLOWED_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp"]);
 const ALLOWED_MIME_TYPES = new Set([
