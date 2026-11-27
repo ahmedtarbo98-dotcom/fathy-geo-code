@@ -24,7 +24,7 @@ export default function CTASection({ currentLocale }: { currentLocale: string })
               <span>FATHY GEO CODE</span>
             </div>
 
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight text-white dark:text-[#F2EBDD]">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight leading-tight text-white dark:text-[#F2EBDD] font-heading">
               {t("title")}
             </h2>
 

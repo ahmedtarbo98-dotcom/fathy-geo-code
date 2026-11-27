@@ -82,7 +82,7 @@ export default function FeaturedCourses({
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" />
               <span>{t("badge")}</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground dark:text-[#F2EBDD]">
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground dark:text-[#F2EBDD] font-heading">
               {t("title")}
             </h2>
             <p className="text-brand-muted text-sm sm:text-base max-w-xl">
@@ -110,7 +110,7 @@ export default function FeaturedCourses({
             return (
               <div
                 key={course.id}
-                className="group relative rounded-2xl bg-card border border-border/80 overflow-hidden shadow-lg card-hover-modern hover:shadow-2xl hover:border-brand-cyan/40 transition-all duration-300 flex flex-col justify-between"
+                className="group relative rounded-2xl surface-altura border border-white/10 overflow-hidden shadow-lg card-hover-modern hover:shadow-altura hover:border-brand-cyan/40 transition-all duration-300 flex flex-col justify-between"
               >
                 {/* Course Thumbnail */}
                 <div className="relative aspect-video w-full overflow-hidden bg-muted">
@@ -155,7 +155,7 @@ export default function FeaturedCourses({
                       <span className="text-brand-cyan font-mono text-[11px]">GIS & RS</span>
                     </div>
 
-                    <h3 className="text-lg font-bold text-foreground dark:text-[#F2EBDD] group-hover:text-brand-cyan transition-colors line-clamp-2">
+                    <h3 className="text-lg font-bold text-foreground dark:text-[#F2EBDD] font-heading group-hover:text-brand-cyan transition-colors line-clamp-2">
                       {title}
                     </h3>
 

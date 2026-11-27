@@ -38,7 +38,7 @@ export default function FeaturedProjects({
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" />
               <span>{isRtl ? "أبرز الأعمال والمشاريع" : "Featured Geospatial Work"}</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground dark:text-[#F2EBDD]">
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground dark:text-[#F2EBDD] font-heading">
               {isRtl ? "مشاريع مكانية منفذة باحترافية" : "Featured Portfolio Projects"}
             </h2>
             <p className="text-brand-muted text-sm sm:text-base leading-relaxed">
@@ -72,7 +72,7 @@ export default function FeaturedProjects({
               <Link
                 key={project.id}
                 href={`/projects/${project.slug}`}
-                className="group flex flex-col rounded-2xl glass-panel overflow-hidden border border-border/70 hover:border-brand-cyan/50 transition-all duration-300 card-hover-modern hover:shadow-2xl hover:shadow-brand-cyan/10"
+                className="group flex flex-col rounded-2xl surface-altura overflow-hidden border border-white/10 hover:border-brand-cyan/50 transition-all duration-300 card-hover-modern hover:shadow-altura"
               >
                 <div className="relative h-52 w-full bg-gradient-to-br from-brand-navy via-brand-blue/80 to-slate-900 overflow-hidden">
                   {project.cover_image_url ? (

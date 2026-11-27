@@ -52,7 +52,7 @@ export default function HeroSection({
             </div>
 
             {/* Headline */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.18] sm:leading-[1.15]">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.18] sm:leading-[1.15] font-heading">
               <span className="block text-foreground dark:text-[#F2EBDD]">{t("titlePart1")}</span>
               <span className="block bg-gradient-to-r from-brand-blue to-brand-cyan dark:from-sky-300 dark:via-brand-cyan dark:to-cyan-200 bg-clip-text text-transparent">
                 {t("titlePart2")}
@@ -107,7 +107,7 @@ export default function HeroSection({
 
           {/* Hero Side Interactive Card / Geospatial Badge */}
           <div className="lg:col-span-4 flex justify-center">
-            <div className="relative w-full max-w-sm p-6 rounded-2xl glass-panel shadow-2xl shadow-brand-blue/15 border border-border/60 hover:shadow-brand-cyan/20 transition-all duration-500">
+            <div className="relative w-full max-w-sm p-6 rounded-2xl surface-altura shadow-altura border border-white/10 hover:border-brand-cyan/30 transition-all duration-500">
               {/* Top Card Bar */}
               <div className="flex items-center justify-between pb-4 border-b border-border/50">
                 <div className="flex items-center gap-2.5">

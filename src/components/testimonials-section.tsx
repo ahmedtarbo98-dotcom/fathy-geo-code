@@ -110,7 +110,7 @@ export default function TestimonialsSection({
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" />
             <span>{t("badge")}</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground dark:text-[#F2EBDD]">
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground dark:text-[#F2EBDD] font-heading">
             {t("title")}
           </h2>
           <p className="text-brand-muted text-sm sm:text-base leading-relaxed">
@@ -176,10 +176,10 @@ export default function TestimonialsSection({
                 return (
                   <div
                     key={item.id}
-                    className={`relative rounded-2xl glass-panel p-6 sm:p-7 border transition-all duration-300 flex flex-col justify-between group shadow-lg hover:shadow-brand-blue/10 ${
+                    className={`relative rounded-2xl surface-altura p-6 sm:p-7 border transition-all duration-300 flex flex-col justify-between group shadow-lg hover:shadow-altura ${
                       item.is_featured
                         ? "border-brand-cyan/50 ring-1 ring-brand-cyan/20"
-                        : "border-border/80"
+                        : "border-white/10"
                     }`}
                   >
                     <div className="space-y-4">

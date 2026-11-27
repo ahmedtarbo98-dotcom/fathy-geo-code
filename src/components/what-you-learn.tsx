@@ -70,7 +70,7 @@ export default function WhatYouLearn({ currentLocale }: { currentLocale: string 
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" />
             <span>{t("badge")}</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground dark:text-[#F2EBDD]">
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground dark:text-[#F2EBDD] font-heading">
             {t("title")}
           </h2>
           <p className="text-brand-muted text-sm sm:text-base leading-relaxed">
@@ -88,7 +88,7 @@ export default function WhatYouLearn({ currentLocale }: { currentLocale: string 
             return (
               <div
                 key={item.key}
-                className={`group relative p-7 rounded-2xl glass-panel border border-border/60 transition-all duration-300 card-hover-modern hover:shadow-xl hover:shadow-brand-blue/10 ${item.border}`}
+                className={`group relative p-7 rounded-2xl surface-altura border border-white/10 transition-all duration-300 card-hover-modern hover:shadow-altura hover:border-brand-cyan/40 ${item.border}`}
               >
                 {/* Background soft glow on hover */}
                 <div
