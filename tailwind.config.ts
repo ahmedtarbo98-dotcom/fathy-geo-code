@@ -68,6 +68,11 @@ const config: Config = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      boxShadow: {
+        "altura": "0 14px 34px -8px rgba(3, 10, 17, 0.6), 0 0 1px 1px rgba(67, 200, 244, 0.12)",
+        "cyan-glow": "0 0 24px -4px rgba(67, 200, 244, 0.25)",
+        "blue-glow": "0 0 24px -4px rgba(22, 120, 211, 0.3)",
+      },
       fontFamily: {
         sans: ["var(--font-inter)", "var(--font-cairo)", "system-ui", "sans-serif"],
         arabic: ["var(--font-cairo)", "system-ui", "sans-serif"],
