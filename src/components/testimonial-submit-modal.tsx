@@ -126,22 +126,22 @@ export default function TestimonialSubmitModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-3 sm:p-6 overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-3 sm:p-6 overflow-y-auto">
       <div
-        className="relative w-full max-w-xl rounded-3xl glass-panel bg-card border border-border/80 shadow-2xl my-auto max-h-[92vh] flex flex-col overflow-hidden"
+        className="relative w-full max-w-xl rounded-3xl surface-altura border border-white/10 shadow-altura my-auto max-h-[92vh] flex flex-col overflow-hidden"
         dir={isRtl ? "rtl" : "ltr"}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border/60 bg-muted/30">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-white/10 bg-[#030A11]/60">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-brand-cyan/15 text-brand-cyan flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-brand-cyan/15 text-brand-cyan flex items-center justify-center border border-brand-cyan/30">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="font-extrabold text-base text-foreground">
+              <h3 className="font-heading font-extrabold text-base text-cream">
                 {isRtl ? "شاركنا تجربتك ورأيك" : "Share Your Experience"}
               </h3>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-[11px] text-brand-muted">
                 {isRtl
                   ? "سيتم مراجعة تقييمك من قِبل الإدارة قبل نشره على المنصة"
                   : "Your review will be reviewed by our team before publishing"}
@@ -151,7 +151,7 @@ export default function TestimonialSubmitModal({
           <button
             type="button"
             onClick={handleClose}
-            className="p-2 rounded-xl text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            className="p-2 rounded-xl text-brand-muted hover:text-cream hover:bg-white/5 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -160,16 +160,16 @@ export default function TestimonialSubmitModal({
         {/* Body */}
         {submitted ? (
           <div className="p-8 text-center space-y-5">
-            <div className="w-16 h-16 rounded-2xl bg-emerald-500/15 text-emerald-500 mx-auto flex items-center justify-center border border-emerald-500/30">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-500/15 text-emerald-400 mx-auto flex items-center justify-center border border-emerald-500/30">
               <CheckCircle2 className="w-8 h-8" />
             </div>
             <div className="space-y-2">
-              <h4 className="text-lg font-extrabold text-foreground">
+              <h4 className="text-lg font-heading font-extrabold text-cream">
                 {isRtl
                   ? "شكراً لمشاركتنا تجربتك!"
                   : "Thank You for Sharing Your Review!"}
               </h4>
-              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
+              <p className="text-xs sm:text-sm text-brand-muted leading-relaxed max-w-md mx-auto">
                 {isRtl
                   ? "تم استلام تقييمك بنجاح وحفظه بحالة «قيد المراجعة». سيظهر في الصفحة الرئيسية فور موافقة إدارة المنصة."
                   : "Your review has been received and saved as Pending Review. It will appear on the homepage once approved by the admin."}
@@ -178,7 +178,7 @@ export default function TestimonialSubmitModal({
             <button
               type="button"
               onClick={handleClose}
-              className="px-6 py-2.5 rounded-xl bg-brand-blue hover:bg-brand-blue/90 text-white text-xs font-bold shadow-md transition-all"
+              className="px-6 py-2.5 rounded-xl bg-brand-cyan hover:bg-cyan-300 text-brand-primary text-xs font-bold shadow-cyan-glow transition-all"
             >
               {isRtl ? "إغلاق" : "Close"}
             </button>
@@ -186,7 +186,7 @@ export default function TestimonialSubmitModal({
         ) : (
           <form onSubmit={handleSubmit} className="p-6 overflow-y-auto space-y-4">
             {error && (
-              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-xs font-semibold flex items-center gap-2">
+              <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-semibold flex items-center gap-2">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{error}</span>
               </div>
@@ -194,7 +194,7 @@ export default function TestimonialSubmitModal({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">
+                <label className="text-xs font-bold text-cream">
                   {isRtl ? "الاسم بالكامل *" : "Full Name *"}
                 </label>
                 <input
@@ -203,12 +203,12 @@ export default function TestimonialSubmitModal({
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder={isRtl ? "مثال: م. أحمد خالد" : "e.g. Eng. Ahmed Khaled"}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/40"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#030A11] border border-white/10 text-cream placeholder:text-brand-muted/60 text-sm focus:outline-none focus:border-brand-cyan/60"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">
+                <label className="text-xs font-bold text-cream">
                   {isRtl ? "التخصص / المسمى الوظيفي *" : "Specialty / Job Title *"}
                 </label>
                 <input
@@ -221,27 +221,27 @@ export default function TestimonialSubmitModal({
                       ? "مثال: مهندس نظم معلومات جغرافية"
                       : "e.g. GIS & Remote Sensing Engineer"
                   }
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/40"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#030A11] border border-white/10 text-cream placeholder:text-brand-muted/60 text-sm focus:outline-none focus:border-brand-cyan/60"
                 />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                <label className="text-xs font-bold text-cream flex items-center gap-1.5">
                   <BookOpen className="w-3.5 h-3.5 text-brand-cyan" />
                   <span>{isRtl ? "الكورس أو المنصة" : "Course or Platform"}</span>
                 </label>
                 <select
                   value={courseId}
                   onChange={(e) => setCourseId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/40"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#030A11] border border-white/10 text-cream text-sm focus:outline-none focus:border-brand-cyan/60"
                 >
-                  <option value="">
+                  <option value="" className="bg-[#030A11] text-cream">
                     {isRtl ? "المنصة بشكل عام" : "General Platform Experience"}
                   </option>
                   {courses.map((c) => (
-                    <option key={c.id} value={c.id}>
+                    <option key={c.id} value={c.id} className="bg-[#030A11] text-cream">
                       {isRtl ? c.title_ar || c.title_en : c.title_en || c.title_ar}
                     </option>
                   ))}
@@ -249,10 +249,10 @@ export default function TestimonialSubmitModal({
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-bold text-foreground">
+                <label className="text-xs font-bold text-cream">
                   {isRtl ? "التقييم بالنجوم *" : "Star Rating *"}
                 </label>
-                <div className="flex items-center gap-1.5 p-2 rounded-xl bg-background border border-border">
+                <div className="flex items-center gap-1.5 p-2 rounded-xl bg-[#030A11] border border-white/10">
                   {[1, 2, 3, 4, 5].map((star) => (
                     <button
                       key={star}
@@ -264,12 +264,12 @@ export default function TestimonialSubmitModal({
                         className={`w-5 h-5 ${
                           star <= rating
                             ? "text-amber-400 fill-amber-400"
-                            : "text-muted-foreground/40"
+                            : "text-white/20"
                         }`}
                       />
                     </button>
                   ))}
-                  <span className="text-xs font-bold text-muted-foreground ms-auto px-1">
+                  <span className="text-xs font-bold text-brand-muted ms-auto px-1 font-mono">
                     {rating}/5
                   </span>
                 </div>
@@ -277,7 +277,7 @@ export default function TestimonialSubmitModal({
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-bold text-foreground">
+              <label className="text-xs font-bold text-cream">
                 {isRtl ? "نص التجربة والرأي *" : "Your Review & Experience *"}
               </label>
               <textarea
@@ -290,13 +290,13 @@ export default function TestimonialSubmitModal({
                     ? "حدثنا عن تجربتك التعليمية وكيف استفدت من الكورس أو المنصة..."
                     : "Tell us about your learning experience with Fathy Geo Code..."
                 }
-                className="w-full px-3.5 py-2.5 rounded-xl bg-background border border-border text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/40 resize-none"
+                className="w-full px-3.5 py-2.5 rounded-xl bg-[#030A11] border border-white/10 text-cream placeholder:text-brand-muted/60 text-sm focus:outline-none focus:border-brand-cyan/60 resize-none"
               />
             </div>
 
             {/* Optional Media URL */}
-            <div className="space-y-2 p-3.5 rounded-2xl bg-muted/30 border border-border/60">
-              <label className="text-xs font-bold text-foreground block">
+            <div className="space-y-2 p-3.5 rounded-2xl bg-[#030A11]/60 border border-white/10">
+              <label className="text-xs font-bold text-cream block">
                 {isRtl
                   ? "رابط صورة أو فيديو اختياري (إن وجد)"
                   : "Optional Image or Video Link"}
@@ -319,8 +319,8 @@ export default function TestimonialSubmitModal({
                       }}
                       className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
                         active
-                          ? "bg-brand-blue text-white border-brand-blue"
-                          : "bg-background text-muted-foreground border-border hover:text-foreground"
+                          ? "bg-brand-cyan text-brand-primary border-brand-cyan shadow-cyan-glow"
+                          : "bg-[#030A11] text-brand-muted border-white/5 hover:text-cream"
                       }`}
                     >
                       {Icon && <Icon className="w-3.5 h-3.5" />}
@@ -340,23 +340,23 @@ export default function TestimonialSubmitModal({
                       ? "https://www.youtube.com/watch?v=..."
                       : "https://example.com/image.jpg"
                   }
-                  className="w-full px-3.5 py-2 rounded-xl bg-background border border-border text-xs focus:outline-none focus:ring-2 focus:ring-brand-cyan/40"
+                  className="w-full px-3.5 py-2 rounded-xl bg-[#030A11] border border-white/10 text-cream text-xs focus:outline-none focus:border-brand-cyan/60"
                 />
               )}
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-3 border-t border-border/60">
+            <div className="flex items-center justify-end gap-3 pt-3 border-t border-white/10">
               <button
                 type="button"
                 onClick={handleClose}
-                className="px-4 py-2.5 rounded-xl border border-border text-xs font-bold text-muted-foreground hover:text-foreground"
+                className="px-4 py-2.5 rounded-xl border border-white/10 text-xs font-bold text-brand-muted hover:text-cream transition-colors"
               >
                 {isRtl ? "إلغاء" : "Cancel"}
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-blue hover:bg-brand-blue/90 text-white text-xs font-bold shadow-md disabled:opacity-60 transition-all"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-cyan hover:bg-cyan-300 text-brand-primary text-xs font-bold shadow-cyan-glow disabled:opacity-60 transition-all"
               >
                 {submitting ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />

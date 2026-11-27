@@ -121,7 +121,7 @@ export default function TestimonialsSection({
             <button
               type="button"
               onClick={() => setSubmitModalOpen(true)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand-blue to-brand-cyan hover:opacity-95 text-white text-xs sm:text-sm font-bold shadow-lg shadow-brand-blue/20 transition-all hover:-translate-y-0.5"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-cyan hover:bg-cyan-300 text-brand-primary text-xs sm:text-sm font-bold shadow-cyan-glow transition-all hover:-translate-y-0.5"
             >
               <MessageSquarePlus className="w-4 h-4" />
               <span>{t("shareExperience")}</span>
@@ -135,14 +135,14 @@ export default function TestimonialsSection({
             {[0, 1, 2].map((i) => (
               <div
                 key={i}
-                className="h-64 rounded-2xl glass-panel border border-border/60 animate-pulse bg-muted/20"
+                className="h-64 rounded-2xl surface-altura border border-white/10 animate-pulse bg-white/5"
               />
             ))}
           </div>
         ) : testimonials.length === 0 ? (
-          <div className="max-w-xl mx-auto rounded-3xl glass-panel p-8 sm:p-10 border border-border/70 text-center space-y-4">
+          <div className="max-w-xl mx-auto rounded-3xl surface-altura p-8 sm:p-10 border border-white/10 text-center space-y-4 shadow-altura">
             <Quote className="w-10 h-10 text-brand-cyan/40 mx-auto" />
-            <p className="text-sm sm:text-base font-semibold text-muted-foreground">
+            <p className="text-sm sm:text-base font-semibold text-brand-muted">
               {t("emptyState")}
             </p>
           </div>
@@ -176,7 +176,7 @@ export default function TestimonialsSection({
                 return (
                   <div
                     key={item.id}
-                    className={`relative rounded-2xl surface-altura p-6 sm:p-7 border transition-all duration-300 flex flex-col justify-between group shadow-lg hover:shadow-altura ${
+                    className={`relative rounded-2xl surface-altura p-6 sm:p-7 border transition-all duration-300 flex flex-col justify-between group shadow-altura hover:border-brand-cyan/40 ${
                       item.is_featured
                         ? "border-brand-cyan/50 ring-1 ring-brand-cyan/20"
                         : "border-white/10"
@@ -192,8 +192,7 @@ export default function TestimonialsSection({
                         </div>
                         <div className="flex items-center gap-2">
                           {item.is_featured && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-cyan/15 text-brand-cyan border border-brand-cyan/30">
-                              <Sparkles className="w-3 h-3" />
+                            <span className="badge-pixel text-[9px] bg-amber-500/90 text-white">
                               {t("featured")}
                             </span>
                           )}
@@ -202,7 +201,7 @@ export default function TestimonialsSection({
                       </div>
 
                       {/* Review Text */}
-                      <p className="text-sm leading-relaxed text-foreground/90 italic">
+                      <p className="text-sm leading-relaxed text-cream/90 italic">
                         &ldquo;{text}&rdquo;
                       </p>
 
@@ -217,7 +216,7 @@ export default function TestimonialsSection({
                               author: name,
                             })
                           }
-                          className="w-full rounded-xl border border-border/70 bg-muted/40 hover:bg-muted/70 px-3 py-2 flex items-center justify-between text-xs font-semibold text-foreground transition-colors"
+                          className="w-full rounded-xl border border-white/10 bg-[#030A11] hover:border-brand-cyan/40 px-3 py-2 flex items-center justify-between text-xs font-semibold text-cream transition-colors"
                         >
                           <span className="inline-flex items-center gap-2">
                             {item.media_type === "video" ? (
@@ -243,15 +242,15 @@ export default function TestimonialsSection({
                     </div>
 
                     {/* Footer: Course Badge + Author */}
-                    <div className="pt-5 mt-5 border-t border-border/50 space-y-3">
-                      <div className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-brand-cyan bg-brand-cyan/10 px-2.5 py-1 rounded-lg max-w-full">
+                    <div className="pt-5 mt-5 border-t border-white/10 space-y-3">
+                      <div className="badge-altura text-[10px] inline-flex items-center gap-1.5 max-w-full">
                         <BookOpen className="w-3.5 h-3.5 shrink-0" />
                         <span className="truncate">{courseTitle}</span>
                       </div>
 
                       <div className="flex items-center gap-3">
                         {item.avatar_url ? (
-                          <div className="relative w-10 h-10 rounded-full overflow-hidden border border-border shrink-0">
+                          <div className="relative w-10 h-10 rounded-full overflow-hidden border border-white/10 shrink-0">
                             <Image
                               src={item.avatar_url}
                               alt={name}
@@ -261,17 +260,17 @@ export default function TestimonialsSection({
                             />
                           </div>
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-brand-navy to-brand-blue text-white flex items-center justify-center font-bold text-xs shadow-md shrink-0">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#030A11] to-brand-blue text-cream flex items-center justify-center font-heading font-bold text-xs border border-white/10 shadow-md shrink-0">
                             {name.slice(0, 2).toUpperCase()}
                           </div>
                         )}
                         <div className="min-w-0">
-                          <h4 className="font-bold text-sm text-foreground flex items-center gap-1.5 truncate">
+                          <h4 className="font-heading font-bold text-sm text-cream flex items-center gap-1.5 truncate">
                             <span className="truncate">{name}</span>
                             <CheckCircle2 className="w-3.5 h-3.5 text-brand-cyan shrink-0" />
                           </h4>
                           {role && (
-                            <p className="text-xs text-muted-foreground truncate">{role}</p>
+                            <p className="text-xs text-brand-muted truncate">{role}</p>
                           )}
                         </div>
                       </div>
@@ -288,7 +287,7 @@ export default function TestimonialsSection({
                   type="button"
                   onClick={isRtl ? goNext : goPrev}
                   aria-label="Previous"
-                  className="p-2.5 rounded-xl border border-border bg-card hover:bg-muted text-foreground transition-colors shadow-sm"
+                  className="p-2.5 rounded-xl border border-white/10 surface-altura hover:border-brand-cyan/40 text-cream transition-colors shadow-sm"
                 >
                   {isRtl ? (
                     <ChevronRight className="w-4 h-4" />
@@ -306,8 +305,8 @@ export default function TestimonialsSection({
                       aria-label={`Page ${idx + 1}`}
                       className={`h-2 rounded-full transition-all ${
                         idx === currentPage
-                          ? "w-7 bg-brand-cyan"
-                          : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/60"
+                          ? "w-7 bg-brand-cyan shadow-cyan-glow"
+                          : "w-2 bg-white/20 hover:bg-white/40"
                       }`}
                     />
                   ))}
@@ -317,7 +316,7 @@ export default function TestimonialsSection({
                   type="button"
                   onClick={isRtl ? goPrev : goNext}
                   aria-label="Next"
-                  className="p-2.5 rounded-xl border border-border bg-card hover:bg-muted text-foreground transition-colors shadow-sm"
+                  className="p-2.5 rounded-xl border border-white/10 surface-altura hover:border-brand-cyan/40 text-cream transition-colors shadow-sm"
                 >
                   {isRtl ? (
                     <ChevronLeft className="w-4 h-4" />
@@ -346,17 +345,17 @@ export default function TestimonialsSection({
           onClick={() => setPreviewMedia(null)}
         >
           <div
-            className="relative w-full max-w-3xl rounded-2xl bg-card border border-border overflow-hidden shadow-2xl"
+            className="relative w-full max-w-3xl rounded-2xl surface-altura border border-white/10 overflow-hidden shadow-altura"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-              <span className="text-xs font-bold text-foreground">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-[#030A11]/60">
+              <span className="text-xs font-heading font-bold text-cream">
                 {previewMedia.author}
               </span>
               <button
                 type="button"
                 onClick={() => setPreviewMedia(null)}
-                className="p-1.5 rounded-lg hover:bg-muted text-muted-foreground"
+                className="p-1.5 rounded-lg hover:bg-white/10 text-brand-muted hover:text-cream transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
