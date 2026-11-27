@@ -152,7 +152,7 @@ export default function LoginPage({
   };
 
   return (
-    <div className="relative min-h-[90vh] flex items-center justify-center px-4 sm:px-6 py-12 overflow-hidden">
+    <div className="relative min-h-[90vh] flex items-center justify-center px-4 sm:px-6 py-12 overflow-hidden bg-brand-primary">
       {/* Animated Geospatial Canvas Background */}
       <HeroBackground />
 
@@ -162,12 +162,12 @@ export default function LoginPage({
 
       {/* Login Card */}
       <div className="relative w-full max-w-md z-10">
-        <div className="rounded-3xl glass-panel p-8 sm:p-10 shadow-2xl shadow-brand-blue/15 border border-border/70 backdrop-blur-2xl">
+        <div className="rounded-3xl surface-altura p-8 sm:p-10 shadow-altura border border-white/10">
           {/* Logo & Header */}
           <div className="text-center space-y-3 mb-8">
             <Link href="/" className="inline-block group">
-              <div className="relative w-16 h-16 mx-auto rounded-2xl overflow-hidden p-0.5 bg-gradient-to-tr from-brand-navy via-brand-blue to-brand-cyan shadow-xl group-hover:scale-105 transition-transform duration-300">
-                <div className="relative w-full h-full rounded-[14px] overflow-hidden bg-background">
+              <div className="relative w-16 h-16 mx-auto rounded-2xl overflow-hidden p-0.5 bg-gradient-to-tr from-brand-navy via-brand-blue to-brand-cyan shadow-cyan-glow group-hover:scale-105 transition-transform duration-300">
+                <div className="relative w-full h-full rounded-[14px] overflow-hidden bg-brand-primary">
                   <SiteLogoImage
                     alt="FATHY GEO CODE"
                     className="object-cover"
@@ -177,24 +177,24 @@ export default function LoginPage({
               </div>
             </Link>
 
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+            <h1 className="text-2xl sm:text-3xl font-heading font-extrabold tracking-tight text-cream">
               {t("loginTitle")}
             </h1>
-            <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+            <p className="text-xs sm:text-sm text-brand-muted leading-relaxed">
               {t("loginSubtitle")}
             </p>
           </div>
 
           {/* Feedback messages */}
           {error && (
-            <div className="mb-6 p-3.5 rounded-xl bg-destructive/10 border border-destructive/30 flex items-center gap-2.5 text-xs text-destructive">
+            <div className="mb-6 p-3.5 rounded-xl bg-destructive/10 border border-destructive/30 flex items-center gap-2.5 text-xs text-red-400">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
           {success && (
-            <div className="mb-6 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-2.5 text-xs text-emerald-600 dark:text-emerald-400">
+            <div className="mb-6 p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-2.5 text-xs text-emerald-400">
               <CheckCircle2 className="w-4 h-4 shrink-0" />
               <span>{success}</span>
             </div>
@@ -204,11 +204,11 @@ export default function LoginPage({
           <form onSubmit={handleEmailLogin} className="space-y-4">
             {/* Email Field */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">
+              <label className="text-xs font-bold text-cream">
                 {t("email")}
               </label>
               <div className="relative">
-                <div className="absolute inset-y-0 start-0 ps-3.5 flex items-center pointer-events-none text-muted-foreground">
+                <div className="absolute inset-y-0 start-0 ps-3.5 flex items-center pointer-events-none text-brand-muted">
                   <Mail className="w-4 h-4" />
                 </div>
                 <input
@@ -217,7 +217,7 @@ export default function LoginPage({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={t("emailPlaceholder")}
-                  className="w-full ps-10 pe-4 py-3 rounded-xl border border-border/80 bg-background/60 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/50 focus:border-brand-blue transition-all"
+                  className="w-full ps-10 pe-4 py-3 rounded-xl border border-white/10 bg-[#030A11] text-sm text-cream placeholder:text-brand-muted/60 focus:outline-none focus:border-brand-cyan/60 transition-all"
                 />
               </div>
             </div>
@@ -225,18 +225,18 @@ export default function LoginPage({
             {/* Password Field */}
             <div className="space-y-1.5">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-semibold text-foreground">
+                <label className="text-xs font-bold text-cream">
                   {t("password")}
                 </label>
                 <Link
                   href="/forgot-password"
-                  className="text-xs font-medium text-brand-blue dark:text-brand-cyan hover:underline"
+                  className="text-xs font-medium text-brand-cyan hover:underline"
                 >
                   {t("forgotPasswordLink")}
                 </Link>
               </div>
               <div className="relative">
-                <div className="absolute inset-y-0 start-0 ps-3.5 flex items-center pointer-events-none text-muted-foreground">
+                <div className="absolute inset-y-0 start-0 ps-3.5 flex items-center pointer-events-none text-brand-muted">
                   <Lock className="w-4 h-4" />
                 </div>
                 <input
@@ -245,12 +245,12 @@ export default function LoginPage({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={t("passwordPlaceholder")}
-                  className="w-full ps-10 pe-11 py-3 rounded-xl border border-border/80 bg-background/60 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue/50 focus:border-brand-blue transition-all"
+                  className="w-full ps-10 pe-11 py-3 rounded-xl border border-white/10 bg-[#030A11] text-sm text-cream placeholder:text-brand-muted/60 focus:outline-none focus:border-brand-cyan/60 transition-all"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 end-0 pe-3.5 flex items-center text-muted-foreground hover:text-foreground"
+                  className="absolute inset-y-0 end-0 pe-3.5 flex items-center text-brand-muted hover:text-cream"
                 >
                   {showPassword ? (
                     <EyeOff className="w-4 h-4" />
@@ -265,7 +265,7 @@ export default function LoginPage({
             <button
               type="submit"
               disabled={loading}
-              className="w-full inline-flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl text-sm font-bold text-white shadow-lg shadow-brand-blue/20 bg-gradient-to-r from-brand-navy via-brand-blue to-brand-cyan hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50"
+              className="w-full inline-flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl text-sm font-bold text-brand-primary bg-brand-cyan hover:bg-cyan-300 shadow-cyan-glow hover:scale-[1.01] active:scale-[0.98] transition-all disabled:opacity-50"
             >
               <GraduationCap className="w-4 h-4" />
               <span>{loading ? t("loading") : t("signInButton")}</span>
@@ -276,10 +276,10 @@ export default function LoginPage({
           {/* Divider */}
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border/60" />
+              <div className="w-full border-t border-white/10" />
             </div>
-            <div className="relative flex justify-center text-[11px] uppercase tracking-wider">
-              <span className="bg-card px-3 text-muted-foreground">
+            <div className="relative flex justify-center text-[11px] uppercase tracking-wider font-mono">
+              <span className="bg-[#071B2B] px-3 text-brand-muted">
                 {t("orContinueWith")}
               </span>
             </div>
@@ -290,7 +290,7 @@ export default function LoginPage({
             type="button"
             onClick={handleGoogleLogin}
             disabled={googleLoading}
-            className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-border bg-card/70 hover:bg-muted text-sm font-semibold text-foreground transition-all duration-200 hover:scale-[1.01] active:scale-[0.98] shadow-sm disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-3 py-3 px-4 rounded-xl border border-white/10 bg-[#030A11] hover:bg-white/5 text-sm font-semibold text-cream transition-all duration-200 hover:scale-[1.01] active:scale-[0.98] shadow-sm disabled:opacity-50"
           >
             <svg className="w-4 h-4" viewBox="0 0 24 24">
               <path
@@ -314,11 +314,11 @@ export default function LoginPage({
           </button>
 
           {/* Switch to Register */}
-          <div className="mt-8 text-center text-xs text-muted-foreground">
+          <div className="mt-8 text-center text-xs text-brand-muted">
             <span>{t("noAccount")} </span>
             <Link
               href="/register"
-              className="font-bold text-brand-blue dark:text-brand-cyan hover:underline"
+              className="font-bold text-brand-cyan hover:underline"
             >
               {t("registerNow")}
             </Link>
