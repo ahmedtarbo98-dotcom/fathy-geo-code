@@ -110,7 +110,7 @@ export default function TestimonialsSection({
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" />
             <span>{t("badge")}</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground dark:text-[#F2EBDD] font-heading">
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-cream font-heading">
             {t("title")}
           </h2>
           <p className="text-brand-muted text-sm sm:text-base leading-relaxed">

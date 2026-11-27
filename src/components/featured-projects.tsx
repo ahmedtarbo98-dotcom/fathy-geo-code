@@ -38,7 +38,7 @@ export default function FeaturedProjects({
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" />
               <span>{isRtl ? "أبرز الأعمال والمشاريع" : "Featured Geospatial Work"}</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground dark:text-[#F2EBDD] font-heading">
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-cream font-heading">
               {isRtl ? "مشاريع مكانية منفذة باحترافية" : "Featured Portfolio Projects"}
             </h2>
             <p className="text-brand-muted text-sm sm:text-base leading-relaxed">
@@ -105,11 +105,11 @@ export default function FeaturedProjects({
 
                 <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
                   <div className="space-y-2">
-                    <h3 className="font-bold text-lg text-foreground dark:text-[#F2EBDD] group-hover:text-brand-cyan transition-colors line-clamp-2">
+                    <h3 className="font-bold text-lg text-cream group-hover:text-brand-cyan transition-colors line-clamp-2">
                       {title}
                     </h3>
                     {desc && (
-                      <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                      <p className="text-xs sm:text-sm text-brand-muted line-clamp-2 leading-relaxed">
                         {desc}
                       </p>
                     )}
@@ -121,7 +121,7 @@ export default function FeaturedProjects({
                         {project.tools.slice(0, 3).map((tool) => (
                           <span
                             key={tool}
-                            className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-muted text-muted-foreground"
+                            className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#030A11] border border-white/5 text-brand-muted"
                           >
                             {tool}
                           </span>
@@ -129,7 +129,7 @@ export default function FeaturedProjects({
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between text-xs font-bold text-brand-blue dark:text-brand-cyan">
+                    <div className="flex items-center justify-between text-xs font-bold text-brand-cyan">
                       <span className="flex items-center gap-1.5">
                         <Briefcase className="w-3.5 h-3.5" />
                         <span>{isRtl ? "استعراض المشروع" : "View Case Study"}</span>

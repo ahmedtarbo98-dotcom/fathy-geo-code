@@ -70,7 +70,7 @@ export default function WhatYouLearn({ currentLocale }: { currentLocale: string 
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" />
             <span>{t("badge")}</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground dark:text-[#F2EBDD] font-heading">
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-cream font-heading">
             {t("title")}
           </h2>
           <p className="text-brand-muted text-sm sm:text-base leading-relaxed">
@@ -104,18 +104,18 @@ export default function WhatYouLearn({ currentLocale }: { currentLocale: string 
                     </div>
                     <Link
                       href="/courses"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-semibold text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-semibold text-brand-muted hover:text-brand-cyan inline-flex items-center gap-1"
                     >
                       <span>{currentLocale === "ar" ? "استكشف" : "Explore"}</span>
                       <ArrowUpRight className="w-3.5 h-3.5 rtl:rotate-[-90deg]" />
                     </Link>
                   </div>
 
-                  <h3 className="text-xl font-bold text-foreground group-hover:text-brand-blue dark:group-hover:text-brand-cyan transition-colors">
+                  <h3 className="text-xl font-bold text-cream group-hover:text-brand-cyan transition-colors">
                     {title}
                   </h3>
 
-                  <p className="text-sm text-muted-foreground leading-relaxed">
+                  <p className="text-sm text-brand-muted leading-relaxed">
                     {desc}
                   </p>
                 </div>

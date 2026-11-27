@@ -29,6 +29,7 @@ const config: Config = {
           blue: "#1678D3",
           cream: "#F2EBDD",
           muted: "#AAB8C5",
+          secondaryText: "#8FA3B5",
           // Backward-compatible aliases:
           navy: "#030A11",
           darkNavy: "#02070D",

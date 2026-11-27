@@ -82,7 +82,7 @@ export default function FeaturedCourses({
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" />
               <span>{t("badge")}</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground dark:text-[#F2EBDD] font-heading">
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-cream font-heading">
               {t("title")}
             </h2>
             <p className="text-brand-muted text-sm sm:text-base max-w-xl">
@@ -155,7 +155,7 @@ export default function FeaturedCourses({
                       <span className="text-brand-cyan font-mono text-[11px]">GIS & RS</span>
                     </div>
 
-                    <h3 className="text-lg font-bold text-foreground dark:text-[#F2EBDD] font-heading group-hover:text-brand-cyan transition-colors line-clamp-2">
+                    <h3 className="text-lg font-bold text-cream font-heading group-hover:text-brand-cyan transition-colors line-clamp-2">
                       {title}
                     </h3>
 
@@ -167,7 +167,7 @@ export default function FeaturedCourses({
                   <div className="pt-4 border-t border-border/50 flex items-center justify-between">
                     <Link
                       href={`/courses/${course.slug}`}
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-foreground dark:text-[#F2EBDD] group-hover:text-brand-cyan transition-colors"
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-cream group-hover:text-brand-cyan transition-colors"
                     >
                       <span>{t("viewDetails")}</span>
                       <Arrow className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />

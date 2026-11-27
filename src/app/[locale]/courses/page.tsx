@@ -194,7 +194,7 @@ export default function CoursesPage({
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" />
             <span>FATHY GEO CODE</span>
           </div>
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-foreground dark:text-[#F2EBDD] font-heading">
+          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-cream font-heading">
             {t("title")}
           </h1>
           <p className="text-brand-muted text-sm sm:text-base leading-relaxed">
@@ -214,12 +214,12 @@ export default function CoursesPage({
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={t("searchPlaceholder")}
-                  className="w-full h-11 ps-10 pe-4 rounded-xl bg-black/40 border border-white/10 text-sm text-foreground dark:text-[#F2EBDD] focus:outline-none focus:ring-2 focus:ring-brand-cyan/40 focus:border-brand-cyan transition-all placeholder:text-muted-foreground/60"
+                  className="w-full h-11 ps-10 pe-4 rounded-xl bg-black/40 border border-white/10 text-sm text-cream focus:outline-none focus:ring-2 focus:ring-brand-cyan/40 focus:border-brand-cyan transition-all placeholder:text-brand-muted/60"
                 />
                 {search && (
                   <button
                     onClick={() => setSearch("")}
-                    className="absolute top-1/2 -translate-y-1/2 end-3 p-1 rounded-md hover:bg-muted text-muted-foreground"
+                    className="absolute top-1/2 -translate-y-1/2 end-3 p-1 rounded-md hover:bg-white/10 text-brand-muted"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -248,7 +248,7 @@ export default function CoursesPage({
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full h-11 px-3 rounded-xl bg-black/40 border border-white/10 text-xs font-medium text-foreground dark:text-[#F2EBDD] focus:outline-none focus:ring-2 focus:ring-brand-cyan/40 cursor-pointer"
+                  className="w-full h-11 px-3 rounded-xl bg-black/40 border border-white/10 text-xs font-medium text-cream focus:outline-none focus:ring-2 focus:ring-brand-cyan/40 cursor-pointer"
                 >
                   <option value="all" className="bg-[#030A11]">{t("allCategories")}</option>
                   {categories.map((cat) => (
@@ -264,7 +264,7 @@ export default function CoursesPage({
                 <select
                   value={selectedLevel}
                   onChange={(e) => setSelectedLevel(e.target.value)}
-                  className="w-full h-11 px-3 rounded-xl bg-black/40 border border-white/10 text-xs font-medium text-foreground dark:text-[#F2EBDD] focus:outline-none focus:ring-2 focus:ring-brand-cyan/40 cursor-pointer"
+                  className="w-full h-11 px-3 rounded-xl bg-black/40 border border-white/10 text-xs font-medium text-cream focus:outline-none focus:ring-2 focus:ring-brand-cyan/40 cursor-pointer"
                 >
                   <option value="all" className="bg-[#030A11]">{t("allLevels")}</option>
                   <option value="beginner" className="bg-[#030A11]">{t("level_beginner")}</option>
@@ -277,14 +277,14 @@ export default function CoursesPage({
         </div>
 
         {/* Results Count & Reset */}
-        <div className="flex items-center justify-between mb-8 text-xs text-muted-foreground">
+        <div className="flex items-center justify-between mb-8 text-xs text-brand-muted">
           <span>
             {t("foundCourses", { count: filteredCourses.length })}
           </span>
           {(search || selectedType !== "all" || selectedCategory !== "all" || selectedLevel !== "all") && (
             <button
               onClick={resetFilters}
-              className="text-brand-blue dark:text-brand-cyan hover:underline font-semibold flex items-center gap-1"
+              className="text-brand-cyan hover:underline font-semibold flex items-center gap-1"
             >
               <X className="w-3.5 h-3.5" />
               <span>{t("resetFilters")}</span>
@@ -296,17 +296,17 @@ export default function CoursesPage({
         {loading ? (
           <div className="py-24 text-center space-y-3">
             <RefreshCw className="w-8 h-8 mx-auto animate-spin text-brand-cyan" />
-            <p className="text-xs text-muted-foreground font-medium">
+            <p className="text-xs text-brand-muted font-medium">
               {isRtl ? "جارٍ تحميل الدورات التعليمية..." : "Loading courses..."}
             </p>
           </div>
         ) : filteredCourses.length === 0 ? (
           <div className="text-center py-20 rounded-3xl glass-panel border border-dashed border-border/80 max-w-lg mx-auto space-y-4">
-            <BookOpen className="w-12 h-12 mx-auto text-muted-foreground/40" />
-            <h3 className="text-lg font-bold text-foreground">
+            <BookOpen className="w-12 h-12 mx-auto text-brand-muted/40" />
+            <h3 className="text-lg font-bold text-cream">
               {t("noResultsTitle")}
             </h3>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-brand-muted">
               {t("noResultsDesc")}
             </p>
             <button
@@ -409,7 +409,7 @@ export default function CoursesPage({
                         )}
                       </div>
 
-                      <h3 className="text-lg font-bold text-foreground dark:text-[#F2EBDD] font-heading leading-snug group-hover:text-brand-cyan transition-colors line-clamp-2">
+                      <h3 className="text-lg font-bold text-cream font-heading leading-snug group-hover:text-brand-cyan transition-colors line-clamp-2">
                         {title}
                       </h3>
 
@@ -421,7 +421,7 @@ export default function CoursesPage({
                     <div className="pt-4 border-t border-border/50 flex items-center justify-between">
                       <Link
                         href={`/courses/${course.slug}`}
-                        className="inline-flex items-center gap-1.5 text-xs font-bold text-foreground dark:text-[#F2EBDD] group-hover:text-brand-cyan transition-colors"
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-cream group-hover:text-brand-cyan transition-colors"
                       >
                         <span>{tFeatured("viewDetails")}</span>
                         <Arrow className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />

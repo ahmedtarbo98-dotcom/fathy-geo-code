@@ -73,7 +73,7 @@ export default function Footer({ currentLocale }: { currentLocale: string }) {
                 </div>
               </div>
               <div className="flex flex-col">
-                <span className="font-extrabold text-lg sm:text-xl tracking-tight text-foreground dark:text-[#F2EBDD]">
+                <span className="font-extrabold text-lg sm:text-xl tracking-tight text-cream">
                   {tBrand("name")}
                 </span>
                 <span className="text-xs text-brand-cyan font-medium">
@@ -82,12 +82,12 @@ export default function Footer({ currentLocale }: { currentLocale: string }) {
               </div>
             </Link>
 
-            <p className="text-sm text-muted-foreground leading-relaxed max-w-sm">
+            <p className="text-sm text-brand-muted leading-relaxed max-w-sm">
               {t("description")}
             </p>
 
             <div className="pt-2">
-              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
+              <div className="text-xs font-semibold uppercase tracking-wider text-brand-muted mb-3 flex items-center gap-1.5">
                 <Sparkles className="w-3.5 h-3.5 text-brand-cyan" />
                 <span>{currentLocale === "ar" ? "قنوات التواصل والمتابعة" : "Official Channels"}</span>
               </div>
@@ -102,7 +102,7 @@ export default function Footer({ currentLocale }: { currentLocale: string }) {
                       rel="noopener noreferrer"
                       title={item.name}
                       aria-label={item.name}
-                      className={`w-9 h-9 rounded-lg border border-border/70 bg-card/60 flex items-center justify-center text-muted-foreground transition-all duration-300 hover:scale-110 active:scale-95 shadow-sm ${item.color}`}
+                      className={`w-9 h-9 rounded-lg border border-border/70 bg-card/60 flex items-center justify-center text-brand-muted hover:text-cream transition-all duration-300 hover:scale-110 active:scale-95 shadow-sm ${item.color}`}
                     >
                       <Icon className="w-4 h-4" />
                     </a>
@@ -114,15 +114,15 @@ export default function Footer({ currentLocale }: { currentLocale: string }) {
 
           {/* Quick Links */}
           <div className="space-y-4">
-            <h4 className="font-semibold text-sm text-foreground tracking-wide flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-brand-blue" />
+            <h4 className="font-semibold text-sm text-cream tracking-wide flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-brand-cyan" />
               {t("quickLinks")}
             </h4>
-            <ul className="space-y-2.5 text-sm text-muted-foreground">
+            <ul className="space-y-2.5 text-sm text-brand-muted">
               <li>
                 <Link
                   href="/courses"
-                  className="transition-colors hover:text-brand-blue dark:hover:text-brand-cyan inline-flex items-center gap-1.5"
+                  className="transition-colors hover:text-brand-cyan inline-flex items-center gap-1.5"
                 >
                   <span>{t("courses")}</span>
                 </Link>
@@ -130,7 +130,7 @@ export default function Footer({ currentLocale }: { currentLocale: string }) {
               <li>
                 <Link
                   href="/projects"
-                  className="transition-colors hover:text-brand-blue dark:hover:text-brand-cyan inline-flex items-center gap-1.5"
+                  className="transition-colors hover:text-brand-cyan inline-flex items-center gap-1.5"
                 >
                   <span>{t("projects")}</span>
                 </Link>
@@ -138,7 +138,7 @@ export default function Footer({ currentLocale }: { currentLocale: string }) {
               <li>
                 <Link
                   href="/about"
-                  className="transition-colors hover:text-brand-blue dark:hover:text-brand-cyan inline-flex items-center gap-1.5"
+                  className="transition-colors hover:text-brand-cyan inline-flex items-center gap-1.5"
                 >
                   <span>{t("about")}</span>
                 </Link>
@@ -146,7 +146,7 @@ export default function Footer({ currentLocale }: { currentLocale: string }) {
               <li>
                 <Link
                   href="/contact"
-                  className="transition-colors hover:text-brand-blue dark:hover:text-brand-cyan inline-flex items-center gap-1.5"
+                  className="transition-colors hover:text-brand-cyan inline-flex items-center gap-1.5"
                 >
                   <span>{t("contact")}</span>
                 </Link>
@@ -156,7 +156,7 @@ export default function Footer({ currentLocale }: { currentLocale: string }) {
                   href="https://www.youtube.com/channel/UCBrwWaq6E8lg0xEmDCLmekw"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="transition-colors hover:text-brand-blue dark:hover:text-brand-cyan inline-flex items-center gap-1.5"
+                  className="transition-colors hover:text-brand-cyan inline-flex items-center gap-1.5"
                 >
                   <span>YouTube Channel</span>
                   <ExternalLink className="w-3 h-3 opacity-60" />
@@ -167,11 +167,11 @@ export default function Footer({ currentLocale }: { currentLocale: string }) {
 
           {/* Training Specializations */}
           <div className="space-y-4">
-            <h4 className="font-semibold text-sm text-foreground tracking-wide flex items-center gap-2">
+            <h4 className="font-semibold text-sm text-cream tracking-wide flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-brand-cyan" />
               {currentLocale === "ar" ? "المسارات التعليمية" : "Specializations"}
             </h4>
-            <ul className="space-y-2.5 text-sm text-muted-foreground">
+            <ul className="space-y-2.5 text-sm text-brand-muted">
               <li className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-3.5 h-3.5 text-brand-cyan" />
                 <span>ArcGIS Pro & Spatial Analyst</span>
@@ -197,15 +197,15 @@ export default function Footer({ currentLocale }: { currentLocale: string }) {
 
           {/* Verification & Legal */}
           <div className="space-y-4">
-            <h4 className="font-semibold text-sm text-foreground tracking-wide flex items-center gap-2">
+            <h4 className="font-semibold text-sm text-cream tracking-wide flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
               {t("legal")}
             </h4>
-            <ul className="space-y-2.5 text-sm text-muted-foreground">
+            <ul className="space-y-2.5 text-sm text-brand-muted">
               <li>
                 <Link
                   href="/verify"
-                  className="transition-colors text-brand-blue dark:text-brand-cyan font-medium inline-flex items-center gap-1.5"
+                  className="transition-colors text-brand-cyan font-medium inline-flex items-center gap-1.5"
                 >
                   <ShieldCheck className="w-4 h-4 text-emerald-500" />
                   <span>{t("verifyCertificate")}</span>
@@ -214,7 +214,7 @@ export default function Footer({ currentLocale }: { currentLocale: string }) {
               <li>
                 <Link
                   href="/privacy"
-                  className="transition-colors hover:text-brand-blue dark:hover:text-brand-cyan"
+                  className="transition-colors hover:text-brand-cyan"
                 >
                   {t("privacy")}
                 </Link>
@@ -222,7 +222,7 @@ export default function Footer({ currentLocale }: { currentLocale: string }) {
               <li>
                 <Link
                   href="/terms"
-                  className="transition-colors hover:text-brand-blue dark:hover:text-brand-cyan"
+                  className="transition-colors hover:text-brand-cyan"
                 >
                   {t("terms")}
                 </Link>
@@ -243,7 +243,7 @@ export default function Footer({ currentLocale }: { currentLocale: string }) {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-12 pt-8 border-t border-border/40 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
+        <div className="mt-12 pt-8 border-t border-border/40 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-brand-muted">
           <p>{t("copyright", { year: currentYear })}</p>
           <div className="flex items-center gap-2">
             <MapPin className="w-3.5 h-3.5 text-brand-cyan" />
