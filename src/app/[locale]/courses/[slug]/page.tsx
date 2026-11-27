@@ -94,9 +94,19 @@ export default function CourseDetailsPage({
     // If lesson has ID, fetch token
     if (targetLesson?.id) {
       try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+        if (session?.access_token) {
+          headers["Authorization"] = `Bearer ${session.access_token}`;
+        }
+
         const res = await fetch("/api/video/token", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify({ lessonId: targetLesson.id }),
         });
         const data = await res.json();
@@ -114,8 +124,17 @@ export default function CourseDetailsPage({
       }
     }
 
-    // Fallback video ID (e.g. course intro or YouTube ID)
-    const fallbackId = (course as any)?.intro_video_url || "dQw4w9WgXcQ";
+    // Fallback to course intro video URL if available (no placeholder video IDs)
+    const rawIntro = String((course as any)?.intro_video_url || "").trim();
+    const introMatch = rawIntro.match(
+      /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+    );
+    const fallbackId = /^[a-zA-Z0-9_-]{11}$/.test(rawIntro)
+      ? rawIntro
+      : introMatch
+      ? introMatch[1]
+      : "";
+
     setPreviewVideoData({
       videoId: fallbackId,
       lessonTitle: lTitle,
@@ -993,6 +1012,8 @@ export default function CourseDetailsPage({
                 <VideoPlayer
                   provider="youtube"
                   videoId={previewVideoData.videoId}
+                  userEmail="FATHY GEO CODE"
+                  userId="PREVIEW"
                   title={previewVideoData.lessonTitle || title}
                   courseName={title}
                   instructorName="Eng: Ahmed Fathy"
@@ -1001,8 +1022,10 @@ export default function CourseDetailsPage({
                   isPaidCourse={false}
                 />
               ) : (
-                <div className="aspect-video w-full rounded-2xl bg-slate-900 flex items-center justify-center text-white text-xs">
-                  {isRtl ? "جاري تحميل الفيديو..." : "Loading video..."}
+                <div className="aspect-video w-full rounded-2xl bg-slate-900 flex items-center justify-center text-slate-300 text-xs sm:text-sm p-6 text-center">
+                  {isRtl
+                    ? "لا يوجد فيديو معاينة مرفق لهذه الدورة حالياً."
+                    : "No preview video is attached to this course yet."}
                 </div>
               )}
             </div>

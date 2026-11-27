@@ -6,6 +6,15 @@ import { videoTokenSchema } from "@/lib/security/validation";
 
 export const dynamic = "force-dynamic";
 
+function extractYouTubeVideoId(raw: string | null | undefined): string {
+  if (!raw) return "";
+  const input = String(raw).trim();
+  if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
+  const regex = /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+  const match = input.match(regex);
+  return match ? match[1] : input;
+}
+
 export async function POST(request: Request) {
   try {
     const clientIp = getClientIp(request);
@@ -31,9 +40,18 @@ export async function POST(request: Request) {
     const { lessonId } = parseResult.data;
 
     const supabase = createClient();
-    const {
+    let {
       data: { user },
     } = await supabase.auth.getUser();
+
+    if (!user) {
+      const authHeader = request.headers.get("authorization");
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        const token = authHeader.substring(7);
+        const { data: tokenUser } = await supabase.auth.getUser(token);
+        user = tokenUser.user;
+      }
+    }
 
     // 3. User-level rate limiting if logged in
     if (user?.id) {
@@ -90,19 +108,31 @@ export async function POST(request: Request) {
       if (isAdmin || isFreeCourse || isFreePreview) {
         hasAccess = true;
       } else {
+        // Collect all profile IDs matching this user's ID or email (consistent with /api/check-enrollment)
+        const userIds = [user.id];
+        if (user.email) {
+          const { data: emailProfiles } = await adminClient
+            .from("profiles")
+            .select("id")
+            .ilike("email", user.email);
+          (emailProfiles || []).forEach((p) => {
+            if (!userIds.includes(p.id)) userIds.push(p.id);
+          });
+        }
+
         // Check active enrollment
-        const { data: enrollment } = await adminClient
+        const { data: enrollments } = await adminClient
           .from("enrollments")
           .select("id, status, expires_at")
-          .eq("user_id", user.id)
-          .eq("course_id", lesson.course_id)
-          .eq("status", "active")
-          .maybeSingle();
+          .in("user_id", userIds)
+          .eq("status", "active");
 
-        if (enrollment) {
-          if (!enrollment.expires_at || new Date(enrollment.expires_at) > new Date()) {
-            hasAccess = true;
-          }
+        const validEnrollment = (enrollments || []).find(
+          (e) => !e.expires_at || new Date(e.expires_at) > new Date()
+        );
+
+        if (validEnrollment) {
+          hasAccess = true;
         }
       }
     } else {
@@ -124,8 +154,18 @@ export async function POST(request: Request) {
       .eq("lesson_id", lessonId)
       .maybeSingle();
 
-    const videoId = videoData?.video_id || "dQw4w9WgXcQ";
     const provider = videoData?.provider || "youtube";
+    const videoId =
+      provider === "youtube"
+        ? extractYouTubeVideoId(videoData?.video_id)
+        : String(videoData?.video_id || "").trim();
+
+    if (!videoId) {
+      return NextResponse.json(
+        { error: "No video linked to this lesson yet." },
+        { status: 404 }
+      );
+    }
 
     // Watermark
     const watermark = user

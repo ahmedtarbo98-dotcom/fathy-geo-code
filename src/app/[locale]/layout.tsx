@@ -42,6 +42,8 @@ export const viewport: Viewport = {
   maximumScale: 5,
 };
 
+export const revalidate = 60;
+
 export async function generateMetadata({
   params,
 }: {
@@ -51,7 +53,11 @@ export async function generateMetadata({
   const isRtl = locale === "ar";
   const branding = await getSiteBranding();
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://fathy-geo-code.vercel.app";
-  const iconUrl = branding.logoUrl || "/logo.jpg";
+  const rawBrandLogo = branding.logoUrl || branding.instructorAvatarUrl || "/logo.jpg";
+  const iconUrl = rawBrandLogo;
+  const shareImageUrl = rawBrandLogo.startsWith("http")
+    ? rawBrandLogo
+    : `${baseUrl}${rawBrandLogo.startsWith("/") ? "" : "/"}${rawBrandLogo}`;
 
   const titleAr = "FATHY GEO CODE | فتحي جيو كود — منصة نظم المعلومات الجغرافية والاستشعار عن بعد | م. أحمد فتحي";
   const titleEn = "FATHY GEO CODE — GIS & Remote Sensing Educational Hub | Eng. Ahmed Fathy";
@@ -115,10 +121,10 @@ export async function generateMetadata({
       description: currentDesc,
       images: [
         {
-          url: `${baseUrl}/images/logo.jpg`,
+          url: shareImageUrl,
           width: 800,
           height: 800,
-          alt: "FATHY GEO CODE • فتحي جيو كود",
+          alt: branding.siteName || "FATHY GEO CODE • فتحي جيو كود",
         },
       ],
     },
@@ -126,7 +132,7 @@ export async function generateMetadata({
       card: "summary_large_image",
       title: currentTitle,
       description: currentDesc,
-      images: [`${baseUrl}/images/logo.jpg`],
+      images: [shareImageUrl],
     },
     robots: {
       index: true,
@@ -172,6 +178,11 @@ export default async function LocaleLayout({
   const dir = locale === "ar" ? "rtl" : "ltr";
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://fathy-geo-code.vercel.app";
 
+  const rawJsonLogo = initialBranding.logoUrl || initialBranding.instructorAvatarUrl || "/logo.jpg";
+  const resolvedJsonLogo = rawJsonLogo.startsWith("http")
+    ? rawJsonLogo
+    : `${baseUrl}${rawJsonLogo.startsWith("/") ? "" : "/"}${rawJsonLogo}`;
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@graph": [
@@ -181,7 +192,7 @@ export default async function LocaleLayout({
         name: "FATHY GEO CODE",
         alternateName: "فتحي جيو كود",
         url: baseUrl,
-        logo: initialBranding.logoUrl || `${baseUrl}/logo.jpg`,
+        logo: resolvedJsonLogo,
         description: initialBranding.tagline || "GIS & Remote Sensing Educational Hub",
         sameAs: [
           "https://wa.me/201060683463",

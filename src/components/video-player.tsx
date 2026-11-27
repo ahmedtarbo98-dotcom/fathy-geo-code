@@ -44,11 +44,21 @@ declare global {
   }
 }
 
+function normalizeYouTubeId(raw: string | null | undefined): string {
+  if (!raw) return "";
+  const input = String(raw).trim();
+  if (/^[a-zA-Z0-9_-]{11}$/.test(input)) return input;
+  const match = input.match(
+    /(?:youtube\.com\/(?:[^/]+\/.+\/|(?:v|e(?:mbed)?|shorts)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+  );
+  return match ? match[1] : input;
+}
+
 export default function VideoPlayer({
   provider = "youtube",
   videoId,
-  userEmail = "student@fathygeocode.com",
-  userId = "FGC-STUDENT",
+  userEmail = "",
+  userId = "",
   isProtected = true,
   isPaidCourse = false,
   title,
@@ -58,6 +68,7 @@ export default function VideoPlayer({
   onComplete,
   onProgress,
 }: VideoPlayerProps) {
+  const resolvedVideoId = provider === "youtube" ? normalizeYouTubeId(videoId) : String(videoId || "").trim();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const iframeContainerRef = useRef<HTMLDivElement | null>(null);
   const playerRef = useRef<any>(null);
@@ -98,6 +109,8 @@ export default function VideoPlayer({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const [playerError, setPlayerError] = useState<string | null>(null);
+  const [retrySeed, setRetrySeed] = useState(0);
 
   // Quality & Speed Popover states (Altura GIS style)
   const [isQualityMenuOpen, setIsQualityMenuOpen] = useState(false);
@@ -196,16 +209,31 @@ export default function VideoPlayer({
   // 1. Initialize YouTube Iframe API
   useEffect(() => {
     if (provider !== "youtube") return;
+    if (!resolvedVideoId) {
+      setIsBuffering(false);
+      setIsReady(false);
+      setPlayerError("لم يتم العثور على رابط الفيديو لهذا الدرس.");
+      return;
+    }
 
     let timer: NodeJS.Timeout;
+    let apiWaitTimer: NodeJS.Timeout;
+    let destroyed = false;
+
+    setIsReady(false);
+    setIsPlaying(false);
+    setIsBuffering(true);
+    setCurrentTime(0);
+    setDuration(0);
+    setPlayerError(null);
 
     const initPlayer = () => {
-      if (!window.YT || !window.YT.Player) return;
+      if (destroyed || !window.YT || !window.YT.Player) return false;
 
       // Unique element id for iframe container
-      const containerId = `yt-player-${videoId}`;
+      const containerId = `yt-player-${resolvedVideoId}`;
       const elem = document.getElementById(containerId);
-      if (!elem) return;
+      if (!elem) return false;
 
       if (playerRef.current) {
         try {
@@ -215,7 +243,7 @@ export default function VideoPlayer({
 
       playerRef.current = new window.YT.Player(containerId, {
         host: "https://www.youtube-nocookie.com",
-        videoId: videoId,
+        videoId: resolvedVideoId,
         width: "100%",
         height: "100%",
         playerVars: {
@@ -234,11 +262,15 @@ export default function VideoPlayer({
         },
         events: {
           onReady: (event: any) => {
+            if (destroyed) return;
             setIsReady(true);
+            setIsBuffering(false);
+            setPlayerError(null);
             setDuration(event.target.getDuration() || 0);
             event.target.setVolume(volume);
           },
           onStateChange: (event: any) => {
+            if (destroyed) return;
             // YT.PlayerState: PLAYING = 1, PAUSED = 2, BUFFERING = 3, CUED = 5, ENDED = 0
             if (event.data === 1) {
               setIsPlaying(true);
@@ -249,6 +281,8 @@ export default function VideoPlayer({
               reportProgress(true);
             } else if (event.data === 3) {
               setIsBuffering(true);
+            } else if (event.data === 5) {
+              setIsBuffering(false);
             } else if (event.data === 0) {
               setIsPlaying(false);
               setIsBuffering(false);
@@ -256,18 +290,53 @@ export default function VideoPlayer({
               if (onComplete) onComplete();
             }
           },
+          onError: (event: any) => {
+            if (destroyed) return;
+            setIsBuffering(false);
+            setIsPlaying(false);
+            const code = Number(event?.data);
+            if (code === 101 || code === 150) {
+              setPlayerError("تعذر تشغيل الفيديو داخل المشغل لأن التضمين معطل على هذا الفيديو في يوتيوب.");
+            } else if (code === 100 || code === 2) {
+              setPlayerError("الفيديو غير متاح أو الرابط غير صحيح. يرجى التواصل مع الإدارة.");
+            } else {
+              setPlayerError("حدث خطأ أثناء تحميل الفيديو. تأكد من اتصالك بالإنترنت أو عطّل مانع الإعلانات وحاول مجدداً.");
+            }
+          },
         },
       });
+      return true;
     };
 
-    if (!window.YT) {
-      const tag = document.createElement("script");
-      tag.src = "https://www.youtube.com/iframe_api";
-      const firstScriptTag = document.getElementsByTagName("script")[0];
-      firstScriptTag?.parentNode?.insertBefore(tag, firstScriptTag);
+    if (!window.YT?.Player) {
+      const existingScript = document.querySelector('script[src*="youtube.com/iframe_api"]');
+      if (!existingScript) {
+        const tag = document.createElement("script");
+        tag.src = "https://www.youtube.com/iframe_api";
+        const firstScriptTag = document.getElementsByTagName("script")[0];
+        firstScriptTag?.parentNode?.insertBefore(tag, firstScriptTag);
+      }
+
+      const prevReady = window.onYouTubeIframeAPIReady;
       window.onYouTubeIframeAPIReady = () => {
+        if (typeof prevReady === "function") {
+          try { prevReady(); } catch {}
+        }
         initPlayer();
       };
+
+      // Poll briefly in case API script finished loading or callback already fired
+      let attempts = 0;
+      apiWaitTimer = setInterval(() => {
+        attempts += 1;
+        if (initPlayer()) {
+          clearInterval(apiWaitTimer);
+        } else if (attempts > 120) {
+          clearInterval(apiWaitTimer);
+          setIsBuffering(false);
+          setPlayerError("تعذر الاتصال بخادم يوتيوب. يرجى التحقق من الشبكة أو إضافات حجب المحتوى.");
+        }
+      }, 100);
     } else {
       initPlayer();
     }
@@ -286,7 +355,9 @@ export default function VideoPlayer({
     }, 500);
 
     return () => {
+      destroyed = true;
       clearInterval(timer);
+      clearInterval(apiWaitTimer);
       if (playerRef.current) {
         try {
           playerRef.current.destroy();
@@ -294,7 +365,7 @@ export default function VideoPlayer({
         playerRef.current = null;
       }
     };
-  }, [videoId, provider]);
+  }, [resolvedVideoId, provider, retrySeed]);
 
   // 2. Play / Pause Control
   const togglePlay = useCallback(() => {
@@ -403,7 +474,7 @@ export default function VideoPlayer({
       // Reload at current second with suggestedQuality
       if (typeof playerRef.current.loadVideoById === "function") {
         playerRef.current.loadVideoById({
-          videoId: videoId,
+          videoId: resolvedVideoId,
           startSeconds: curr,
           suggestedQuality: ytQuality,
         });
@@ -762,13 +833,13 @@ export default function VideoPlayer({
           {provider === "youtube" ? (
             <div className="absolute inset-x-0 -top-[72px] h-[calc(100%+144px)] pointer-events-none">
               <div
-                id={`yt-player-${videoId}`}
+                id={`yt-player-${resolvedVideoId}`}
                 className="w-full h-full pointer-events-none"
               />
             </div>
           ) : (
             <iframe
-              src={`https://player.vimeo.com/video/${videoId}`}
+              src={`https://player.vimeo.com/video/${resolvedVideoId}`}
               title="Course Video"
               allow="autoplay; fullscreen"
               className="w-full h-full border-0 pointer-events-none"
@@ -798,7 +869,6 @@ export default function VideoPlayer({
           }
         }}
         className="absolute inset-0 z-10 cursor-pointer bg-transparent"
-        title={isPlaying ? "انقر للإيقاف المؤقت (نقر مزدوج للتقديم/الترجيع)" : "انقر للتشغيل"}
       />
 
       {/* Visual Feedback Badge (Center Ripple) */}
@@ -831,15 +901,35 @@ export default function VideoPlayer({
         </div>
       )}
 
-      {/* Buffering Spinner */}
-      {isBuffering && (
-        <div className="absolute inset-0 m-auto w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-black/60 backdrop-blur-sm flex items-center justify-center pointer-events-none z-20 shadow-2xl">
+      {/* Buffering / Initializing Spinner */}
+      {(isBuffering || (!isReady && !playerError && provider === "youtube")) && (
+        <div className="absolute inset-0 m-auto w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-black/70 backdrop-blur-sm flex items-center justify-center pointer-events-none z-30 shadow-2xl">
           <Loader2 className="w-7 h-7 sm:w-8 sm:h-8 text-brand-cyan animate-spin" />
         </div>
       )}
 
+      {/* Player Error Overlay */}
+      {playerError && (
+        <div className="absolute inset-0 z-40 bg-[#030A11]/95 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center text-white space-y-3">
+          <ShieldAlert className="w-10 h-10 text-amber-400" />
+          <p className="text-xs sm:text-sm text-slate-200 max-w-md leading-relaxed">
+            {playerError}
+          </p>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setRetrySeed((s) => s + 1);
+            }}
+            className="px-4 py-2 rounded-xl bg-brand-blue hover:bg-blue-600 text-white text-xs font-bold transition-colors"
+          >
+            إعادة تحميل الفيديو
+          </button>
+        </div>
+      )}
+
       {/* Dynamic Moving Watermark 1 */}
-      {isProtected && (
+      {isProtected && (userEmail || userId) && (
         <div
           className="absolute pointer-events-none transition-all duration-1000 ease-in-out z-20"
           style={{
@@ -848,13 +938,13 @@ export default function VideoPlayer({
           }}
         >
           <div className="px-2.5 py-1 rounded bg-black/50 backdrop-blur-[2px] border border-white/15 text-white/50 text-[10px] sm:text-xs font-mono font-bold tracking-wider whitespace-nowrap shadow-md">
-            {userEmail} • {userId.slice(0, 8)}
+            {[userEmail, userId ? userId.slice(0, 8) : ""].filter(Boolean).join(" • ")}
           </div>
         </div>
       )}
 
       {/* Dynamic Moving Watermark 2 (Strict Paid Courses - Diagonal Ghost) */}
-      {isProtected && isPaidCourse && (
+      {isProtected && isPaidCourse && userEmail && (
         <div
           className="absolute pointer-events-none transition-all duration-1000 ease-in-out z-20 select-none opacity-30 hover:opacity-10"
           style={{
@@ -989,8 +1079,8 @@ export default function VideoPlayer({
       </div>
 
       {/* Center Play Button & "Video Paused" Pill Badge (Altura GIS Style) */}
-      {!isPlaying && !isBuffering && isReady && (
-        <div className="absolute inset-0 z-20 m-auto flex flex-col items-center justify-center pointer-events-none">
+      {!isPlaying && !isBuffering && isReady && !playerError && (
+        <div className="absolute inset-0 z-30 m-auto flex flex-col items-center justify-center pointer-events-none">
           <button
             type="button"
             onClick={(e) => {

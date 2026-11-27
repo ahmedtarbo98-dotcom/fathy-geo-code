@@ -52,11 +52,15 @@ function CoursePlayerContent({
   const [notesSaved, setNotesSaved] = useState(false);
   const [showCertificateModal, setShowCertificateModal] = useState(false);
 
-  const [videoTokenData, setVideoTokenData] = useState({
-    videoId: "dQw4w9WgXcQ",
-    email: "student@fathygeocode.com",
-    userId: "STUDENT",
-  });
+  const [videoTokenData, setVideoTokenData] = useState<{
+    videoId: string | null;
+    provider: "youtube" | "bunny" | "vimeo";
+    email: string;
+    userId: string;
+  } | null>(null);
+  const [videoLoading, setVideoLoading] = useState(true);
+  const [videoError, setVideoError] = useState<string | null>(null);
+  const [videoRetryCount, setVideoRetryCount] = useState(0);
   const [lessonResourcesList, setLessonResourcesList] = useState<any[]>([]);
   const [courseResourcesList, setCourseResourcesList] = useState<any[]>([]);
 
@@ -227,25 +231,72 @@ function CoursePlayerContent({
 
   // Fetch real protected video & watermark
   useEffect(() => {
-    if (!currentLesson?.id) return;
+    if (!currentLesson?.id) {
+      setVideoLoading(false);
+      setVideoTokenData(null);
+      return;
+    }
 
-    // 1. Fetch token and video
-    fetch("/api/video/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ lessonId: currentLesson.id }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.videoId) {
+    let cancelled = false;
+    setVideoLoading(true);
+    setVideoError(null);
+    setVideoTokenData(null);
+
+    async function loadVideoToken() {
+      try {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        const headers: Record<string, string> = {
+          "Content-Type": "application/json",
+        };
+        if (session?.access_token) {
+          headers["Authorization"] = `Bearer ${session.access_token}`;
+        }
+
+        const res = await fetch("/api/video/token", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ lessonId: currentLesson.id }),
+        });
+
+        const data = await res.json().catch(() => ({}));
+        if (cancelled) return;
+
+        if (!res.ok || !data?.videoId) {
+          setVideoError(
+            data?.error ||
+              (isRtl
+                ? "لا يوجد فيديو متاح لهذا الدرس حالياً."
+                : "No video is currently linked to this lesson.")
+          );
+          setVideoTokenData(null);
+        } else {
           setVideoTokenData({
             videoId: data.videoId,
-            email: data.watermark?.email || "student@fathygeocode.com",
-            userId: data.watermark?.userId || "STUDENT",
+            provider: (data.provider as "youtube" | "bunny" | "vimeo") || "youtube",
+            email: data.watermark?.email || session?.user?.email || "",
+            userId: data.watermark?.userId || session?.user?.id?.slice(0, 8) || "",
           });
         }
-      })
-      .catch((err) => console.error("Video token error:", err));
+      } catch (err) {
+        console.error("Video token error:", err);
+        if (!cancelled) {
+          setVideoError(
+            isRtl
+              ? "تعذر الاتصال بخادم الفيديو. يرجى المحاولة مرة أخرى."
+              : "Could not load video. Please try again."
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setVideoLoading(false);
+        }
+      }
+    }
+
+    loadVideoToken();
 
     // 2. Fetch live resources from DB
     supabase
@@ -254,13 +305,18 @@ function CoursePlayerContent({
       .eq("lesson_id", currentLesson.id)
       .order("order_index", { ascending: true })
       .then(({ data }) => {
+        if (cancelled) return;
         if (data && data.length > 0) {
           setLessonResourcesList(data);
         } else {
           setLessonResourcesList([]);
         }
       });
-  }, [currentLesson?.id]);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentLesson?.id, isEnrolled, videoRetryCount, isRtl, supabase]);
 
   // Calculate percentage
   const completedCount = Object.values(completedLessons).filter(Boolean).length;
@@ -354,19 +410,54 @@ function CoursePlayerContent({
           <div className="lg:col-span-8 space-y-6 min-w-0">
             {/* Custom Video Player or Locked Paywall */}
             {canWatchCurrentLesson ? (
-              <VideoPlayer
-                provider="youtube"
-                videoId={videoTokenData.videoId}
-                userEmail={videoTokenData.email}
-                userId={videoTokenData.userId}
-                isProtected={true}
-                isPaidCourse={!course?.is_free}
-                title={locale === "ar" ? currentLesson?.title_ar : currentLesson?.title_en}
-                courseName={locale === "ar" ? course?.title_ar : course?.title_en}
-                instructorName="Eng: Ahmed Fathy"
-                drmLabel="FGC DRM"
-                onComplete={() => toggleComplete(currentLesson?.id)}
-              />
+              videoLoading ? (
+                <div className="aspect-video w-full rounded-2xl bg-[#030A11] border border-border/80 flex flex-col items-center justify-center p-6 text-center space-y-3 shadow-xl">
+                  <RefreshCw className="w-8 h-8 animate-spin text-brand-cyan" />
+                  <p className="text-xs sm:text-sm text-brand-muted font-medium">
+                    {isRtl ? "جارٍ تجهيز الفيديو المحمي..." : "Preparing protected video stream..."}
+                  </p>
+                </div>
+              ) : videoTokenData?.videoId ? (
+                <VideoPlayer
+                  key={`${currentLesson?.id}-${videoTokenData.videoId}`}
+                  provider={videoTokenData.provider}
+                  videoId={videoTokenData.videoId}
+                  userEmail={videoTokenData.email}
+                  userId={videoTokenData.userId}
+                  isProtected={true}
+                  isPaidCourse={!course?.is_free}
+                  title={locale === "ar" ? currentLesson?.title_ar : currentLesson?.title_en}
+                  courseName={locale === "ar" ? course?.title_ar : course?.title_en}
+                  instructorName="Eng: Ahmed Fathy"
+                  drmLabel="FGC DRM"
+                  onComplete={() => toggleComplete(currentLesson?.id)}
+                />
+              ) : (
+                <div className="aspect-video w-full rounded-2xl bg-[#030A11] border border-border/80 flex flex-col items-center justify-center p-6 text-center space-y-4 shadow-xl">
+                  <div className="w-12 h-12 rounded-2xl bg-brand-cyan/10 border border-brand-cyan/30 flex items-center justify-center text-brand-cyan">
+                    <PlayCircle className="w-6 h-6" />
+                  </div>
+                  <div className="space-y-1 max-w-md">
+                    <h3 className="text-sm sm:text-base font-bold text-white">
+                      {isRtl ? "تعذر عرض فيديو الدرس" : "Lesson Video Unavailable"}
+                    </h3>
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      {videoError ||
+                        (isRtl
+                          ? "لم يتم ربط رابط فيديو لهذا الدرس بعد."
+                          : "No video has been attached to this lesson yet.")}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setVideoRetryCount((c) => c + 1)}
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-brand-blue hover:bg-brand-blue/90 text-white text-xs font-bold transition-colors"
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    <span>{isRtl ? "إعادة المحاولة" : "Retry"}</span>
+                  </button>
+                </div>
+              )
             ) : (
               <div className="aspect-video w-full rounded-2xl bg-slate-950 border border-border/80 flex flex-col items-center justify-center p-6 text-center space-y-4 shadow-xl">
                 <div className="w-14 h-14 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
