@@ -34,14 +34,14 @@ export default function FeaturedProjects({
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
           <div className="space-y-3 max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-cyan/30 bg-brand-cyan/10 text-xs font-semibold text-brand-cyan">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-blue/25 dark:border-brand-cyan/30 bg-brand-blue/10 dark:bg-brand-cyan/10 text-xs font-semibold text-brand-blue dark:text-brand-cyan">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-blue dark:bg-brand-cyan animate-pulse" />
               <span>{isRtl ? "أبرز الأعمال والمشاريع" : "Featured Geospatial Work"}</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-cream font-heading">
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground dark:text-cream font-heading">
               {isRtl ? "مشاريع مكانية منفذة باحترافية" : "Featured Portfolio Projects"}
             </h2>
-            <p className="text-brand-muted text-sm sm:text-base leading-relaxed">
+            <p className="text-muted-foreground dark:text-brand-muted text-sm sm:text-base leading-relaxed">
               {isRtl
                 ? "نماذج من المشاريع التطبيقية في نظم المعلومات الجغرافية والاستشعار عن بعد والنمذجة المكانية."
                 : "Selected spatial analysis, remote sensing, surveying, and cartographic engineering deliverables."}
@@ -50,7 +50,7 @@ export default function FeaturedProjects({
 
           <Link
             href="/projects"
-            className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border border-brand-cyan/30 bg-brand-cyan/10 hover:bg-brand-cyan/20 text-brand-cyan transition-all self-start md:self-auto"
+            className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold border border-brand-blue/25 dark:border-brand-cyan/30 bg-brand-blue/10 dark:bg-brand-cyan/10 hover:bg-brand-blue/20 dark:hover:bg-brand-cyan/20 text-brand-blue dark:text-brand-cyan transition-all self-start md:self-auto"
           >
             <span>{isRtl ? "عرض جميع المشاريع" : "View all projects"}</span>
             <Arrow className="w-4 h-4 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
@@ -72,7 +72,7 @@ export default function FeaturedProjects({
               <Link
                 key={project.id}
                 href={`/projects/${project.slug}`}
-                className="group flex flex-col rounded-2xl surface-altura overflow-hidden border border-white/10 hover:border-brand-cyan/50 transition-all duration-300 card-hover-modern hover:shadow-altura"
+                className="group flex flex-col rounded-2xl surface-altura overflow-hidden border border-border/70 dark:border-white/10 hover:border-brand-blue/50 dark:hover:border-brand-cyan/50 transition-all duration-300 card-hover-modern hover:shadow-altura"
               >
                 <div className="relative h-52 w-full bg-gradient-to-br from-brand-navy via-brand-blue/80 to-slate-900 overflow-hidden">
                   {project.cover_image_url ? (
@@ -105,11 +105,11 @@ export default function FeaturedProjects({
 
                 <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
                   <div className="space-y-2">
-                    <h3 className="font-bold text-lg text-cream group-hover:text-brand-cyan transition-colors line-clamp-2">
+                    <h3 className="font-bold text-lg text-foreground dark:text-cream group-hover:text-brand-blue dark:group-hover:text-brand-cyan transition-colors line-clamp-2">
                       {title}
                     </h3>
                     {desc && (
-                      <p className="text-xs sm:text-sm text-brand-muted line-clamp-2 leading-relaxed">
+                      <p className="text-xs sm:text-sm text-muted-foreground dark:text-brand-muted line-clamp-2 leading-relaxed">
                         {desc}
                       </p>
                     )}
@@ -121,7 +121,7 @@ export default function FeaturedProjects({
                         {project.tools.slice(0, 3).map((tool) => (
                           <span
                             key={tool}
-                            className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#030A11] border border-white/5 text-brand-muted"
+                            className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-muted border border-border/60 text-muted-foreground dark:bg-[#030A11] dark:border-white/5 dark:text-brand-muted"
                           >
                             {tool}
                           </span>
@@ -129,7 +129,7 @@ export default function FeaturedProjects({
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between text-xs font-bold text-brand-cyan">
+                    <div className="flex items-center justify-between text-xs font-bold text-brand-blue dark:text-brand-cyan">
                       <span className="flex items-center gap-1.5">
                         <Briefcase className="w-3.5 h-3.5" />
                         <span>{isRtl ? "استعراض المشروع" : "View Case Study"}</span>

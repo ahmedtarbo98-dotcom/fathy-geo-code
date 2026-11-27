@@ -204,10 +204,10 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
             </div>
           </div>
           <div className="flex flex-col shrink-0">
-            <span className="font-extrabold tracking-tight text-sm sm:text-base lg:text-xl whitespace-nowrap text-cream">
+            <span className="font-extrabold tracking-tight text-sm sm:text-base lg:text-xl whitespace-nowrap text-foreground dark:text-cream">
               {tBrand("name")}
             </span>
-            <span className="hidden sm:flex text-[10px] sm:text-xs font-medium text-brand-muted tracking-wide items-center gap-1.5 truncate">
+            <span className="hidden sm:flex text-[10px] sm:text-xs font-medium text-muted-foreground dark:text-brand-muted tracking-wide items-center gap-1.5 truncate">
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cyan shadow-sm shadow-cyan-400/50" />
               <span className="truncate">{tBrand("tagline")}</span>
             </span>
@@ -227,14 +227,14 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
                 href={link.href}
                 className={`relative px-3 lg:px-4 py-2 rounded-xl text-xs lg:text-sm font-medium transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap ${
                   isActive
-                    ? "text-brand-cyan font-bold bg-brand-cyan/10 border border-brand-cyan/20"
-                    : "text-brand-muted hover:text-cream hover:bg-white/5"
+                    ? "text-brand-blue dark:text-brand-cyan font-bold bg-brand-blue/10 dark:bg-brand-cyan/10 border border-brand-blue/20 dark:border-brand-cyan/20"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/60 dark:text-brand-muted dark:hover:text-cream dark:hover:bg-white/5"
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? "text-brand-cyan" : "opacity-70"}`} />
+                <Icon className={`w-4 h-4 ${isActive ? "text-brand-blue dark:text-brand-cyan" : "opacity-70"}`} />
                 <span>{link.label}</span>
                 {isActive && (
-                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-brand-cyan rounded-full shadow-[0_0_8px_rgba(67,200,244,0.6)]" />
+                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-brand-blue dark:bg-brand-cyan rounded-full shadow-[0_0_8px_rgba(67,200,244,0.6)]" />
                 )}
               </Link>
             );
@@ -268,16 +268,16 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
                   )}
                 </div>
                 <div className="flex flex-col text-start">
-                  <span className="text-xs font-bold text-cream max-w-[110px] truncate leading-tight">
+                  <span className="text-xs font-bold text-foreground dark:text-cream max-w-[110px] truncate leading-tight">
                     {currentUser.full_name}
                   </span>
                   {currentUser.role === "admin" && (
-                    <span className="text-[10px] font-extrabold text-brand-cyan uppercase tracking-wider leading-none">
+                    <span className="text-[10px] font-extrabold text-brand-blue dark:text-brand-cyan uppercase tracking-wider leading-none">
                       ADMIN
                     </span>
                   )}
                 </div>
-                <ChevronDown className={`w-3.5 h-3.5 text-brand-muted transition-transform ${userDropdownOpen ? "rotate-180" : ""}`} />
+                <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground dark:text-brand-muted transition-transform ${userDropdownOpen ? "rotate-180" : ""}`} />
               </button>
 
               {/* Dropdown Menu */}
@@ -288,10 +288,10 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
                   }`}
                 >
                   <div className="px-3 py-2 border-b border-border/60 mb-1">
-                    <p className="text-xs font-bold text-cream truncate">
+                    <p className="text-xs font-bold text-foreground dark:text-cream truncate">
                       {currentUser.full_name}
                     </p>
-                    <p className="text-[11px] text-brand-muted truncate font-mono">
+                    <p className="text-[11px] text-muted-foreground dark:text-brand-muted truncate font-mono">
                       {currentUser.email}
                     </p>
                   </div>
@@ -300,9 +300,9 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
                   <Link
                     href="/dashboard"
                     onClick={() => setUserDropdownOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-cream hover:text-brand-cyan hover:bg-white/5 transition-colors"
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-foreground hover:text-brand-blue hover:bg-muted/70 dark:text-cream dark:hover:text-brand-cyan dark:hover:bg-white/5 transition-colors"
                   >
-                    <GraduationCap className="w-4 h-4 text-brand-cyan" />
+                    <GraduationCap className="w-4 h-4 text-brand-blue dark:text-brand-cyan" />
                     <span>{t("myCourses")}</span>
                   </Link>
 
@@ -310,9 +310,9 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
                   <Link
                     href="/profile"
                     onClick={() => setUserDropdownOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-cream hover:text-brand-cyan hover:bg-white/5 transition-colors"
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-foreground hover:text-brand-blue hover:bg-muted/70 dark:text-cream dark:hover:text-brand-cyan dark:hover:bg-white/5 transition-colors"
                   >
-                    <User className="w-4 h-4 text-brand-cyan" />
+                    <User className="w-4 h-4 text-brand-blue dark:text-brand-cyan" />
                     <span>{t("dashboard")}</span>
                   </Link>
 
@@ -320,7 +320,7 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
                   <Link
                     href="/certificates"
                     onClick={() => setUserDropdownOpen(false)}
-                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-cream hover:text-brand-cyan hover:bg-white/5 transition-colors"
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-foreground hover:text-brand-blue hover:bg-muted/70 dark:text-cream dark:hover:text-brand-cyan dark:hover:bg-white/5 transition-colors"
                   >
                     <Award className="w-4 h-4 text-amber-500" />
                     <span>{isRtl ? "شهاداتي" : "My Certificates"}</span>
@@ -393,7 +393,7 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
-            className="p-2 rounded-lg border border-border/60 text-cream hover:bg-white/5 active:scale-95 transition-all"
+            className="p-2 rounded-lg border border-border/60 text-foreground hover:bg-muted dark:text-cream dark:hover:bg-white/5 active:scale-95 transition-all"
           >
             {mobileMenuOpen ? (
               <X className="w-5 h-5" />
@@ -409,7 +409,7 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
         <div className="md:hidden border-b border-border bg-background/95 backdrop-blur-xl px-4 pt-3 pb-6 space-y-3 transition-all animate-in slide-in-from-top-4">
           {/* Quick Language & Theme switch on Mobile */}
           <div className="flex items-center justify-between p-2.5 rounded-xl bg-card border border-border">
-            <span className="text-xs font-medium text-brand-muted">
+            <span className="text-xs font-medium text-muted-foreground dark:text-brand-muted">
               {currentLocale === "ar" ? "اللغة والمظهر" : "Language & Theme"}
             </span>
             <div className="flex items-center gap-2">
@@ -435,16 +435,16 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
                   )}
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-cream">
+                  <p className="text-xs font-bold text-foreground dark:text-cream">
                     {currentUser.full_name}
                   </p>
-                  <p className="text-[10px] text-brand-muted font-mono">
+                  <p className="text-[10px] text-muted-foreground dark:text-brand-muted font-mono">
                     {currentUser.email}
                   </p>
                 </div>
               </div>
               {currentUser.role === "admin" && (
-                <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-brand-cyan/20 text-brand-cyan border border-brand-cyan/40">
+                <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-brand-cyan/20 text-brand-blue dark:text-brand-cyan border border-brand-cyan/40">
                   ADMIN
                 </span>
               )}
@@ -465,8 +465,8 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
                   onClick={() => setMobileMenuOpen(false)}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium ${
                     isActive
-                      ? "bg-brand-blue/15 text-brand-cyan font-bold"
-                      : "text-brand-muted hover:text-cream hover:bg-white/5"
+                      ? "bg-brand-blue/15 text-brand-blue dark:text-brand-cyan font-bold"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted/60 dark:text-brand-muted dark:hover:text-cream dark:hover:bg-white/5"
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -481,25 +481,25 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
                 <Link
                   href="/dashboard"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-cream hover:text-brand-cyan hover:bg-white/5"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground hover:text-brand-blue hover:bg-muted/60 dark:text-cream dark:hover:text-brand-cyan dark:hover:bg-white/5"
                 >
-                  <GraduationCap className="w-4 h-4 text-brand-cyan" />
+                  <GraduationCap className="w-4 h-4 text-brand-blue dark:text-brand-cyan" />
                   <span>{t("myCourses")}</span>
                 </Link>
 
                 <Link
                   href="/profile"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-cream hover:text-brand-cyan hover:bg-white/5"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground hover:text-brand-blue hover:bg-muted/60 dark:text-cream dark:hover:text-brand-cyan dark:hover:bg-white/5"
                 >
-                  <User className="w-4 h-4 text-brand-cyan" />
+                  <User className="w-4 h-4 text-brand-blue dark:text-brand-cyan" />
                   <span>{t("dashboard")}</span>
                 </Link>
 
                 <Link
                   href="/certificates"
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-cream hover:text-brand-cyan hover:bg-white/5"
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground hover:text-brand-blue hover:bg-muted/60 dark:text-cream dark:hover:text-brand-cyan dark:hover:bg-white/5"
                 >
                   <Award className="w-4 h-4 text-amber-500" />
                   <span>{isRtl ? "شهاداتي" : "My Certificates"}</span>

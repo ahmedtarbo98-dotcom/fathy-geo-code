@@ -190,36 +190,36 @@ export default function CoursesPage({
       <div className="container relative mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-cyan/30 bg-brand-cyan/10 text-xs font-semibold text-brand-cyan">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-blue/25 dark:border-brand-cyan/30 bg-brand-blue/10 dark:bg-brand-cyan/10 text-xs font-semibold text-brand-blue dark:text-brand-cyan">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-blue dark:bg-brand-cyan animate-pulse" />
             <span>FATHY GEO CODE</span>
           </div>
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-cream font-heading">
+          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-foreground dark:text-cream font-heading">
             {t("title")}
           </h1>
-          <p className="text-brand-muted text-sm sm:text-base leading-relaxed">
+          <p className="text-muted-foreground dark:text-brand-muted text-sm sm:text-base leading-relaxed">
             {t("subtitle")}
           </p>
         </div>
 
         {/* Search & Filter Bar (Altura GIS Minimalist Style) */}
         <div className="mb-10 space-y-4">
-          <div className="rounded-2xl surface-altura p-4 sm:p-5 border border-white/10 shadow-altura">
+          <div className="rounded-2xl surface-altura p-4 sm:p-5 border border-border/70 dark:border-white/10 shadow-altura">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
               {/* Search Input */}
               <div className="md:col-span-5 relative">
-                <Search className="absolute top-1/2 -translate-y-1/2 start-3.5 w-4 h-4 text-brand-cyan/70" />
+                <Search className="absolute top-1/2 -translate-y-1/2 start-3.5 w-4 h-4 text-brand-blue/70 dark:text-brand-cyan/70" />
                 <input
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={t("searchPlaceholder")}
-                  className="w-full h-11 ps-10 pe-4 rounded-xl bg-black/40 border border-white/10 text-sm text-cream focus:outline-none focus:ring-2 focus:ring-brand-cyan/40 focus:border-brand-cyan transition-all placeholder:text-brand-muted/60"
+                  className="w-full h-11 ps-10 pe-4 rounded-xl bg-muted/50 dark:bg-black/40 border border-border dark:border-white/10 text-sm text-foreground dark:text-cream focus:outline-none focus:ring-2 focus:ring-brand-blue/30 dark:focus:ring-brand-cyan/40 focus:border-brand-blue dark:focus:border-brand-cyan transition-all placeholder:text-muted-foreground/60 dark:placeholder:text-brand-muted/60"
                 />
                 {search && (
                   <button
                     onClick={() => setSearch("")}
-                    className="absolute top-1/2 -translate-y-1/2 end-3 p-1 rounded-md hover:bg-white/10 text-brand-muted"
+                    className="absolute top-1/2 -translate-y-1/2 end-3 p-1 rounded-md hover:bg-muted dark:hover:bg-white/10 text-muted-foreground dark:text-brand-muted"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>
@@ -227,7 +227,7 @@ export default function CoursesPage({
               </div>
 
               {/* Type Filter (All / Free / Paid) */}
-              <div className="md:col-span-3 flex rounded-xl p-1 bg-black/40 border border-white/10">
+              <div className="md:col-span-3 flex rounded-xl p-1 bg-muted/60 dark:bg-black/40 border border-border dark:border-white/10">
                 {(["all", "free", "paid"] as const).map((type) => (
                   <button
                     key={type}
@@ -235,7 +235,7 @@ export default function CoursesPage({
                     className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
                       selectedType === type
                         ? "bg-brand-blue text-white shadow-md shadow-brand-blue/30 font-bold"
-                        : "text-brand-muted hover:text-white"
+                        : "text-muted-foreground hover:text-foreground dark:text-brand-muted dark:hover:text-white"
                     }`}
                   >
                     {t(`type_${type}`)}
@@ -248,11 +248,11 @@ export default function CoursesPage({
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full h-11 px-3 rounded-xl bg-black/40 border border-white/10 text-xs font-medium text-cream focus:outline-none focus:ring-2 focus:ring-brand-cyan/40 cursor-pointer"
+                  className="w-full h-11 px-3 rounded-xl bg-muted/50 dark:bg-black/40 border border-border dark:border-white/10 text-xs font-medium text-foreground dark:text-cream focus:outline-none focus:ring-2 focus:ring-brand-blue/30 dark:focus:ring-brand-cyan/40 cursor-pointer"
                 >
-                  <option value="all" className="bg-[#030A11]">{t("allCategories")}</option>
+                  <option value="all" className="bg-background dark:bg-[#030A11] text-foreground dark:text-cream">{t("allCategories")}</option>
                   {categories.map((cat) => (
-                    <option key={cat} value={cat} className="bg-[#030A11]">
+                    <option key={cat} value={cat} className="bg-background dark:bg-[#030A11] text-foreground dark:text-cream">
                       {cat}
                     </option>
                   ))}
@@ -264,12 +264,12 @@ export default function CoursesPage({
                 <select
                   value={selectedLevel}
                   onChange={(e) => setSelectedLevel(e.target.value)}
-                  className="w-full h-11 px-3 rounded-xl bg-black/40 border border-white/10 text-xs font-medium text-cream focus:outline-none focus:ring-2 focus:ring-brand-cyan/40 cursor-pointer"
+                  className="w-full h-11 px-3 rounded-xl bg-muted/50 dark:bg-black/40 border border-border dark:border-white/10 text-xs font-medium text-foreground dark:text-cream focus:outline-none focus:ring-2 focus:ring-brand-blue/30 dark:focus:ring-brand-cyan/40 cursor-pointer"
                 >
-                  <option value="all" className="bg-[#030A11]">{t("allLevels")}</option>
-                  <option value="beginner" className="bg-[#030A11]">{t("level_beginner")}</option>
-                  <option value="intermediate" className="bg-[#030A11]">{t("level_intermediate")}</option>
-                  <option value="advanced" className="bg-[#030A11]">{t("level_advanced")}</option>
+                  <option value="all" className="bg-background dark:bg-[#030A11] text-foreground dark:text-cream">{t("allLevels")}</option>
+                  <option value="beginner" className="bg-background dark:bg-[#030A11] text-foreground dark:text-cream">{t("level_beginner")}</option>
+                  <option value="intermediate" className="bg-background dark:bg-[#030A11] text-foreground dark:text-cream">{t("level_intermediate")}</option>
+                  <option value="advanced" className="bg-background dark:bg-[#030A11] text-foreground dark:text-cream">{t("level_advanced")}</option>
                 </select>
               </div>
             </div>
@@ -277,14 +277,14 @@ export default function CoursesPage({
         </div>
 
         {/* Results Count & Reset */}
-        <div className="flex items-center justify-between mb-8 text-xs text-brand-muted">
+        <div className="flex items-center justify-between mb-8 text-xs text-muted-foreground dark:text-brand-muted">
           <span>
             {t("foundCourses", { count: filteredCourses.length })}
           </span>
           {(search || selectedType !== "all" || selectedCategory !== "all" || selectedLevel !== "all") && (
             <button
               onClick={resetFilters}
-              className="text-brand-cyan hover:underline font-semibold flex items-center gap-1"
+              className="text-brand-blue dark:text-brand-cyan hover:underline font-semibold flex items-center gap-1"
             >
               <X className="w-3.5 h-3.5" />
               <span>{t("resetFilters")}</span>
@@ -295,18 +295,18 @@ export default function CoursesPage({
         {/* Courses Cards Grid */}
         {loading ? (
           <div className="py-24 text-center space-y-3">
-            <RefreshCw className="w-8 h-8 mx-auto animate-spin text-brand-cyan" />
-            <p className="text-xs text-brand-muted font-medium">
+            <RefreshCw className="w-8 h-8 mx-auto animate-spin text-brand-blue dark:text-brand-cyan" />
+            <p className="text-xs text-muted-foreground dark:text-brand-muted font-medium">
               {isRtl ? "جارٍ تحميل الدورات التعليمية..." : "Loading courses..."}
             </p>
           </div>
         ) : filteredCourses.length === 0 ? (
           <div className="text-center py-20 rounded-3xl glass-panel border border-dashed border-border/80 max-w-lg mx-auto space-y-4">
-            <BookOpen className="w-12 h-12 mx-auto text-brand-muted/40" />
-            <h3 className="text-lg font-bold text-cream">
+            <BookOpen className="w-12 h-12 mx-auto text-muted-foreground/40 dark:text-brand-muted/40" />
+            <h3 className="text-lg font-bold text-foreground dark:text-cream">
               {t("noResultsTitle")}
             </h3>
-            <p className="text-xs text-brand-muted">
+            <p className="text-xs text-muted-foreground dark:text-brand-muted">
               {t("noResultsDesc")}
             </p>
             <button
@@ -342,7 +342,7 @@ export default function CoursesPage({
               return (
                 <div
                   key={course.id}
-                  className="group flex flex-col rounded-2xl surface-altura border border-white/10 overflow-hidden shadow-lg transition-all duration-300 card-hover-modern hover:shadow-altura hover:border-brand-cyan/40"
+                  className="group flex flex-col rounded-2xl surface-altura border border-border/70 dark:border-white/10 overflow-hidden shadow-lg transition-all duration-300 card-hover-modern hover:shadow-altura hover:border-brand-blue/40 dark:hover:border-brand-cyan/40"
                 >
                   {/* Thumbnail */}
                   <div className="relative aspect-video w-full bg-muted overflow-hidden">
@@ -387,11 +387,11 @@ export default function CoursesPage({
                   {/* Body */}
                   <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
                     <div className="space-y-2.5">
-                      <div className="flex items-center gap-2 text-xs text-brand-muted font-medium">
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground dark:text-brand-muted font-medium">
                         <span className="capitalize">{level}</span>
                         <span>•</span>
                         <div className="flex items-center gap-1">
-                          <BookOpen className="w-3.5 h-3.5 text-brand-cyan" />
+                          <BookOpen className="w-3.5 h-3.5 text-brand-blue dark:text-brand-cyan" />
                           <span>
                             {lessonsTotal} {locale === "ar" ? "درس" : "lessons"}
                           </span>
@@ -400,7 +400,7 @@ export default function CoursesPage({
                           <>
                             <span>•</span>
                             <div className="flex items-center gap-1">
-                              <Clock className="w-3.5 h-3.5 text-brand-cyan" />
+                              <Clock className="w-3.5 h-3.5 text-brand-blue dark:text-brand-cyan" />
                               <span>
                                 {durationHours} {locale === "ar" ? "ساعة" : "hrs"}
                               </span>
@@ -409,11 +409,11 @@ export default function CoursesPage({
                         )}
                       </div>
 
-                      <h3 className="text-lg font-bold text-cream font-heading leading-snug group-hover:text-brand-cyan transition-colors line-clamp-2">
+                      <h3 className="text-lg font-bold text-foreground dark:text-cream font-heading leading-snug group-hover:text-brand-blue dark:group-hover:text-brand-cyan transition-colors line-clamp-2">
                         {title}
                       </h3>
 
-                      <p className="text-xs text-brand-muted leading-relaxed line-clamp-3">
+                      <p className="text-xs text-muted-foreground dark:text-brand-muted leading-relaxed line-clamp-3">
                         {desc}
                       </p>
                     </div>
@@ -421,7 +421,7 @@ export default function CoursesPage({
                     <div className="pt-4 border-t border-border/50 flex items-center justify-between">
                       <Link
                         href={`/courses/${course.slug}`}
-                        className="inline-flex items-center gap-1.5 text-xs font-bold text-cream group-hover:text-brand-cyan transition-colors"
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-foreground dark:text-cream group-hover:text-brand-blue dark:group-hover:text-brand-cyan transition-colors"
                       >
                         <span>{tFeatured("viewDetails")}</span>
                         <Arrow className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
@@ -432,7 +432,7 @@ export default function CoursesPage({
                         className={`px-4 py-2 rounded-xl text-xs font-bold shadow-md transition-all hover:scale-105 ${
                           isEnrolled
                             ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20"
-                            : "text-[#030A11] bg-gradient-to-r from-brand-cyan to-sky-300 hover:shadow-cyan-400/25"
+                            : "text-white dark:text-[#030A11] bg-gradient-to-r from-brand-navy via-brand-blue to-brand-cyan dark:from-brand-cyan dark:to-sky-300 hover:shadow-cyan-400/25"
                         }`}
                       >
                         {isEnrolled

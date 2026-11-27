@@ -20,44 +20,44 @@ export default function WhatYouLearn({ currentLocale }: { currentLocale: string 
     {
       key: "gis",
       icon: Map,
-      color: "from-blue-600/20 to-brand-navy/30",
-      accent: "text-blue-500",
+      color: "from-blue-500/10 to-sky-100/40 dark:from-blue-600/20 dark:to-brand-navy/30",
+      accent: "text-blue-600 dark:text-blue-500",
       border: "group-hover:border-blue-500/50",
     },
     {
       key: "remoteSensing",
       icon: Satellite,
-      color: "from-cyan-500/20 to-teal-700/30",
-      accent: "text-cyan-400",
-      border: "group-hover:border-cyan-400/50",
+      color: "from-cyan-500/10 to-teal-100/40 dark:from-cyan-500/20 dark:to-teal-700/30",
+      accent: "text-cyan-600 dark:text-cyan-400",
+      border: "group-hover:border-cyan-500/50 dark:group-hover:border-cyan-400/50",
     },
     {
       key: "surveying",
       icon: Compass,
-      color: "from-indigo-600/20 to-blue-900/30",
-      accent: "text-indigo-400",
-      border: "group-hover:border-indigo-400/50",
+      color: "from-indigo-500/10 to-blue-100/40 dark:from-indigo-600/20 dark:to-blue-900/30",
+      accent: "text-indigo-600 dark:text-indigo-400",
+      border: "group-hover:border-indigo-500/50 dark:group-hover:border-indigo-400/50",
     },
     {
       key: "spatialModeling",
       icon: Workflow,
-      color: "from-sky-500/20 to-blue-800/30",
-      accent: "text-sky-400",
-      border: "group-hover:border-sky-400/50",
+      color: "from-sky-500/10 to-blue-100/40 dark:from-sky-500/20 dark:to-blue-800/30",
+      accent: "text-sky-600 dark:text-sky-400",
+      border: "group-hover:border-sky-500/50 dark:group-hover:border-sky-400/50",
     },
     {
       key: "gee",
       icon: Code2,
-      color: "from-emerald-600/20 to-cyan-900/30",
-      accent: "text-emerald-400",
-      border: "group-hover:border-emerald-400/50",
+      color: "from-emerald-500/10 to-cyan-100/40 dark:from-emerald-600/20 dark:to-cyan-900/30",
+      accent: "text-emerald-600 dark:text-emerald-400",
+      border: "group-hover:border-emerald-500/50 dark:group-hover:border-emerald-400/50",
     },
     {
       key: "arcgisPro",
       icon: Layers,
-      color: "from-blue-700/20 to-brand-cyan/20",
+      color: "from-blue-500/10 to-cyan-100/40 dark:from-blue-700/20 dark:to-brand-cyan/20",
       accent: "text-brand-blue dark:text-brand-cyan",
-      border: "group-hover:border-brand-cyan/50",
+      border: "group-hover:border-brand-blue/50 dark:group-hover:border-brand-cyan/50",
     },
   ];
 
@@ -66,14 +66,14 @@ export default function WhatYouLearn({ currentLocale }: { currentLocale: string 
       <div className="container mx-auto px-4 sm:px-6 relative z-10">
         {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto space-y-4 mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-cyan/30 bg-brand-cyan/10 text-xs font-semibold text-brand-cyan">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-blue/25 dark:border-brand-cyan/30 bg-brand-blue/10 dark:bg-brand-cyan/10 text-xs font-semibold text-brand-blue dark:text-brand-cyan">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-blue dark:bg-brand-cyan animate-pulse" />
             <span>{t("badge")}</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-cream font-heading">
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground dark:text-cream font-heading">
             {t("title")}
           </h2>
-          <p className="text-brand-muted text-sm sm:text-base leading-relaxed">
+          <p className="text-muted-foreground dark:text-brand-muted text-sm sm:text-base leading-relaxed">
             {t("subtitle")}
           </p>
         </div>
@@ -88,7 +88,7 @@ export default function WhatYouLearn({ currentLocale }: { currentLocale: string 
             return (
               <div
                 key={item.key}
-                className={`group relative p-7 rounded-2xl surface-altura border border-white/10 transition-all duration-300 card-hover-modern hover:shadow-altura hover:border-brand-cyan/40 ${item.border}`}
+                className={`group relative p-7 rounded-2xl surface-altura border border-border/70 dark:border-white/10 transition-all duration-300 card-hover-modern hover:shadow-altura hover:border-brand-blue/40 dark:hover:border-brand-cyan/40 ${item.border}`}
               >
                 {/* Background soft glow on hover */}
                 <div
@@ -104,18 +104,18 @@ export default function WhatYouLearn({ currentLocale }: { currentLocale: string 
                     </div>
                     <Link
                       href="/courses"
-                      className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-semibold text-brand-muted hover:text-brand-cyan inline-flex items-center gap-1"
+                      className="opacity-0 group-hover:opacity-100 transition-opacity text-xs font-semibold text-muted-foreground hover:text-brand-blue dark:text-brand-muted dark:hover:text-brand-cyan inline-flex items-center gap-1"
                     >
                       <span>{currentLocale === "ar" ? "استكشف" : "Explore"}</span>
                       <ArrowUpRight className="w-3.5 h-3.5 rtl:rotate-[-90deg]" />
                     </Link>
                   </div>
 
-                  <h3 className="text-xl font-bold text-cream group-hover:text-brand-cyan transition-colors">
+                  <h3 className="text-xl font-bold text-foreground group-hover:text-brand-blue dark:text-cream dark:group-hover:text-brand-cyan transition-colors">
                     {title}
                   </h3>
 
-                  <p className="text-sm text-brand-muted leading-relaxed">
+                  <p className="text-sm text-muted-foreground dark:text-brand-muted leading-relaxed">
                     {desc}
                   </p>
                 </div>

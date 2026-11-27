@@ -106,14 +106,14 @@ export default function TestimonialsSection({
       <div className="container mx-auto px-4 sm:px-6 relative z-10">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto space-y-4 mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-cyan/30 bg-brand-cyan/10 text-xs font-semibold text-brand-cyan">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-blue/25 dark:border-brand-cyan/30 bg-brand-blue/10 dark:bg-brand-cyan/10 text-xs font-semibold text-brand-blue dark:text-brand-cyan">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-blue dark:bg-brand-cyan animate-pulse" />
             <span>{t("badge")}</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-cream font-heading">
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground dark:text-cream font-heading">
             {t("title")}
           </h2>
-          <p className="text-brand-muted text-sm sm:text-base leading-relaxed">
+          <p className="text-muted-foreground dark:text-brand-muted text-sm sm:text-base leading-relaxed">
             {t("subtitle")}
           </p>
 
@@ -121,7 +121,7 @@ export default function TestimonialsSection({
             <button
               type="button"
               onClick={() => setSubmitModalOpen(true)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-cyan hover:bg-cyan-300 text-brand-primary text-xs sm:text-sm font-bold shadow-cyan-glow transition-all hover:-translate-y-0.5"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-blue hover:bg-brand-blue/90 text-white dark:bg-brand-cyan dark:hover:bg-cyan-300 dark:text-brand-primary text-xs sm:text-sm font-bold shadow-cyan-glow transition-all hover:-translate-y-0.5"
             >
               <MessageSquarePlus className="w-4 h-4" />
               <span>{t("shareExperience")}</span>
@@ -135,14 +135,14 @@ export default function TestimonialsSection({
             {[0, 1, 2].map((i) => (
               <div
                 key={i}
-                className="h-64 rounded-2xl surface-altura border border-white/10 animate-pulse bg-white/5"
+                className="h-64 rounded-2xl surface-altura border border-border/70 dark:border-white/10 animate-pulse bg-muted/60 dark:bg-white/5"
               />
             ))}
           </div>
         ) : testimonials.length === 0 ? (
-          <div className="max-w-xl mx-auto rounded-3xl surface-altura p-8 sm:p-10 border border-white/10 text-center space-y-4 shadow-altura">
-            <Quote className="w-10 h-10 text-brand-cyan/40 mx-auto" />
-            <p className="text-sm sm:text-base font-semibold text-brand-muted">
+          <div className="max-w-xl mx-auto rounded-3xl surface-altura p-8 sm:p-10 border border-border/70 dark:border-white/10 text-center space-y-4 shadow-altura">
+            <Quote className="w-10 h-10 text-brand-blue/40 dark:text-brand-cyan/40 mx-auto" />
+            <p className="text-sm sm:text-base font-semibold text-muted-foreground dark:text-brand-muted">
               {t("emptyState")}
             </p>
           </div>
@@ -176,16 +176,16 @@ export default function TestimonialsSection({
                 return (
                   <div
                     key={item.id}
-                    className={`relative rounded-2xl surface-altura p-6 sm:p-7 border transition-all duration-300 flex flex-col justify-between group shadow-altura hover:border-brand-cyan/40 ${
+                    className={`relative rounded-2xl surface-altura p-6 sm:p-7 border transition-all duration-300 flex flex-col justify-between group shadow-altura hover:border-brand-blue/40 dark:hover:border-brand-cyan/40 ${
                       item.is_featured
-                        ? "border-brand-cyan/50 ring-1 ring-brand-cyan/20"
-                        : "border-white/10"
+                        ? "border-brand-blue/40 ring-1 ring-brand-blue/20 dark:border-brand-cyan/50 dark:ring-brand-cyan/20"
+                        : "border-border/70 dark:border-white/10"
                     }`}
                   >
                     <div className="space-y-4">
                       {/* Top row: Stars + Featured badge + Quote */}
                       <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1 text-amber-400">
+                        <div className="flex items-center gap-1 text-amber-500 dark:text-amber-400">
                           {[...Array(item.rating || 5)].map((_, i) => (
                             <Star key={i} className="w-4 h-4 fill-current" />
                           ))}
@@ -196,12 +196,12 @@ export default function TestimonialsSection({
                               {t("featured")}
                             </span>
                           )}
-                          <Quote className="w-7 h-7 text-brand-cyan/20 group-hover:text-brand-cyan/40 transition-colors shrink-0" />
+                          <Quote className="w-7 h-7 text-brand-blue/20 dark:text-brand-cyan/20 group-hover:text-brand-blue/40 dark:group-hover:text-brand-cyan/40 transition-colors shrink-0" />
                         </div>
                       </div>
 
                       {/* Review Text */}
-                      <p className="text-sm leading-relaxed text-cream/90 italic">
+                      <p className="text-sm leading-relaxed text-foreground/90 dark:text-cream/90 italic">
                         &ldquo;{text}&rdquo;
                       </p>
 
@@ -216,13 +216,13 @@ export default function TestimonialsSection({
                               author: name,
                             })
                           }
-                          className="w-full rounded-xl border border-white/10 bg-[#030A11] hover:border-brand-cyan/40 px-3 py-2 flex items-center justify-between text-xs font-semibold text-cream transition-colors"
+                          className="w-full rounded-xl border border-border dark:border-white/10 bg-muted/60 dark:bg-[#030A11] hover:border-brand-blue/40 dark:hover:border-brand-cyan/40 px-3 py-2 flex items-center justify-between text-xs font-semibold text-foreground dark:text-cream transition-colors"
                         >
                           <span className="inline-flex items-center gap-2">
                             {item.media_type === "video" ? (
                               <Play className="w-4 h-4 text-red-500 fill-current" />
                             ) : (
-                              <ImageIcon className="w-4 h-4 text-brand-cyan" />
+                              <ImageIcon className="w-4 h-4 text-brand-blue dark:text-brand-cyan" />
                             )}
                             <span>
                               {item.media_type === "video"
@@ -234,7 +234,7 @@ export default function TestimonialsSection({
                                 : "View Review Image"}
                             </span>
                           </span>
-                          <span className="text-[11px] text-brand-cyan">
+                          <span className="text-[11px] text-brand-blue dark:text-brand-cyan">
                             {isRtl ? "عرض" : "Open"}
                           </span>
                         </button>
@@ -242,7 +242,7 @@ export default function TestimonialsSection({
                     </div>
 
                     {/* Footer: Course Badge + Author */}
-                    <div className="pt-5 mt-5 border-t border-white/10 space-y-3">
+                    <div className="pt-5 mt-5 border-t border-border/60 dark:border-white/10 space-y-3">
                       <div className="badge-altura text-[10px] inline-flex items-center gap-1.5 max-w-full">
                         <BookOpen className="w-3.5 h-3.5 shrink-0" />
                         <span className="truncate">{courseTitle}</span>
@@ -250,7 +250,7 @@ export default function TestimonialsSection({
 
                       <div className="flex items-center gap-3">
                         {item.avatar_url ? (
-                          <div className="relative w-10 h-10 rounded-full overflow-hidden border border-white/10 shrink-0">
+                          <div className="relative w-10 h-10 rounded-full overflow-hidden border border-border/60 dark:border-white/10 shrink-0">
                             <Image
                               src={item.avatar_url}
                               alt={name}
@@ -260,17 +260,17 @@ export default function TestimonialsSection({
                             />
                           </div>
                         ) : (
-                          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#030A11] to-brand-blue text-cream flex items-center justify-center font-heading font-bold text-xs border border-white/10 shadow-md shrink-0">
+                          <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-[#030A11] to-brand-blue text-cream flex items-center justify-center font-heading font-bold text-xs border border-border/60 dark:border-white/10 shadow-md shrink-0">
                             {name.slice(0, 2).toUpperCase()}
                           </div>
                         )}
                         <div className="min-w-0">
-                          <h4 className="font-heading font-bold text-sm text-cream flex items-center gap-1.5 truncate">
+                          <h4 className="font-heading font-bold text-sm text-foreground dark:text-cream flex items-center gap-1.5 truncate">
                             <span className="truncate">{name}</span>
-                            <CheckCircle2 className="w-3.5 h-3.5 text-brand-cyan shrink-0" />
+                            <CheckCircle2 className="w-3.5 h-3.5 text-brand-blue dark:text-brand-cyan shrink-0" />
                           </h4>
                           {role && (
-                            <p className="text-xs text-brand-muted truncate">{role}</p>
+                            <p className="text-xs text-muted-foreground dark:text-brand-muted truncate">{role}</p>
                           )}
                         </div>
                       </div>
@@ -287,7 +287,7 @@ export default function TestimonialsSection({
                   type="button"
                   onClick={isRtl ? goNext : goPrev}
                   aria-label="Previous"
-                  className="p-2.5 rounded-xl border border-white/10 surface-altura hover:border-brand-cyan/40 text-cream transition-colors shadow-sm"
+                  className="p-2.5 rounded-xl border border-border/70 dark:border-white/10 surface-altura hover:border-brand-blue/40 dark:hover:border-brand-cyan/40 text-foreground dark:text-cream transition-colors shadow-sm"
                 >
                   {isRtl ? (
                     <ChevronRight className="w-4 h-4" />
@@ -305,8 +305,8 @@ export default function TestimonialsSection({
                       aria-label={`Page ${idx + 1}`}
                       className={`h-2 rounded-full transition-all ${
                         idx === currentPage
-                          ? "w-7 bg-brand-cyan shadow-cyan-glow"
-                          : "w-2 bg-white/20 hover:bg-white/40"
+                          ? "w-7 bg-brand-blue dark:bg-brand-cyan shadow-cyan-glow"
+                          : "w-2 bg-border dark:bg-white/20 hover:bg-muted-foreground/40 dark:hover:bg-white/40"
                       }`}
                     />
                   ))}
@@ -316,7 +316,7 @@ export default function TestimonialsSection({
                   type="button"
                   onClick={isRtl ? goPrev : goNext}
                   aria-label="Next"
-                  className="p-2.5 rounded-xl border border-white/10 surface-altura hover:border-brand-cyan/40 text-cream transition-colors shadow-sm"
+                  className="p-2.5 rounded-xl border border-border/70 dark:border-white/10 surface-altura hover:border-brand-blue/40 dark:hover:border-brand-cyan/40 text-foreground dark:text-cream transition-colors shadow-sm"
                 >
                   {isRtl ? (
                     <ChevronLeft className="w-4 h-4" />
@@ -345,17 +345,17 @@ export default function TestimonialsSection({
           onClick={() => setPreviewMedia(null)}
         >
           <div
-            className="relative w-full max-w-3xl rounded-2xl surface-altura border border-white/10 overflow-hidden shadow-altura"
+            className="relative w-full max-w-3xl rounded-2xl surface-altura border border-border/70 dark:border-white/10 overflow-hidden shadow-altura"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-[#030A11]/60">
-              <span className="text-xs font-heading font-bold text-cream">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border/60 dark:border-white/10 bg-muted/60 dark:bg-[#030A11]/60">
+              <span className="text-xs font-heading font-bold text-foreground dark:text-cream">
                 {previewMedia.author}
               </span>
               <button
                 type="button"
                 onClick={() => setPreviewMedia(null)}
-                className="p-1.5 rounded-lg hover:bg-white/10 text-brand-muted hover:text-cream transition-colors"
+                className="p-1.5 rounded-lg hover:bg-muted dark:hover:bg-white/10 text-muted-foreground hover:text-foreground dark:text-brand-muted dark:hover:text-cream transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>

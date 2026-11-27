@@ -54,18 +54,39 @@ export default function Footer({ currentLocale }: { currentLocale: string }) {
   ];
 
   return (
-    <footer className="relative bg-gradient-to-b from-background via-muted/30 to-brand-navy/10 dark:to-brand-navy/30 border-t border-border/50 overflow-hidden">
+    <footer className="relative bg-gradient-to-b from-[#071B2B] via-[#030A11] to-[#02070D] text-cream overflow-hidden">
+      {/* Curved / Wave Transition from Upper Section into Dark Navy Footer */}
+      <div className="w-full overflow-hidden leading-none bg-background">
+        <svg
+          className="relative block w-full h-12 sm:h-16 md:h-20"
+          viewBox="0 0 1440 96"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M0,24 C360,92 1080,92 1440,24 L1440,96 L0,96 Z"
+            className="fill-[#071B2B]"
+          />
+          <path
+            d="M0,24 C360,92 1080,92 1440,24"
+            fill="none"
+            stroke="rgba(67, 200, 244, 0.3)"
+            strokeWidth="2"
+          />
+        </svg>
+      </div>
+
       {/* Background ambient glow */}
-      <div className="absolute inset-0 pointer-events-none topographic-lines opacity-40" />
+      <div className="absolute inset-0 pointer-events-none topographic-lines opacity-30" />
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-brand-cyan/5 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="container relative mx-auto px-4 sm:px-6 pt-16 pb-12">
+      <div className="container relative mx-auto px-4 sm:px-6 pt-10 pb-12">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
           {/* Brand Info */}
           <div className="lg:col-span-2 space-y-4">
             <Link href="/" className="inline-flex items-center gap-3">
               <div className="relative w-12 h-12 rounded-xl overflow-hidden p-0.5 bg-gradient-to-tr from-brand-navy via-brand-blue to-brand-cyan shadow-md">
-                <div className="relative w-full h-full rounded-[10px] overflow-hidden bg-background">
+                <div className="relative w-full h-full rounded-[10px] overflow-hidden bg-[#030A11]">
                   <SiteLogoImage
                     alt="FATHY GEO CODE"
                     className="object-cover"
@@ -102,7 +123,7 @@ export default function Footer({ currentLocale }: { currentLocale: string }) {
                       rel="noopener noreferrer"
                       title={item.name}
                       aria-label={item.name}
-                      className={`w-9 h-9 rounded-lg border border-border/70 bg-card/60 flex items-center justify-center text-brand-muted hover:text-cream transition-all duration-300 hover:scale-110 active:scale-95 shadow-sm ${item.color}`}
+                      className={`w-9 h-9 rounded-lg border border-white/10 bg-[#030A11]/70 flex items-center justify-center text-brand-muted hover:text-cream transition-all duration-300 hover:scale-110 active:scale-95 shadow-sm ${item.color}`}
                     >
                       <Icon className="w-4 h-4" />
                     </a>
@@ -232,7 +253,7 @@ export default function Footer({ currentLocale }: { currentLocale: string }) {
                   href="https://wa.me/201060683463"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 transition-colors"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 transition-colors"
                 >
                   <PhoneCall className="w-3.5 h-3.5" />
                   <span>{currentLocale === "ar" ? "طلب استشارة أو مشروع" : "Request Project / Hire"}</span>
@@ -243,7 +264,7 @@ export default function Footer({ currentLocale }: { currentLocale: string }) {
         </div>
 
         {/* Bottom Bar */}
-        <div className="mt-12 pt-8 border-t border-border/40 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-brand-muted">
+        <div className="mt-12 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-brand-muted">
           <p>{t("copyright", { year: currentYear })}</p>
           <div className="flex items-center gap-2">
             <MapPin className="w-3.5 h-3.5 text-brand-cyan" />

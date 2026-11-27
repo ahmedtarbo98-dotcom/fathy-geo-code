@@ -448,14 +448,14 @@ export default function CourseDetailsPage({
 
               <div className="flex flex-wrap items-center gap-4 text-xs sm:text-sm text-muted-foreground pt-1">
                 <div className="flex items-center gap-1.5">
-                  <BookOpen className="w-4 h-4 text-brand-cyan" />
+                  <BookOpen className="w-4 h-4 text-brand-blue dark:text-brand-cyan" />
                   <span>{t("lessonsCount", { count: totalLessons })}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-brand-cyan" />
+                  <Clock className="w-4 h-4 text-brand-blue dark:text-brand-cyan" />
                   <span>{totalHours} {locale === "ar" ? "ساعة تدريبية" : "Training Hours"}</span>
                 </div>
-                <div className="flex items-center gap-1.5 text-emerald-500 font-semibold">
+                <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-500 font-semibold">
                   <ShieldCheck className="w-4 h-4" />
                   <span>{locale === "ar" ? "شهادة إتمام معتمدة" : "Verified Certificate"}</span>
                 </div>
@@ -463,27 +463,27 @@ export default function CourseDetailsPage({
             </div>
 
             {/* Course Overview */}
-            <div className="rounded-3xl surface-altura p-6 sm:p-8 border border-white/10 shadow-altura space-y-4">
+            <div className="rounded-3xl surface-altura p-6 sm:p-8 border border-border/70 dark:border-white/10 shadow-altura space-y-4">
               <h2 className="text-xl font-bold text-foreground dark:text-[#F2EBDD] font-heading flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-brand-cyan" />
+                <Sparkles className="w-5 h-5 text-brand-blue dark:text-brand-cyan" />
                 <span>{t("overview")}</span>
               </h2>
-              <p className="text-sm sm:text-base text-brand-muted leading-relaxed whitespace-pre-line">
+              <p className="text-sm sm:text-base text-muted-foreground dark:text-brand-muted leading-relaxed whitespace-pre-line">
                 {description}
               </p>
             </div>
 
             {/* What you'll learn */}
             {whatYouLearn && whatYouLearn.length > 0 && (
-              <div className="rounded-3xl surface-altura p-6 sm:p-8 border border-white/10 shadow-altura space-y-4">
+              <div className="rounded-3xl surface-altura p-6 sm:p-8 border border-border/70 dark:border-white/10 shadow-altura space-y-4">
                 <h2 className="text-xl font-bold text-foreground dark:text-[#F2EBDD] font-heading flex items-center gap-2">
                   <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                   <span>{t("whatYouWillLearn")}</span>
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                   {whatYouLearn.map((item, idx) => (
-                    <div key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-brand-muted">
-                      <span className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">
+                    <div key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-muted-foreground dark:text-brand-muted">
+                      <span className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">
                         ✓
                       </span>
                       <span>{item}</span>
@@ -500,7 +500,7 @@ export default function CourseDetailsPage({
                   <Layers className="w-5 h-5 text-brand-blue dark:text-brand-cyan" />
                   <span>{t("curriculum")}</span>
                 </h2>
-                <span className="text-xs text-brand-muted">
+                <span className="text-xs text-muted-foreground dark:text-brand-muted">
                   {course.sections.length} {locale === "ar" ? "فصول" : "Sections"} • {totalLessons} {locale === "ar" ? "دروس" : "Lessons"}
                 </span>
               </div>
@@ -519,7 +519,7 @@ export default function CourseDetailsPage({
                     return (
                       <div
                         key={section.id || sIdx}
-                        className="rounded-2xl border border-white/10 surface-altura overflow-hidden shadow-sm transition-all"
+                        className="rounded-2xl border border-border/70 dark:border-white/10 surface-altura overflow-hidden shadow-sm transition-all"
                       >
                         <button
                           onClick={() => toggleSection(section.id)}
@@ -590,7 +590,7 @@ export default function CourseDetailsPage({
                                     </div>
 
                                     <div className="flex items-center gap-2 shrink-0">
-                                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-brand-blue/20 text-brand-cyan border border-brand-cyan/40 flex items-center gap-1 shadow-sm">
+                                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-brand-blue/10 dark:bg-brand-blue/20 text-brand-blue dark:text-brand-cyan border border-brand-blue/30 dark:border-brand-cyan/40 flex items-center gap-1 shadow-sm">
                                         <span>{isRtl ? "معاينة مجانية" : "Free Preview"}</span>
                                         <Play className="w-2.5 h-2.5 fill-current" />
                                       </span>
@@ -630,7 +630,7 @@ export default function CourseDetailsPage({
             </div>
 
             {/* Instructor Box */}
-            <div className="rounded-3xl surface-altura p-6 sm:p-8 border border-white/10 shadow-altura">
+            <div className="rounded-3xl surface-altura p-6 sm:p-8 border border-border/70 dark:border-white/10 shadow-altura">
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
                 <div className="relative w-20 h-20 rounded-2xl overflow-hidden p-0.5 bg-gradient-to-tr from-brand-navy to-brand-cyan shadow-lg shrink-0">
                   <div className="relative w-full h-full rounded-[14px] overflow-hidden bg-background">
@@ -642,7 +642,7 @@ export default function CourseDetailsPage({
                   </div>
                 </div>
                 <div className="space-y-2 text-center sm:text-start">
-                  <div className="text-xs font-semibold text-brand-cyan uppercase tracking-wider">
+                  <div className="text-xs font-semibold text-brand-blue dark:text-brand-cyan uppercase tracking-wider">
                     {t("instructorTitle")}
                   </div>
                   <h3 className="text-lg font-extrabold text-foreground dark:text-[#F2EBDD] font-heading">
@@ -651,7 +651,7 @@ export default function CourseDetailsPage({
                   <p className="text-xs font-medium text-brand-blue dark:text-cyan-400">
                     {tBrand("ownerTitle")}
                   </p>
-                  <p className="text-xs sm:text-sm text-brand-muted leading-relaxed pt-1">
+                  <p className="text-xs sm:text-sm text-muted-foreground dark:text-brand-muted leading-relaxed pt-1">
                     {locale === "ar"
                       ? "مهندس ومطور نظم معلومات جغرافية معتمد، متخصص في تحليلات نظم المعلومات الجغرافية المتقدمة والاستشعار عن بعد وبرمجة التطبيقات المكانية."
                       : "Certified GIS Engineer & Spatial Data Analyst specializing in remote sensing, spatial programming, and GIS workflows."}
@@ -663,11 +663,11 @@ export default function CourseDetailsPage({
 
           {/* Sticky Sidebar Action Card */}
           <div className="order-1 lg:order-2 lg:col-span-4 lg:sticky lg:top-28 space-y-6">
-            <div className="rounded-3xl surface-altura p-5 sm:p-7 border border-white/10 shadow-altura backdrop-blur-2xl space-y-5 sm:space-y-6">
+            <div className="rounded-3xl surface-altura p-5 sm:p-7 border border-border/70 dark:border-white/10 shadow-altura backdrop-blur-2xl space-y-5 sm:space-y-6">
               {/* Thumbnail Banner with Interactive Altura-style Preview Trigger */}
               <div
                 onClick={() => openPreview()}
-                className="relative aspect-video rounded-2xl overflow-hidden shadow-md bg-muted cursor-pointer group/thumb border border-white/10"
+                className="relative aspect-video rounded-2xl overflow-hidden shadow-md bg-muted cursor-pointer group/thumb border border-border/70 dark:border-white/10"
                 title={isRtl ? "انقر لمشاهدة فيديو المعاينة" : "Click to watch preview"}
               >
                 {course.thumbnail_url ? (
@@ -713,16 +713,16 @@ export default function CourseDetailsPage({
                 </div>
               ) : (
                 <div className="flex items-baseline justify-between pt-1">
-                  <span className="text-xs text-brand-muted">
+                  <span className="text-xs text-muted-foreground dark:text-brand-muted">
                     {locale === "ar" ? "قيمة الاشتراك:" : "Enrollment Fee:"}
                   </span>
                   <span className="text-xl sm:text-2xl font-extrabold text-foreground dark:text-[#F2EBDD]">
                     {course.is_free ? (
-                      <span className="text-emerald-500 font-bold">
+                      <span className="text-emerald-600 dark:text-emerald-500 font-bold">
                         {locale === "ar" ? "مجاناً" : "Free"}
                       </span>
                     ) : (
-                      <span className="font-pixel text-lg sm:text-xl text-brand-cyan">
+                      <span className="font-pixel text-lg sm:text-xl text-brand-blue dark:text-brand-cyan">
                         {course.price} {course.currency}
                       </span>
                     )}
@@ -774,7 +774,7 @@ export default function CourseDetailsPage({
                     <button
                       type="button"
                       onClick={() => openPreview()}
-                      className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold border border-brand-cyan/40 text-brand-cyan hover:bg-brand-blue/10 transition-all shadow-sm"
+                      className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold border border-brand-blue/30 dark:border-brand-cyan/40 text-brand-blue dark:text-brand-cyan hover:bg-brand-blue/10 transition-all shadow-sm"
                     >
                       <PlayCircle className="w-4 h-4 shrink-0" />
                       <span>{isRtl ? "مشاهدة الدروس المجانية والمعاينة" : "Watch Free Preview Lessons"}</span>
@@ -806,7 +806,7 @@ export default function CourseDetailsPage({
                 </div>
                 <div className="flex justify-between items-center">
                   <span>{locale === "ar" ? "الشهادة" : "Certificate"}</span>
-                  <span className="font-semibold text-brand-cyan">{locale === "ar" ? "شهادة موثقة بـ QR" : "Verified with QR"}</span>
+                  <span className="font-semibold text-brand-blue dark:text-brand-cyan">{locale === "ar" ? "شهادة موثقة بـ QR" : "Verified with QR"}</span>
                 </div>
               </div>
             </div>

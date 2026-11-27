@@ -218,26 +218,26 @@ export default function StudentDashboardPage({
   }
 
   return (
-    <div className="min-h-screen py-8 md:py-16 relative overflow-hidden bg-brand-primary">
+    <div className="min-h-screen py-8 md:py-16 relative overflow-hidden bg-background dark:bg-brand-primary">
       {/* Background ambient accents */}
       <div className="absolute top-0 right-1/4 w-72 sm:w-96 h-72 sm:h-96 bg-brand-cyan/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-1/2 left-1/4 w-72 sm:w-96 h-72 sm:h-96 bg-brand-blue/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="container relative mx-auto px-4 sm:px-6 space-y-10">
         {/* Welcome Header */}
-        <div className="rounded-3xl surface-altura border border-white/10 p-8 sm:p-10 shadow-altura">
+        <div className="rounded-3xl surface-altura border border-border/70 dark:border-white/10 p-8 sm:p-10 shadow-altura">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-3">
               <div className="badge-altura inline-flex items-center gap-2">
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" />
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-blue dark:bg-brand-cyan animate-pulse" />
                 <span className="font-pixel text-[10px]">{locale === "ar" ? "لوحة الطالب" : "Learner Portal"}</span>
               </div>
-              <h1 className="text-2xl sm:text-4xl font-heading font-extrabold text-cream tracking-tight">
+              <h1 className="text-2xl sm:text-4xl font-heading font-extrabold text-foreground dark:text-cream tracking-tight">
                 {t("welcomeTitle", {
                   name: userName || (locale === "ar" ? "يا مهندس" : "Engineer"),
                 })}
               </h1>
-              <p className="text-xs sm:text-sm text-brand-muted max-w-xl leading-relaxed">
+              <p className="text-xs sm:text-sm text-muted-foreground dark:text-brand-muted max-w-xl leading-relaxed">
                 {t("welcomeSubtitle")}
               </p>
             </div>
@@ -245,7 +245,7 @@ export default function StudentDashboardPage({
             <div className="flex items-center gap-3">
               <Link
                 href="/courses"
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-xs sm:text-sm font-bold text-brand-primary bg-brand-cyan hover:bg-cyan-300 shadow-cyan-glow transition-all"
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-xl text-xs sm:text-sm font-bold text-white bg-brand-blue hover:bg-brand-blue/90 dark:text-brand-primary dark:bg-brand-cyan dark:hover:bg-cyan-300 shadow-cyan-glow transition-all"
               >
                 <Compass className="w-4 h-4" />
                 <span>{t("exploreCourses")}</span>
@@ -254,39 +254,39 @@ export default function StudentDashboardPage({
           </div>
 
           {/* Stats Bar */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-8 border-t border-white/10">
-            <div className="p-4 rounded-2xl bg-[#030A11]/60 border border-white/5">
-              <div className="flex items-center gap-2 text-xs text-brand-muted font-medium mb-1">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8 pt-8 border-t border-border/60 dark:border-white/10">
+            <div className="p-4 rounded-2xl bg-muted/50 dark:bg-[#030A11]/60 border border-border/60 dark:border-white/5">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground dark:text-brand-muted font-medium mb-1">
                 <BookOpen className="w-4 h-4 text-brand-blue" />
                 <span>{t("enrolledCourses")}</span>
               </div>
-              <div className="text-2xl font-heading font-extrabold text-cream">
+              <div className="text-2xl font-heading font-extrabold text-foreground dark:text-cream">
                 {enrolledCourses.length}
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#030A11]/60 border border-white/5">
-              <div className="flex items-center gap-2 text-xs text-brand-muted font-medium mb-1">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <div className="p-4 rounded-2xl bg-muted/50 dark:bg-[#030A11]/60 border border-border/60 dark:border-white/5">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground dark:text-brand-muted font-medium mb-1">
+                <CheckCircle2 className="w-4 h-4 text-emerald-500 dark:text-emerald-400" />
                 <span>{t("completedCourses")}</span>
               </div>
-              <div className="text-2xl font-heading font-extrabold text-cream">{completedCount}</div>
+              <div className="text-2xl font-heading font-extrabold text-foreground dark:text-cream">{completedCount}</div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#030A11]/60 border border-white/5">
-              <div className="flex items-center gap-2 text-xs text-brand-muted font-medium mb-1">
-                <Award className="w-4 h-4 text-amber-400" />
+            <div className="p-4 rounded-2xl bg-muted/50 dark:bg-[#030A11]/60 border border-border/60 dark:border-white/5">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground dark:text-brand-muted font-medium mb-1">
+                <Award className="w-4 h-4 text-amber-500 dark:text-amber-400" />
                 <span>{t("certificatesEarned")}</span>
               </div>
-              <div className="text-2xl font-heading font-extrabold text-cream">{completedCount}</div>
+              <div className="text-2xl font-heading font-extrabold text-foreground dark:text-cream">{completedCount}</div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#030A11]/60 border border-white/5">
-              <div className="flex items-center gap-2 text-xs text-brand-muted font-medium mb-1">
-                <Clock className="w-4 h-4 text-brand-cyan" />
+            <div className="p-4 rounded-2xl bg-muted/50 dark:bg-[#030A11]/60 border border-border/60 dark:border-white/5">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground dark:text-brand-muted font-medium mb-1">
+                <Clock className="w-4 h-4 text-brand-blue dark:text-brand-cyan" />
                 <span>{t("trainingHours")}</span>
               </div>
-              <div className="text-2xl font-heading font-extrabold text-cream">
+              <div className="text-2xl font-heading font-extrabold text-foreground dark:text-cream">
                 {enrolledCourses.reduce((acc, c) => acc + c.totalLessons, 0) > 0
                   ? `${Math.max(1, Math.round(enrolledCourses.reduce((acc, c) => acc + c.totalLessons, 0) * 0.75))}h`
                   : "0h"}
@@ -297,18 +297,18 @@ export default function StudentDashboardPage({
 
         {/* Continue Where You Left Off Card */}
         {continueCourse && (
-          <div className="rounded-3xl surface-altura border border-brand-cyan/30 p-6 sm:p-8 text-cream shadow-cyan-glow space-y-6 relative overflow-hidden">
+          <div className="rounded-3xl surface-altura border border-brand-blue/30 dark:border-brand-cyan/30 p-6 sm:p-8 text-foreground dark:text-cream shadow-cyan-glow space-y-6 relative overflow-hidden">
             <div className="absolute inset-0 topographic-lines opacity-10 pointer-events-none" />
             <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
               <div className="space-y-3 max-w-2xl">
                 <div className="badge-pixel inline-flex items-center gap-2 text-[10px]">
-                  <PlayCircle className="w-3.5 h-3.5 text-brand-cyan" />
+                  <PlayCircle className="w-3.5 h-3.5 text-brand-blue dark:text-brand-cyan" />
                   <span>{t("continueWatching")}</span>
                 </div>
-                <h3 className="text-xl sm:text-2xl font-heading font-bold text-cream">
+                <h3 className="text-xl sm:text-2xl font-heading font-bold text-foreground dark:text-cream">
                   {locale === "ar" ? continueCourse.title_ar : continueCourse.title_en}
                 </h3>
-                <p className="text-xs sm:text-sm text-brand-muted">
+                <p className="text-xs sm:text-sm text-muted-foreground dark:text-brand-muted">
                   {locale === "ar"
                     ? `الدرس الحالي: ${continueCourse.lastLessonTitle_ar}`
                     : `Current Lesson: ${continueCourse.lastLessonTitle_en}`}
@@ -316,12 +316,12 @@ export default function StudentDashboardPage({
 
                 {/* Progress bar */}
                 <div className="space-y-1.5 pt-2">
-                  <div className="flex justify-between text-xs font-mono text-brand-muted">
+                  <div className="flex justify-between text-xs font-mono text-muted-foreground dark:text-brand-muted">
                     <span>
                       {t("progressLabel", { percent: continueCourse.progressPercent })}
                     </span>
                   </div>
-                  <div className="w-full h-2 rounded-full bg-[#030A11] border border-white/5 overflow-hidden">
+                  <div className="w-full h-2 rounded-full bg-muted dark:bg-[#030A11] border border-border/60 dark:border-white/5 overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-brand-blue to-brand-cyan rounded-full transition-all duration-500"
                       style={{ width: `${continueCourse.progressPercent}%` }}
@@ -332,7 +332,7 @@ export default function StudentDashboardPage({
 
               <Link
                 href={`/player/${continueCourse.slug}`}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-bold text-brand-primary bg-brand-cyan hover:bg-cyan-300 shadow-cyan-glow transition-all shrink-0"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-sm font-bold text-white bg-brand-blue hover:bg-brand-blue/90 dark:text-brand-primary dark:bg-brand-cyan dark:hover:bg-cyan-300 shadow-cyan-glow transition-all shrink-0"
               >
                 <PlayCircle className="w-4 h-4" />
                 <span>{t("resumeLesson")}</span>
@@ -345,18 +345,18 @@ export default function StudentDashboardPage({
         {/* My Enrolled Courses Section */}
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <h2 className="text-xl sm:text-2xl font-heading font-bold text-cream">
+            <h2 className="text-xl sm:text-2xl font-heading font-bold text-foreground dark:text-cream">
               {t("enrolledCourses")}
             </h2>
 
             {enrolledCourses.length > 0 && (
-              <div className="flex items-center p-1.5 rounded-xl surface-altura border border-white/10 text-xs font-semibold">
+              <div className="flex items-center p-1.5 rounded-xl surface-altura border border-border/70 dark:border-white/10 text-xs font-semibold">
                 <button
                   onClick={() => setActiveTab("all")}
                   className={`px-3 py-1.5 rounded-lg transition-colors ${
                     activeTab === "all"
-                      ? "bg-brand-cyan text-brand-primary font-bold shadow-sm"
-                      : "text-brand-muted hover:text-cream"
+                      ? "bg-brand-blue text-white dark:bg-brand-cyan dark:text-brand-primary font-bold shadow-sm"
+                      : "text-muted-foreground hover:text-foreground dark:text-brand-muted dark:hover:text-cream"
                   }`}
                 >
                   {t("allTab")}
@@ -365,8 +365,8 @@ export default function StudentDashboardPage({
                   onClick={() => setActiveTab("inProgress")}
                   className={`px-3 py-1.5 rounded-lg transition-colors ${
                     activeTab === "inProgress"
-                      ? "bg-brand-cyan text-brand-primary font-bold shadow-sm"
-                      : "text-brand-muted hover:text-cream"
+                      ? "bg-brand-blue text-white dark:bg-brand-cyan dark:text-brand-primary font-bold shadow-sm"
+                      : "text-muted-foreground hover:text-foreground dark:text-brand-muted dark:hover:text-cream"
                   }`}
                 >
                   {t("inProgressTab")}
@@ -375,8 +375,8 @@ export default function StudentDashboardPage({
                   onClick={() => setActiveTab("completed")}
                   className={`px-3 py-1.5 rounded-lg transition-colors ${
                     activeTab === "completed"
-                      ? "bg-brand-cyan text-brand-primary font-bold shadow-sm"
-                      : "text-brand-muted hover:text-cream"
+                      ? "bg-brand-blue text-white dark:bg-brand-cyan dark:text-brand-primary font-bold shadow-sm"
+                      : "text-muted-foreground hover:text-foreground dark:text-brand-muted dark:hover:text-cream"
                   }`}
                 >
                   {t("completedTab")}
@@ -387,16 +387,16 @@ export default function StudentDashboardPage({
 
           {/* If No Enrolled Courses */}
           {enrolledCourses.length === 0 ? (
-            <div className="rounded-3xl surface-altura border border-white/10 p-12 text-center space-y-4 max-w-xl mx-auto shadow-altura">
-              <div className="w-16 h-16 rounded-2xl bg-brand-cyan/10 border border-brand-cyan/20 flex items-center justify-center mx-auto text-brand-cyan">
+            <div className="rounded-3xl surface-altura border border-border/70 dark:border-white/10 p-12 text-center space-y-4 max-w-xl mx-auto shadow-altura">
+              <div className="w-16 h-16 rounded-2xl bg-brand-blue/10 dark:bg-brand-cyan/10 border border-brand-blue/20 dark:border-brand-cyan/20 flex items-center justify-center mx-auto text-brand-blue dark:text-brand-cyan">
                 <BookOpen className="w-8 h-8" />
               </div>
-              <h3 className="text-lg font-heading font-bold text-cream">
+              <h3 className="text-lg font-heading font-bold text-foreground dark:text-cream">
                 {isRtl
                   ? "لم تشترك في أي دورة تعليمية بعد"
                   : "No enrolled courses yet"}
               </h3>
-              <p className="text-xs text-brand-muted leading-relaxed">
+              <p className="text-xs text-muted-foreground dark:text-brand-muted leading-relaxed">
                 {isRtl
                   ? "ابدأ رحلتك الاحترافية في مجالات نظم المعلومات الجغرافية والاستشعار عن بعد. تصفح الدورات التعليمية المتاحة الآن على المنصة وابدأ بالتعلم فوراً."
                   : "Explore our professional GIS & Remote Sensing courses catalog and start advancing your skills today."}
@@ -404,7 +404,7 @@ export default function StudentDashboardPage({
               <div className="pt-2">
                 <Link
                   href="/courses"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-bold text-brand-primary bg-brand-cyan hover:bg-cyan-300 shadow-cyan-glow transition-all"
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-xs font-bold text-white bg-brand-blue hover:bg-brand-blue/90 dark:text-brand-primary dark:bg-brand-cyan dark:hover:bg-cyan-300 shadow-cyan-glow transition-all"
                 >
                   <Compass className="w-4 h-4" />
                   <span>{isRtl ? "تصفح الدورات التعليمية الآن" : "Browse Courses Catalog"}</span>
@@ -421,7 +421,7 @@ export default function StudentDashboardPage({
                 return (
                   <div
                     key={course.id}
-                    className="rounded-2xl surface-altura border border-white/10 overflow-hidden shadow-altura hover:border-brand-cyan/40 card-hover-modern transition-all flex flex-col justify-between"
+                    className="rounded-2xl surface-altura border border-border/70 dark:border-white/10 overflow-hidden shadow-altura hover:border-brand-blue/40 dark:hover:border-brand-cyan/40 card-hover-modern transition-all flex flex-col justify-between"
                   >
                     <div className="h-44 bg-[#030A11] p-4 flex flex-col justify-between relative overflow-hidden group">
                       <Image
@@ -451,11 +451,11 @@ export default function StudentDashboardPage({
 
                     <div className="p-5 space-y-4 flex-1 flex flex-col justify-between">
                       <div className="space-y-2">
-                        <h4 className="font-heading font-bold text-base text-cream line-clamp-2">
+                        <h4 className="font-heading font-bold text-base text-foreground dark:text-cream line-clamp-2">
                           {title}
                         </h4>
                         <div className="space-y-1.5 pt-1">
-                          <div className="flex justify-between text-xs text-brand-muted font-mono">
+                          <div className="flex justify-between text-xs text-muted-foreground dark:text-brand-muted font-mono">
                             <span>
                               {t("progressLabel", { percent: course.progressPercent })}
                             </span>
@@ -464,12 +464,12 @@ export default function StudentDashboardPage({
                               {locale === "ar" ? "درس" : "lessons"}
                             </span>
                           </div>
-                          <div className="w-full h-1.5 rounded-full bg-[#030A11] border border-white/5 overflow-hidden">
+                          <div className="w-full h-1.5 rounded-full bg-muted dark:bg-[#030A11] border border-border/60 dark:border-white/5 overflow-hidden">
                             <div
                               className={`h-full rounded-full ${
                                 isDone
-                                  ? "bg-emerald-400"
-                                  : "bg-brand-cyan"
+                                  ? "bg-emerald-500 dark:bg-emerald-400"
+                                  : "bg-brand-blue dark:bg-brand-cyan"
                               }`}
                               style={{ width: `${course.progressPercent}%` }}
                             />
@@ -480,7 +480,7 @@ export default function StudentDashboardPage({
                       <div className="pt-2">
                         <Link
                           href={`/player/${course.slug}`}
-                          className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold bg-[#030A11] border border-brand-cyan/20 text-cream hover:bg-brand-cyan hover:text-brand-primary hover:border-brand-cyan transition-all"
+                          className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold bg-muted/70 border border-brand-blue/25 text-foreground hover:bg-brand-blue hover:text-white dark:bg-[#030A11] dark:border-brand-cyan/20 dark:text-cream dark:hover:bg-brand-cyan dark:hover:text-brand-primary dark:hover:border-brand-cyan transition-all"
                         >
                           <PlayCircle className="w-4 h-4" />
                           <span>{isDone ? t("completedTab") : t("resumeLesson")}</span>

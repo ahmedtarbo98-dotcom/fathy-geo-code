@@ -86,7 +86,7 @@ export default function YouTubeSection({ currentLocale }: { currentLocale: strin
   }
 
   return (
-    <section className="py-20 relative overflow-hidden bg-gradient-to-b from-background via-brand-navy/5 to-background">
+    <section className="py-20 relative overflow-hidden bg-gradient-to-b from-background via-muted/20 dark:via-brand-navy/5 to-background">
       <div className="container mx-auto px-4 sm:px-6 relative z-10">
         <div className="rounded-3xl p-8 sm:p-12 glass-panel border border-red-500/20 shadow-2xl shadow-red-500/5 relative overflow-hidden">
           {/* Ambient red/cyan glows */}
@@ -101,10 +101,10 @@ export default function YouTubeSection({ currentLocale }: { currentLocale: strin
                   <Youtube className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
                   <span>{t("badge")}</span>
                 </div>
-                <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-cream">
+                <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground dark:text-cream">
                   {t("title")}
                 </h2>
-                <p className="text-brand-muted text-sm sm:text-base leading-relaxed">
+                <p className="text-muted-foreground dark:text-brand-muted text-sm sm:text-base leading-relaxed">
                   {t("subtitle")}
                 </p>
               </div>
@@ -114,7 +114,7 @@ export default function YouTubeSection({ currentLocale }: { currentLocale: strin
                 {isAdmin && (
                   <Link
                     href="/admin/settings#youtube-videos"
-                    className="inline-flex items-center gap-2 px-4 py-3.5 rounded-xl text-xs sm:text-sm font-bold border border-red-500/40 bg-background/80 hover:bg-red-500/10 text-cream transition-all"
+                    className="inline-flex items-center gap-2 px-4 py-3.5 rounded-xl text-xs sm:text-sm font-bold border border-red-500/40 bg-background/80 hover:bg-red-500/10 text-foreground dark:text-cream transition-all"
                   >
                     <Settings2 className="w-4 h-4 text-red-500" />
                     <span>
@@ -141,7 +141,7 @@ export default function YouTubeSection({ currentLocale }: { currentLocale: strin
             {/* Video Cards Grid */}
             {videoCards.length === 0 ? (
               <div className="p-8 rounded-2xl border border-dashed border-border/70 bg-background/50 text-center space-y-2">
-                <p className="text-sm font-semibold text-brand-muted">
+                <p className="text-sm font-semibold text-muted-foreground dark:text-brand-muted">
                   {currentLocale === "ar"
                     ? "لا توجد فيديوهات يوتيوب مضافة حالياً. هذا القسم مخفي تلقائياً للزوار حتى تضيف روابط فيديوهات حقيقية من الإعدادات."
                     : "No YouTube videos added yet. This section is hidden from visitors until you add real video links in Settings."}
@@ -218,10 +218,10 @@ export default function YouTubeSection({ currentLocale }: { currentLocale: strin
                     </div>
 
                     <div className="p-4 flex-1 flex flex-col justify-between space-y-2">
-                      <h4 className="font-bold text-sm text-cream line-clamp-2 group-hover:text-red-500 transition-colors">
+                      <h4 className="font-bold text-sm text-foreground dark:text-cream line-clamp-2 group-hover:text-red-500 transition-colors">
                         {title}
                       </h4>
-                      <div className="flex items-center justify-between text-xs text-brand-muted pt-2 border-t border-border/30">
+                      <div className="flex items-center justify-between text-xs text-muted-foreground dark:text-brand-muted pt-2 border-t border-border/30">
                         <span>YouTube</span>
                         <span className="text-red-500 font-semibold flex items-center gap-1">
                           <span>{t("watchVideo")}</span>

@@ -4,36 +4,45 @@
 
 @layer base {
   :root {
-    /* Set dark theme values as the universal baseline so un-themed / SSR elements always have readable light text */
-    --background: 210 70% 4%; /* #030A11 */
-    --foreground: 39 44% 91%; /* #F2EBDD */
+    /* Light Mode — Fathy Geo Code Clean Light Identity */
+    --background: 216 100% 98%; /* #F5F9FF (White & Very Light Blue) */
+    --foreground: 222 66% 12%; /* #0B1F4B (Dark Navy Main Text) */
 
-    --card: 207 72% 10%; /* #071B2B */
-    --card-foreground: 39 44% 91%; /* #F2EBDD */
+    --card: 0 0% 100%; /* #FFFFFF */
+    --card-foreground: 222 66% 12%; /* #0B1F4B */
 
-    --popover: 206 68% 13%;
-    --popover-foreground: 39 44% 91%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 66% 12%;
 
-    --primary: 209 81% 46%; /* #1678D3 */
-    --primary-foreground: 39 44% 91%;
+    --primary: 209 81% 46%; /* #1678D3 (FGC Blue) */
+    --primary-foreground: 210 40% 98%;
 
-    --secondary: 207 60% 15%;
-    --secondary-foreground: 39 44% 91%;
+    --secondary: 214 45% 94%;
+    --secondary-foreground: 222 66% 12%;
 
-    --muted: 207 65% 12%;
-    --muted-foreground: 210 20% 72%; /* #AAB8C5 */
+    --muted: 214 38% 94%;
+    --muted-foreground: 214 22% 43%; /* Muted Blue-Gray Secondary Text */
 
-    --accent: 195 89% 61%; /* #43C8F4 */
-    --accent-foreground: 210 70% 4%;
+    --accent: 195 89% 45%; /* FGC Cyan Accent */
+    --accent-foreground: 222 66% 12%;
 
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 39 44% 91%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 206 55% 18%;
-    --input: 206 55% 16%;
-    --ring: 195 89% 61%;
+    --border: 214 32% 88%;
+    --input: 214 32% 88%;
+    --ring: 209 81% 46%;
 
     --radius: 0.85rem;
+
+    /* Theme-aware Surface & Shadow Tokens (Light Mode) */
+    --surface-altura-bg: #FFFFFF;
+    --surface-altura-border: rgba(22, 120, 211, 0.14);
+    --surface-altura-text: #4A5F75;
+    --surface-altura-heading: #0B1F4B;
+    --shadow-altura: 0 12px 32px -8px rgba(11, 31, 75, 0.08), 0 0 1px 1px rgba(22, 120, 211, 0.1);
+    --shadow-cyan-glow: 0 8px 24px -4px rgba(22, 120, 211, 0.22);
+    --shadow-blue-glow: 0 8px 24px -4px rgba(22, 120, 211, 0.25);
 
     --brand-primary: #030A11;
     --brand-secondary: #071B2B;
@@ -46,6 +55,7 @@
   }
 
   .dark {
+    /* Dark Mode — Preserved Fathy Geo Code Approved Design */
     /* Primary: #030A11 (Deep Space Navy) */
     --background: 210 70% 4%;
     /* Cream: #F2EBDD (Warm Clean Off-White for High-Readability Headings/Text) */
@@ -80,6 +90,15 @@
     --border: 206 55% 18%;
     --input: 206 55% 16%;
     --ring: 195 89% 61%;
+
+    /* Theme-aware Surface & Shadow Tokens (Dark Mode — Exact Original Values) */
+    --surface-altura-bg: #071B2B;
+    --surface-altura-border: rgba(67, 200, 244, 0.12);
+    --surface-altura-text: #AAB8C5;
+    --surface-altura-heading: #F2EBDD;
+    --shadow-altura: 0 14px 34px -8px rgba(3, 10, 17, 0.6), 0 0 1px 1px rgba(67, 200, 244, 0.12);
+    --shadow-cyan-glow: 0 0 24px -4px rgba(67, 200, 244, 0.25);
+    --shadow-blue-glow: 0 0 24px -4px rgba(22, 120, 211, 0.3);
   }
 }
 
@@ -211,6 +230,12 @@
   letter-spacing: 0.05em;
   padding: 2px 8px;
   border-radius: 6px;
+  border: 1px solid rgba(22, 120, 211, 0.28);
+  background: rgba(22, 120, 211, 0.1);
+  color: #1678D3;
+}
+
+.dark .badge-pixel {
   border: 1px solid rgba(67, 200, 244, 0.35);
   background: rgba(22, 120, 211, 0.15);
   color: #43C8F4;
@@ -221,16 +246,22 @@
   font-weight: 700;
   padding: 3px 10px;
   border-radius: 9999px;
-  border: 1px solid rgba(67, 200, 244, 0.25);
-  background: rgba(7, 27, 43, 0.7);
-  color: #43C8F4;
+  border: 1px solid rgba(22, 120, 211, 0.22);
+  background: rgba(22, 120, 211, 0.08);
+  color: #1678D3;
   backdrop-filter: blur(8px);
 }
 
+.dark .badge-altura {
+  border: 1px solid rgba(67, 200, 244, 0.25);
+  background: rgba(7, 27, 43, 0.7);
+  color: #43C8F4;
+}
+
 .surface-altura {
-  background: #071B2B;
-  border: 1px solid rgba(67, 200, 244, 0.12);
-  color: #AAB8C5;
+  background: var(--surface-altura-bg);
+  border: 1px solid var(--surface-altura-border);
+  color: var(--surface-altura-text);
 }
 
 .surface-altura h1,
@@ -239,7 +270,7 @@
 .surface-altura h4,
 .surface-altura h5,
 .surface-altura h6 {
-  color: #F2EBDD;
+  color: var(--surface-altura-heading);
 }
 
 /* Modern Minimalist Card Hover & Elevation */
@@ -250,6 +281,12 @@
 }
 
 .card-hover-modern:hover {
+  transform: translateY(-4px);
+  border-color: rgba(22, 120, 211, 0.35);
+  box-shadow: 0 16px 36px -10px rgba(11, 31, 75, 0.12), 0 0 20px -4px rgba(67, 200, 244, 0.18);
+}
+
+.dark .card-hover-modern:hover {
   transform: translateY(-4px);
   border-color: rgba(67, 200, 244, 0.35);
   box-shadow: 0 16px 36px -10px rgba(3, 10, 17, 0.5), 0 0 20px -4px rgba(67, 200, 244, 0.12);

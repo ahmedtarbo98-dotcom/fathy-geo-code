@@ -113,7 +113,7 @@ export default function ContactPage({
   ];
 
   return (
-    <div className="relative min-h-screen py-12 md:py-20 bg-brand-primary">
+    <div className="relative min-h-screen py-12 md:py-20 bg-background dark:bg-brand-primary">
       {/* Background ambient accents */}
       <div className="absolute top-0 right-1/4 w-[450px] h-[450px] bg-brand-cyan/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-1/2 left-1/4 w-[450px] h-[450px] bg-brand-blue/10 rounded-full blur-3xl pointer-events-none" />
@@ -122,13 +122,13 @@ export default function ContactPage({
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto space-y-4 mb-14">
           <div className="badge-altura inline-flex items-center gap-2">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" />
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-blue dark:bg-brand-cyan animate-pulse" />
             <span className="font-pixel text-[10px]">{t("badge")}</span>
           </div>
-          <h1 className="text-3xl sm:text-5xl font-heading font-extrabold tracking-tight text-cream">
+          <h1 className="text-3xl sm:text-5xl font-heading font-extrabold tracking-tight text-foreground dark:text-cream">
             {t("title")}
           </h1>
-          <p className="text-brand-muted text-sm sm:text-base leading-relaxed">
+          <p className="text-muted-foreground dark:text-brand-muted text-sm sm:text-base leading-relaxed">
             {t("subtitle")}
           </p>
         </div>
@@ -136,16 +136,16 @@ export default function ContactPage({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start max-w-5xl mx-auto">
           {/* Contact Form */}
           <div className="lg:col-span-7">
-            <div className="rounded-3xl surface-altura p-6 sm:p-10 border border-white/10 shadow-altura">
+            <div className="rounded-3xl surface-altura p-6 sm:p-10 border border-border/70 dark:border-white/10 shadow-altura">
               {success && (
-                <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-3 text-sm text-emerald-400">
+                <div className="mb-6 p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-3 text-sm text-emerald-600 dark:text-emerald-400">
                   <CheckCircle2 className="w-5 h-5 shrink-0" />
                   <span>{t("successMessage")}</span>
                 </div>
               )}
 
               {error && (
-                <div className="mb-6 p-4 rounded-xl bg-destructive/10 border border-destructive/30 flex items-center gap-3 text-sm text-red-400">
+                <div className="mb-6 p-4 rounded-xl bg-destructive/10 border border-destructive/30 flex items-center gap-3 text-sm text-red-600 dark:text-red-400">
                   <AlertCircle className="w-5 h-5 shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -154,11 +154,11 @@ export default function ContactPage({
               <form onSubmit={handleSubmit} className="space-y-4">
                 {/* Name */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-cream">
+                  <label className="text-xs font-bold text-foreground dark:text-cream">
                     {t("name")}
                   </label>
                   <div className="relative">
-                    <div className="absolute inset-y-0 start-0 ps-3.5 flex items-center pointer-events-none text-brand-muted">
+                    <div className="absolute inset-y-0 start-0 ps-3.5 flex items-center pointer-events-none text-muted-foreground dark:text-brand-muted">
                       <User className="w-4 h-4" />
                     </div>
                     <input
@@ -167,7 +167,7 @@ export default function ContactPage({
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder={t("namePlaceholder")}
-                      className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-white/10 bg-[#030A11] text-cream placeholder:text-brand-muted/60 text-sm focus:outline-none focus:border-brand-cyan/60"
+                      className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-border dark:border-white/10 bg-muted/50 dark:bg-[#030A11] text-foreground dark:text-cream placeholder:text-muted-foreground/60 dark:placeholder:text-brand-muted/60 text-sm focus:outline-none focus:border-brand-blue dark:focus:border-brand-cyan/60"
                     />
                   </div>
                 </div>
@@ -175,11 +175,11 @@ export default function ContactPage({
                 {/* Email & Phone */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-cream">
+                    <label className="text-xs font-bold text-foreground dark:text-cream">
                       {t("email")}
                     </label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 start-0 ps-3.5 flex items-center pointer-events-none text-brand-muted">
+                      <div className="absolute inset-y-0 start-0 ps-3.5 flex items-center pointer-events-none text-muted-foreground dark:text-brand-muted">
                         <Mail className="w-4 h-4" />
                       </div>
                       <input
@@ -188,17 +188,17 @@ export default function ContactPage({
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="name@example.com"
-                        className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-white/10 bg-[#030A11] text-cream placeholder:text-brand-muted/60 text-sm focus:outline-none focus:border-brand-cyan/60"
+                        className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-border dark:border-white/10 bg-muted/50 dark:bg-[#030A11] text-foreground dark:text-cream placeholder:text-muted-foreground/60 dark:placeholder:text-brand-muted/60 text-sm focus:outline-none focus:border-brand-blue dark:focus:border-brand-cyan/60"
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-cream">
+                    <label className="text-xs font-bold text-foreground dark:text-cream">
                       {t("phone")}
                     </label>
                     <div className="relative">
-                      <div className="absolute inset-y-0 start-0 ps-3.5 flex items-center pointer-events-none text-brand-muted">
+                      <div className="absolute inset-y-0 start-0 ps-3.5 flex items-center pointer-events-none text-muted-foreground dark:text-brand-muted">
                         <PhoneCall className="w-4 h-4" />
                       </div>
                       <input
@@ -206,7 +206,7 @@ export default function ContactPage({
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         placeholder="+20 100 000 0000"
-                        className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-white/10 bg-[#030A11] text-cream placeholder:text-brand-muted/60 text-sm focus:outline-none focus:border-brand-cyan/60 font-mono"
+                        className="w-full ps-10 pe-4 py-2.5 rounded-xl border border-border dark:border-white/10 bg-muted/50 dark:bg-[#030A11] text-foreground dark:text-cream placeholder:text-muted-foreground/60 dark:placeholder:text-brand-muted/60 text-sm focus:outline-none focus:border-brand-blue dark:focus:border-brand-cyan/60 font-mono"
                       />
                     </div>
                   </div>
@@ -214,7 +214,7 @@ export default function ContactPage({
 
                 {/* Subject */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-cream">
+                  <label className="text-xs font-bold text-foreground dark:text-cream">
                     {t("subject")}
                   </label>
                   <input
@@ -223,13 +223,13 @@ export default function ContactPage({
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
                     placeholder={t("subjectPlaceholder")}
-                    className="w-full px-4 py-2.5 rounded-xl border border-white/10 bg-[#030A11] text-cream placeholder:text-brand-muted/60 text-sm focus:outline-none focus:border-brand-cyan/60"
+                    className="w-full px-4 py-2.5 rounded-xl border border-border dark:border-white/10 bg-muted/50 dark:bg-[#030A11] text-foreground dark:text-cream placeholder:text-muted-foreground/60 dark:placeholder:text-brand-muted/60 text-sm focus:outline-none focus:border-brand-blue dark:focus:border-brand-cyan/60"
                   />
                 </div>
 
                 {/* Message */}
                 <div className="space-y-1.5">
-                  <label className="text-xs font-bold text-cream">
+                  <label className="text-xs font-bold text-foreground dark:text-cream">
                     {t("message")}
                   </label>
                   <div className="relative">
@@ -239,7 +239,7 @@ export default function ContactPage({
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
                       placeholder={t("messagePlaceholder")}
-                      className="w-full p-3.5 rounded-xl border border-white/10 bg-[#030A11] text-cream placeholder:text-brand-muted/60 text-sm focus:outline-none focus:border-brand-cyan/60 resize-none"
+                      className="w-full p-3.5 rounded-xl border border-border dark:border-white/10 bg-muted/50 dark:bg-[#030A11] text-foreground dark:text-cream placeholder:text-muted-foreground/60 dark:placeholder:text-brand-muted/60 text-sm focus:outline-none focus:border-brand-blue dark:focus:border-brand-cyan/60 resize-none"
                     />
                   </div>
                 </div>
@@ -247,7 +247,7 @@ export default function ContactPage({
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full inline-flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl text-sm font-bold text-brand-primary bg-brand-cyan hover:bg-cyan-300 shadow-cyan-glow hover:scale-[1.01] active:scale-[0.98] transition-all disabled:opacity-50"
+                  className="w-full inline-flex items-center justify-center gap-2.5 py-3.5 px-4 rounded-xl text-sm font-bold text-white bg-brand-blue hover:bg-brand-blue/90 dark:text-brand-primary dark:bg-brand-cyan dark:hover:bg-cyan-300 shadow-cyan-glow hover:scale-[1.01] active:scale-[0.98] transition-all disabled:opacity-50"
                 >
                   <Send className="w-4 h-4" />
                   <span>{loading ? "..." : t("submit")}</span>
@@ -261,14 +261,14 @@ export default function ContactPage({
             {/* Direct WhatsApp Callout */}
             <div className="rounded-3xl surface-altura p-6 sm:p-7 border border-emerald-500/30 shadow-altura space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
+                <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center border border-emerald-500/30">
                   <PhoneCall className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="font-heading font-bold text-base text-cream">
+                  <h3 className="font-heading font-bold text-base text-foreground dark:text-cream">
                     {locale === "ar" ? "محادثة فورية عبر واتساب" : "Instant WhatsApp Support"}
                   </h3>
-                  <p className="text-xs text-brand-muted">
+                  <p className="text-xs text-muted-foreground dark:text-brand-muted">
                     {locale === "ar" ? "لتنفيذ المشاريع المكانية والاستفسارات السريعة" : "For GIS projects and fast inquiries"}
                   </p>
                 </div>
@@ -286,8 +286,8 @@ export default function ContactPage({
             </div>
 
             {/* Official Channels List */}
-            <div className="rounded-3xl surface-altura p-6 sm:p-7 border border-white/10 shadow-altura space-y-4">
-              <h3 className="font-heading font-bold text-sm text-cream">
+            <div className="rounded-3xl surface-altura p-6 sm:p-7 border border-border/70 dark:border-white/10 shadow-altura space-y-4">
+              <h3 className="font-heading font-bold text-sm text-foreground dark:text-cream">
                 {t("officialChannels")}
               </h3>
 
@@ -300,7 +300,7 @@ export default function ContactPage({
                       href={ch.href}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-[#030A11] hover:border-brand-cyan/40 transition-all group"
+                      className="flex items-center justify-between p-3 rounded-xl border border-border/70 dark:border-white/5 bg-muted/40 dark:bg-[#030A11] hover:border-brand-blue/40 dark:hover:border-brand-cyan/40 transition-all group"
                     >
                       <div className="flex items-center gap-3">
                         <div
@@ -309,15 +309,15 @@ export default function ContactPage({
                           <Icon className="w-4 h-4" />
                         </div>
                         <div>
-                          <div className="text-xs font-bold text-cream">
+                          <div className="text-xs font-bold text-foreground dark:text-cream">
                             {ch.name}
                           </div>
-                          <div className="text-[11px] text-brand-muted">
+                          <div className="text-[11px] text-muted-foreground dark:text-brand-muted">
                             {ch.label}
                           </div>
                         </div>
                       </div>
-                      <ExternalLink className="w-3.5 h-3.5 text-brand-muted group-hover:text-brand-cyan transition-colors" />
+                      <ExternalLink className="w-3.5 h-3.5 text-muted-foreground dark:text-brand-muted group-hover:text-brand-blue dark:group-hover:text-brand-cyan transition-colors" />
                     </a>
                   );
                 })}

@@ -46,21 +46,21 @@ export default function HeroSection({
           {/* Main Hero Copy */}
           <div className="lg:col-span-8 space-y-6 text-center lg:text-start">
             {/* Tag badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-brand-cyan/30 bg-brand-cyan/10 backdrop-blur-md text-xs sm:text-sm font-semibold text-brand-cyan shadow-sm">
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-brand-blue/25 dark:border-brand-cyan/30 bg-brand-blue/10 dark:bg-brand-cyan/10 backdrop-blur-md text-xs sm:text-sm font-semibold text-brand-blue dark:text-brand-cyan shadow-sm">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-blue dark:bg-brand-cyan animate-pulse" />
               <span>{t("badge")}</span>
             </div>
 
             {/* Headline */}
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.18] sm:leading-[1.15] font-heading">
               <span className="block text-foreground dark:text-[#F2EBDD]">{t("titlePart1")}</span>
-              <span className="block bg-gradient-to-r from-brand-blue to-brand-cyan dark:from-sky-300 dark:via-brand-cyan dark:to-cyan-200 bg-clip-text text-transparent">
+              <span className="block bg-gradient-to-r from-brand-navy via-brand-blue to-brand-cyan dark:from-sky-300 dark:via-brand-cyan dark:to-cyan-200 bg-clip-text text-transparent">
                 {t("titlePart2")}
               </span>
             </h1>
 
             {/* Subheadline / description */}
-            <p className="text-base sm:text-lg lg:text-xl text-brand-muted max-w-2xl leading-relaxed mx-auto lg:mx-0">
+            <p className="text-base sm:text-lg lg:text-xl text-muted-foreground dark:text-brand-muted max-w-2xl leading-relaxed mx-auto lg:mx-0">
               {t("description")}
             </p>
 
@@ -68,9 +68,9 @@ export default function HeroSection({
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
               <Link
                 href="/courses"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl text-base font-bold text-[#030A11] bg-gradient-to-r from-brand-cyan via-sky-300 to-brand-cyan hover:shadow-lg hover:shadow-cyan-400/25 hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 group btn-shimmer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl text-base font-bold text-white dark:text-[#030A11] bg-gradient-to-r from-brand-navy via-brand-blue to-brand-cyan dark:from-brand-cyan dark:via-sky-300 dark:to-brand-cyan hover:shadow-lg hover:shadow-brand-blue/30 dark:hover:shadow-cyan-400/25 hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 group btn-shimmer"
               >
-                <Compass className="w-5 h-5 text-[#030A11] transition-transform group-hover:rotate-45" />
+                <Compass className="w-5 h-5 text-brand-cyan dark:text-[#030A11] transition-transform group-hover:rotate-45" />
                 <span>{t("ctaCourses")}</span>
                 <Arrow className="w-5 h-5 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
               </Link>
@@ -87,17 +87,17 @@ export default function HeroSection({
             </div>
 
             {/* Quick Proof Pills */}
-            <div className="pt-6 border-t border-border/40 grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs sm:text-sm text-brand-muted">
+            <div className="pt-6 border-t border-border/40 grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs sm:text-sm text-muted-foreground dark:text-brand-muted">
               <div className="flex items-center gap-2 justify-center lg:justify-start">
-                <CheckCircle2 className="w-4 h-4 text-brand-cyan shrink-0" />
+                <CheckCircle2 className="w-4 h-4 text-brand-blue dark:text-brand-cyan shrink-0" />
                 <span className="font-medium">ArcGIS Pro 3.x & Spatial</span>
               </div>
               <div className="flex items-center gap-2 justify-center lg:justify-start">
-                <CheckCircle2 className="w-4 h-4 text-brand-cyan shrink-0" />
+                <CheckCircle2 className="w-4 h-4 text-brand-blue dark:text-brand-cyan shrink-0" />
                 <span className="font-medium">Google Earth Engine</span>
               </div>
               <div className="flex items-center gap-2 justify-center lg:justify-start col-span-2 sm:col-span-1">
-                <CheckCircle2 className="w-4 h-4 text-brand-cyan shrink-0" />
+                <CheckCircle2 className="w-4 h-4 text-brand-blue dark:text-brand-cyan shrink-0" />
                 <span className="font-medium">
                   {currentLocale === "ar" ? "شهادات إتمام موثقة" : "Verified Certificates"}
                 </span>
@@ -107,31 +107,31 @@ export default function HeroSection({
 
           {/* Hero Side Interactive Card / Geospatial Badge */}
           <div className="lg:col-span-4 flex justify-center">
-            <div className="relative w-full max-w-sm p-6 rounded-2xl surface-altura shadow-altura border border-white/10 hover:border-brand-cyan/30 transition-all duration-500">
+            <div className="relative w-full max-w-sm p-6 rounded-2xl surface-altura shadow-altura border border-border/70 dark:border-white/10 hover:border-brand-blue/40 dark:hover:border-brand-cyan/30 transition-all duration-500">
               {/* Top Card Bar */}
               <div className="flex items-center justify-between pb-4 border-b border-border/50">
                 <div className="flex items-center gap-2.5">
                   <div className="w-3 h-3 rounded-full bg-emerald-500 animate-ping" />
-                  <span className="text-xs font-semibold text-cream">
+                  <span className="text-xs font-semibold text-foreground dark:text-cream">
                     {currentLocale === "ar" ? "المنصة جاهزة للدراسة والتطبيق" : "Active Geospatial Hub"}
                   </span>
                 </div>
-                <Satellite className="w-4 h-4 text-brand-cyan" />
+                <Satellite className="w-4 h-4 text-brand-blue dark:text-brand-cyan" />
               </div>
 
               {/* Spatial Coordinates Box */}
-              <div className="my-5 p-3.5 rounded-xl bg-muted/60 border border-border/40 font-mono text-[11px] sm:text-xs text-brand-muted space-y-1.5">
+              <div className="my-5 p-3.5 rounded-xl bg-muted/60 border border-border/40 font-mono text-[11px] sm:text-xs text-muted-foreground dark:text-brand-muted space-y-1.5">
                 <div className="flex justify-between items-center">
-                  <span className="text-brand-cyan">DATUM:</span>
-                  <span className="text-cream">WGS 84 / UTM Zone 36N</span>
+                  <span className="text-brand-blue dark:text-brand-cyan">DATUM:</span>
+                  <span className="text-foreground dark:text-cream">WGS 84 / UTM Zone 36N</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-brand-cyan">INSTR:</span>
-                  <span className="text-cream">{tBrand("owner")}</span>
+                  <span className="text-brand-blue dark:text-brand-cyan">INSTR:</span>
+                  <span className="text-foreground dark:text-cream">{tBrand("owner")}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-brand-cyan">SENSOR:</span>
-                  <span className="text-cream">Multispectral (10m Res)</span>
+                  <span className="text-brand-blue dark:text-brand-cyan">SENSOR:</span>
+                  <span className="text-foreground dark:text-cream">Multispectral (10m Res)</span>
                 </div>
               </div>
 
@@ -147,23 +147,23 @@ export default function HeroSection({
                     <PlayCircle className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="text-xs font-bold text-cream">
+                    <div className="text-xs font-bold text-foreground dark:text-cream">
                       {t("youtubeChannel")}
                     </div>
-                    <div className="text-[11px] text-brand-muted">
+                    <div className="text-[11px] text-muted-foreground dark:text-brand-muted">
                       {currentLocale === "ar" ? "شروحات وتطبيقات مجانية" : "Free Practical Tutorials"}
                     </div>
                   </div>
                 </div>
-                <Arrow className="w-4 h-4 text-brand-muted group-hover:text-red-500 transition-colors" />
+                <Arrow className="w-4 h-4 text-muted-foreground dark:text-brand-muted group-hover:text-red-500 transition-colors" />
               </a>
 
               {/* Live Learner & Courses Pill */}
               <div className="mt-4 pt-4 border-t border-border/40 flex items-center justify-between text-xs">
-                <span className="text-brand-muted">
+                <span className="text-muted-foreground dark:text-brand-muted">
                   {t("activeLearners", { count: formattedStudents })}
                 </span>
-                <span className="font-bold text-brand-cyan">
+                <span className="font-bold text-brand-blue dark:text-brand-cyan">
                   {t("publishedCoursesPill", { count: formattedCourses })}
                 </span>
               </div>

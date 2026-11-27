@@ -94,7 +94,7 @@ export default function StatsStrip({
       ref={containerRef}
       className="relative -mt-8 z-20 container mx-auto px-4 sm:px-6 mb-20"
     >
-      <div className="rounded-2xl surface-altura shadow-altura p-6 sm:p-8 border border-white/10">
+      <div className="rounded-2xl surface-altura shadow-altura p-6 sm:p-8 border border-border/70 dark:border-white/10">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 divide-y sm:divide-y-0 divide-border/30">
           {statItems.map((stat, idx) => (
             <StatCounter
@@ -182,16 +182,16 @@ function StatCounter({
 
   return (
     <div className="flex flex-col items-center text-center p-3 sm:p-0">
-      <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-brand-blue/15 to-brand-cyan/20 border border-brand-cyan/30 flex items-center justify-center text-brand-cyan mb-3">
+      <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-brand-blue/15 to-brand-cyan/20 border border-brand-blue/25 dark:border-brand-cyan/30 flex items-center justify-center text-brand-blue dark:text-brand-cyan mb-3">
         <Icon className="w-6 h-6" />
       </div>
-      <div className="text-2xl sm:text-3xl font-extrabold tracking-tight text-cream font-heading">
+      <div className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground dark:text-cream font-heading">
         {formatNumberLocale(count, locale)}
         {suffix && (
-          <span className="text-brand-cyan ml-0.5 rtl:mr-0.5">{suffix}</span>
+          <span className="text-brand-blue dark:text-brand-cyan ml-0.5 rtl:mr-0.5">{suffix}</span>
         )}
       </div>
-      <div className="text-xs sm:text-sm text-brand-muted mt-1 font-medium">
+      <div className="text-xs sm:text-sm text-muted-foreground dark:text-brand-muted mt-1 font-medium">
         {label}
       </div>
     </div>

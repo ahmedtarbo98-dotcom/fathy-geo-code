@@ -64,8 +64,8 @@ export default function ProjectMediaViewer({
       {/* Gallery Images */}
       {images.length > 0 && (
         <section className="space-y-4">
-          <h2 className="text-xl font-heading font-extrabold text-cream flex items-center gap-2">
-            <ImageIcon className="w-5 h-5 text-brand-cyan" />
+          <h2 className="text-xl font-heading font-extrabold text-foreground dark:text-cream flex items-center gap-2">
+            <ImageIcon className="w-5 h-5 text-brand-blue dark:text-brand-cyan" />
             <span>{isRtl ? "معرض صور المشروع والخرائط" : "Project Gallery & Maps"}</span>
           </h2>
 
@@ -77,9 +77,9 @@ export default function ProjectMediaViewer({
                   key={img.id || idx}
                   type="button"
                   onClick={() => setLightboxIdx(idx)}
-                  className="group relative rounded-2xl overflow-hidden border border-white/10 surface-altura text-start transition-all hover:border-brand-cyan/50 hover:shadow-cyan-glow"
+                  className="group relative rounded-2xl overflow-hidden border border-border/70 dark:border-white/10 surface-altura text-start transition-all hover:border-brand-blue/50 dark:hover:border-brand-cyan/50 hover:shadow-cyan-glow"
                 >
-                  <div className="relative aspect-[4/3] w-full bg-[#030A11] overflow-hidden">
+                  <div className="relative aspect-[4/3] w-full bg-muted dark:bg-[#030A11] overflow-hidden">
                     <Image
                       src={img.url}
                       alt={caption || projectTitle}
@@ -95,7 +95,7 @@ export default function ProjectMediaViewer({
                     </div>
                   </div>
                   {caption && (
-                    <div className="p-3 text-xs font-medium text-brand-muted line-clamp-2">
+                    <div className="p-3 text-xs font-medium text-muted-foreground dark:text-brand-muted line-clamp-2">
                       {caption}
                     </div>
                   )}
@@ -109,7 +109,7 @@ export default function ProjectMediaViewer({
       {/* YouTube Videos (Public youtube-nocookie.com 16:9 embeds) */}
       {videos.length > 0 && (
         <section className="space-y-4">
-          <h2 className="text-xl font-heading font-extrabold text-cream flex items-center gap-2">
+          <h2 className="text-xl font-heading font-extrabold text-foreground dark:text-cream flex items-center gap-2">
             <Youtube className="w-5 h-5 text-red-500" />
             <span>{isRtl ? "فيديوهات وشرح المشروع" : "Project Videos"}</span>
           </h2>
@@ -123,7 +123,7 @@ export default function ProjectMediaViewer({
               return (
                 <div
                   key={vid.id || idx}
-                  className="rounded-2xl overflow-hidden surface-altura border border-white/10 shadow-altura"
+                  className="rounded-2xl overflow-hidden surface-altura border border-border/70 dark:border-white/10 shadow-altura"
                 >
                   <div className="relative aspect-video w-full bg-black">
                     <iframe
@@ -136,7 +136,7 @@ export default function ProjectMediaViewer({
                     />
                   </div>
                   {caption && (
-                    <div className="p-3.5 text-xs sm:text-sm font-semibold text-cream">
+                    <div className="p-3.5 text-xs sm:text-sm font-semibold text-foreground dark:text-cream">
                       {caption}
                     </div>
                   )}
