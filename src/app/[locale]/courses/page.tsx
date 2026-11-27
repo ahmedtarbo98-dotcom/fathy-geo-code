@@ -194,7 +194,7 @@ export default function CoursesPage({
             <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" />
             <span>FATHY GEO CODE</span>
           </div>
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-foreground dark:text-[#F2EBDD]">
+          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-foreground dark:text-[#F2EBDD] font-heading">
             {t("title")}
           </h1>
           <p className="text-brand-muted text-sm sm:text-base leading-relaxed">
@@ -202,19 +202,19 @@ export default function CoursesPage({
           </p>
         </div>
 
-        {/* Search & Filter Bar */}
+        {/* Search & Filter Bar (Altura GIS Minimalist Style) */}
         <div className="mb-10 space-y-4">
-          <div className="rounded-2xl glass-panel p-4 sm:p-5 border border-border/70 shadow-lg shadow-brand-blue/5">
+          <div className="rounded-2xl surface-altura p-4 sm:p-5 border border-white/10 shadow-altura">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
               {/* Search Input */}
               <div className="md:col-span-5 relative">
-                <Search className="absolute top-1/2 -translate-y-1/2 start-3.5 w-4 h-4 text-muted-foreground" />
+                <Search className="absolute top-1/2 -translate-y-1/2 start-3.5 w-4 h-4 text-brand-cyan/70" />
                 <input
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder={t("searchPlaceholder")}
-                  className="w-full h-11 ps-10 pe-4 rounded-xl bg-background/80 border border-border/80 text-sm focus:outline-none focus:ring-2 focus:ring-brand-cyan/40 focus:border-brand-cyan transition-all placeholder:text-muted-foreground/60"
+                  className="w-full h-11 ps-10 pe-4 rounded-xl bg-black/40 border border-white/10 text-sm text-foreground dark:text-[#F2EBDD] focus:outline-none focus:ring-2 focus:ring-brand-cyan/40 focus:border-brand-cyan transition-all placeholder:text-muted-foreground/60"
                 />
                 {search && (
                   <button
@@ -227,15 +227,15 @@ export default function CoursesPage({
               </div>
 
               {/* Type Filter (All / Free / Paid) */}
-              <div className="md:col-span-3 flex rounded-xl p-1 bg-background/60 border border-border/80">
+              <div className="md:col-span-3 flex rounded-xl p-1 bg-black/40 border border-white/10">
                 {(["all", "free", "paid"] as const).map((type) => (
                   <button
                     key={type}
                     onClick={() => setSelectedType(type)}
                     className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
                       selectedType === type
-                        ? "bg-brand-cyan text-[#030A11] shadow-sm font-bold"
-                        : "text-muted-foreground hover:text-foreground"
+                        ? "bg-brand-blue text-white shadow-md shadow-brand-blue/30 font-bold"
+                        : "text-brand-muted hover:text-white"
                     }`}
                   >
                     {t(`type_${type}`)}
@@ -248,11 +248,11 @@ export default function CoursesPage({
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full h-11 px-3 rounded-xl bg-background/80 border border-border/80 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-brand-cyan/40"
+                  className="w-full h-11 px-3 rounded-xl bg-black/40 border border-white/10 text-xs font-medium text-foreground dark:text-[#F2EBDD] focus:outline-none focus:ring-2 focus:ring-brand-cyan/40 cursor-pointer"
                 >
-                  <option value="all">{t("allCategories")}</option>
+                  <option value="all" className="bg-[#030A11]">{t("allCategories")}</option>
                   {categories.map((cat) => (
-                    <option key={cat} value={cat}>
+                    <option key={cat} value={cat} className="bg-[#030A11]">
                       {cat}
                     </option>
                   ))}
@@ -264,12 +264,12 @@ export default function CoursesPage({
                 <select
                   value={selectedLevel}
                   onChange={(e) => setSelectedLevel(e.target.value)}
-                  className="w-full h-11 px-3 rounded-xl bg-background/80 border border-border/80 text-xs font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-brand-cyan/40"
+                  className="w-full h-11 px-3 rounded-xl bg-black/40 border border-white/10 text-xs font-medium text-foreground dark:text-[#F2EBDD] focus:outline-none focus:ring-2 focus:ring-brand-cyan/40 cursor-pointer"
                 >
-                  <option value="all">{t("allLevels")}</option>
-                  <option value="beginner">{t("level_beginner")}</option>
-                  <option value="intermediate">{t("level_intermediate")}</option>
-                  <option value="advanced">{t("level_advanced")}</option>
+                  <option value="all" className="bg-[#030A11]">{t("allLevels")}</option>
+                  <option value="beginner" className="bg-[#030A11]">{t("level_beginner")}</option>
+                  <option value="intermediate" className="bg-[#030A11]">{t("level_intermediate")}</option>
+                  <option value="advanced" className="bg-[#030A11]">{t("level_advanced")}</option>
                 </select>
               </div>
             </div>
@@ -342,7 +342,7 @@ export default function CoursesPage({
               return (
                 <div
                   key={course.id}
-                  className="group flex flex-col rounded-2xl bg-card border border-border/70 overflow-hidden shadow-md transition-all duration-300 card-hover-modern hover:shadow-2xl hover:shadow-brand-blue/15 hover:border-brand-cyan/40"
+                  className="group flex flex-col rounded-2xl surface-altura border border-white/10 overflow-hidden shadow-lg transition-all duration-300 card-hover-modern hover:shadow-altura hover:border-brand-cyan/40"
                 >
                   {/* Thumbnail */}
                   <div className="relative aspect-video w-full bg-muted overflow-hidden">
@@ -354,13 +354,13 @@ export default function CoursesPage({
                         className="object-cover transition-transform duration-500 group-hover:scale-105"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gradient-to-tr from-brand-navy to-brand-blue flex items-center justify-center text-white font-extrabold text-xs">
+                      <div className="w-full h-full bg-gradient-to-tr from-brand-secondary to-brand-primary flex items-center justify-center text-[#F2EBDD] font-extrabold text-xs">
                         FATHY GEO CODE
                       </div>
                     )}
 
                     <div className="absolute top-3.5 start-3.5 z-10">
-                      <span className="px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase bg-black/60 text-white backdrop-blur-md border border-white/10">
+                      <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#030A11]/80 backdrop-blur-md text-[#F2EBDD] border border-white/10">
                         {course.category}
                       </span>
                     </div>
@@ -372,10 +372,10 @@ export default function CoursesPage({
                         </span>
                       ) : (
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-bold shadow-md ${
+                          className={`px-3 py-1 rounded-xl text-xs font-extrabold shadow-lg ${
                             course.is_free
                               ? "bg-emerald-500 text-white"
-                              : "bg-black/80 backdrop-blur-md text-brand-cyan border border-brand-cyan/40"
+                              : "bg-[#030A11]/90 backdrop-blur-md text-brand-cyan border border-brand-cyan/40 font-pixel text-[11px]"
                           }`}
                         >
                           {course.is_free ? tFeatured("free") : `${course.price} ${course.currency || "USD"}`}
@@ -387,8 +387,8 @@ export default function CoursesPage({
                   {/* Body */}
                   <div className="p-6 flex-1 flex flex-col justify-between space-y-4">
                     <div className="space-y-2.5">
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground font-medium">
-                        <span>{level}</span>
+                      <div className="flex items-center gap-2 text-xs text-brand-muted font-medium">
+                        <span className="capitalize">{level}</span>
                         <span>•</span>
                         <div className="flex items-center gap-1">
                           <BookOpen className="w-3.5 h-3.5 text-brand-cyan" />
@@ -409,11 +409,11 @@ export default function CoursesPage({
                         )}
                       </div>
 
-                      <h3 className="text-lg font-bold text-foreground dark:text-[#F2EBDD] leading-snug group-hover:text-brand-cyan transition-colors">
+                      <h3 className="text-lg font-bold text-foreground dark:text-[#F2EBDD] font-heading leading-snug group-hover:text-brand-cyan transition-colors line-clamp-2">
                         {title}
                       </h3>
 
-                      <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
+                      <p className="text-xs text-brand-muted leading-relaxed line-clamp-3">
                         {desc}
                       </p>
                     </div>
@@ -421,7 +421,7 @@ export default function CoursesPage({
                     <div className="pt-4 border-t border-border/50 flex items-center justify-between">
                       <Link
                         href={`/courses/${course.slug}`}
-                        className="inline-flex items-center gap-1.5 text-xs font-bold text-foreground group-hover:text-brand-blue dark:group-hover:text-brand-cyan transition-colors"
+                        className="inline-flex items-center gap-1.5 text-xs font-bold text-foreground dark:text-[#F2EBDD] group-hover:text-brand-cyan transition-colors"
                       >
                         <span>{tFeatured("viewDetails")}</span>
                         <Arrow className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
@@ -429,10 +429,10 @@ export default function CoursesPage({
 
                       <Link
                         href={isEnrolled ? `/player/${course.slug}` : `/courses/${course.slug}`}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold text-white shadow-md transition-all hover:scale-105 ${
+                        className={`px-4 py-2 rounded-xl text-xs font-bold shadow-md transition-all hover:scale-105 ${
                           isEnrolled
-                            ? "bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/20"
-                            : "bg-gradient-to-r from-brand-navy via-brand-blue to-brand-cyan hover:shadow-brand-blue/30"
+                            ? "bg-emerald-600 hover:bg-emerald-500 text-white shadow-emerald-500/20"
+                            : "text-[#030A11] bg-gradient-to-r from-brand-cyan to-sky-300 hover:shadow-cyan-400/25"
                         }`}
                       >
                         {isEnrolled
