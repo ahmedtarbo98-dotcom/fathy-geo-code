@@ -8,6 +8,7 @@ import { Link } from "@/i18n/routing";
 import { getCourseBySlug, CourseDetailData } from "@/lib/data/courses";
 import { createClient } from "@/lib/supabase/client";
 import { SiteLogoImage } from "@/components/site-branding-provider";
+import VideoPlayer from "@/components/video-player";
 import {
   BookOpen,
   Clock,
@@ -15,6 +16,8 @@ import {
   CheckCircle2,
   Lock,
   PlayCircle,
+  Play,
+  X,
   GraduationCap,
   Sparkles,
   PhoneCall,
@@ -50,6 +53,75 @@ export default function CourseDetailsPage({
   const [studentPhone, setStudentPhone] = useState("");
   const [submittingRequest, setSubmittingRequest] = useState(false);
   const [requestSuccess, setRequestSuccess] = useState(false);
+
+  // Preview Video Modal State (Matching Altura GIS Preview Modal)
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [previewVideoData, setPreviewVideoData] = useState<{
+    videoId: string;
+    lessonTitle: string;
+    lessonId?: string;
+  }>({
+    videoId: "",
+    lessonTitle: "",
+  });
+
+  const openPreview = async (lesson?: any) => {
+    // Find first preview lesson if none provided
+    let targetLesson = lesson;
+    if (!targetLesson && course?.sections) {
+      for (const s of course.sections) {
+        for (const l of s.lessons || []) {
+          if (l.is_free_preview) {
+            targetLesson = l;
+            break;
+          }
+        }
+        if (targetLesson) break;
+      }
+      if (!targetLesson && course.sections[0]?.lessons?.[0]) {
+        targetLesson = course.sections[0].lessons[0];
+      }
+    }
+
+    const lTitle = targetLesson
+      ? isRtl
+        ? targetLesson.title_ar
+        : targetLesson.title_en
+      : isRtl
+      ? "فيديو المعاينة"
+      : "Preview Video";
+
+    // If lesson has ID, fetch token
+    if (targetLesson?.id) {
+      try {
+        const res = await fetch("/api/video/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ lessonId: targetLesson.id }),
+        });
+        const data = await res.json();
+        if (data?.videoId) {
+          setPreviewVideoData({
+            videoId: data.videoId,
+            lessonTitle: lTitle,
+            lessonId: targetLesson.id,
+          });
+          setPreviewModalOpen(true);
+          return;
+        }
+      } catch (err) {
+        console.warn("Could not fetch preview video token:", err);
+      }
+    }
+
+    // Fallback video ID (e.g. course intro or YouTube ID)
+    const fallbackId = (course as any)?.intro_video_url || "dQw4w9WgXcQ";
+    setPreviewVideoData({
+      videoId: fallbackId,
+      lessonTitle: lTitle,
+    });
+    setPreviewModalOpen(true);
+  };
 
   useEffect(() => {
     async function loadCourse() {
@@ -480,28 +552,54 @@ export default function CourseDetailsPage({
                               const minutes = Math.round((lesson.duration_seconds || 900) / 60);
                               const canWatch = isEnrolled || lesson.is_free_preview || course.is_free;
                               return canWatch ? (
-                                <Link
-                                  key={lesson.id || lIdx}
-                                  href={`/player/${course.slug}?lessonId=${lesson.id}`}
-                                  className="py-2.5 flex items-center justify-between gap-2 text-xs sm:text-sm group hover:bg-brand-blue/5 px-2 rounded-lg transition-colors"
-                                >
-                                  <div className="flex items-center gap-2.5 min-w-0">
-                                    <PlayCircle className="w-4 h-4 text-emerald-500 group-hover:scale-110 transition-transform shrink-0" />
-                                    <span className="text-foreground font-medium group-hover:text-brand-blue dark:group-hover:text-brand-cyan truncate">
-                                      {lTitle}
-                                    </span>
-                                  </div>
+                                isEnrolled || course.is_free ? (
+                                  <Link
+                                    key={lesson.id || lIdx}
+                                    href={`/player/${course.slug}?lessonId=${lesson.id}`}
+                                    className="py-2.5 flex items-center justify-between gap-2 text-xs sm:text-sm group hover:bg-brand-blue/5 px-2 rounded-lg transition-colors"
+                                  >
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                      <PlayCircle className="w-4 h-4 text-emerald-500 group-hover:scale-110 transition-transform shrink-0" />
+                                      <span className="text-foreground font-medium group-hover:text-brand-blue dark:group-hover:text-brand-cyan truncate">
+                                        {lTitle}
+                                      </span>
+                                    </div>
 
-                                  <div className="flex items-center gap-2 shrink-0">
-                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 flex items-center gap-1">
-                                      <span>{isEnrolled ? (isRtl ? "مشاهدة الدرس" : "Watch Lesson") : (isRtl ? "معاينة" : "Preview")}</span>
-                                      <ExternalLink className="w-2.5 h-2.5" />
-                                    </span>
-                                    <span className="text-xs text-muted-foreground font-mono">
-                                      {minutes} {locale === "ar" ? "د" : "m"}
-                                    </span>
-                                  </div>
-                                </Link>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 flex items-center gap-1">
+                                        <span>{isRtl ? "مشاهدة الدرس" : "Watch Lesson"}</span>
+                                        <ExternalLink className="w-2.5 h-2.5" />
+                                      </span>
+                                      <span className="text-xs text-muted-foreground font-mono">
+                                        {minutes} {locale === "ar" ? "د" : "m"}
+                                      </span>
+                                    </div>
+                                  </Link>
+                                ) : (
+                                  <button
+                                    key={lesson.id || lIdx}
+                                    type="button"
+                                    onClick={() => openPreview(lesson)}
+                                    className="w-full py-2.5 flex items-center justify-between gap-2 text-xs sm:text-sm group hover:bg-brand-blue/10 px-2 rounded-lg transition-colors text-start"
+                                  >
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                      <PlayCircle className="w-4 h-4 text-brand-cyan group-hover:scale-110 transition-transform shrink-0" />
+                                      <span className="text-foreground font-medium group-hover:text-brand-blue dark:group-hover:text-brand-cyan truncate">
+                                        {lTitle}
+                                      </span>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-brand-blue/20 text-brand-cyan border border-brand-cyan/40 flex items-center gap-1 shadow-sm">
+                                        <span>{isRtl ? "معاينة مجانية" : "Free Preview"}</span>
+                                        <Play className="w-2.5 h-2.5 fill-current" />
+                                      </span>
+                                      <span className="text-xs text-muted-foreground font-mono">
+                                        {minutes} {locale === "ar" ? "د" : "m"}
+                                      </span>
+                                    </div>
+                                  </button>
+                                )
                               ) : (
                                 <div
                                   key={lesson.id || lIdx}
@@ -566,23 +664,39 @@ export default function CourseDetailsPage({
           {/* Sticky Sidebar Action Card */}
           <div className="order-1 lg:order-2 lg:col-span-4 lg:sticky lg:top-28 space-y-6">
             <div className="rounded-3xl glass-panel p-5 sm:p-7 border border-border/70 shadow-2xl shadow-brand-blue/10 backdrop-blur-2xl space-y-5 sm:space-y-6">
-              {/* Thumbnail Banner */}
-              <div className="relative aspect-video rounded-2xl overflow-hidden shadow-md bg-muted">
+              {/* Thumbnail Banner with Interactive Altura-style Preview Trigger */}
+              <div
+                onClick={() => openPreview()}
+                className="relative aspect-video rounded-2xl overflow-hidden shadow-md bg-muted cursor-pointer group/thumb border border-white/10"
+                title={isRtl ? "انقر لمشاهدة فيديو المعاينة" : "Click to watch preview"}
+              >
                 {course.thumbnail_url ? (
                   <Image
                     src={course.thumbnail_url}
                     alt={title}
                     fill
-                    className="object-cover"
+                    className="object-cover group-hover/thumb:scale-105 transition-transform duration-300"
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-brand-navy text-white text-xs font-bold">
                     FATHY GEO CODE
                   </div>
                 )}
+                {/* Dark Hover Overlay & Center Blue Play Button */}
+                <div className="absolute inset-0 bg-black/35 group-hover/thumb:bg-black/55 transition-colors flex items-center justify-center">
+                  <div className="w-14 h-14 rounded-full bg-brand-blue/90 group-hover/thumb:bg-brand-blue text-white flex items-center justify-center shadow-2xl group-hover/thumb:scale-110 active:scale-95 transition-all border border-white/30">
+                    <Play className="w-6 h-6 fill-white ml-0.5" />
+                  </div>
+                </div>
                 <div className="absolute top-2.5 start-2.5 z-10">
-                  <span className="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-black/60 text-white backdrop-blur-md">
+                  <span className="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-black/70 text-white backdrop-blur-md border border-white/10">
                     {course.category}
+                  </span>
+                </div>
+                <div className="absolute bottom-2.5 start-2.5 z-10">
+                  <span className="px-2.5 py-1 rounded-md text-[10px] font-bold bg-brand-blue text-white backdrop-blur-md shadow-md flex items-center gap-1.5">
+                    <Play className="w-2.5 h-2.5 fill-white" />
+                    <span>{isRtl ? "معاينة الفيديو" : "Watch Preview"}</span>
                   </span>
                 </div>
               </div>
@@ -655,13 +769,14 @@ export default function CourseDetailsPage({
                       <span>{isRtl ? "طلب الاشتراك والتفعيل (فودافون كاش / إنستاباي)" : "Request Access & Payment"}</span>
                     </button>
 
-                    <Link
-                      href={`/player/${course.slug}`}
-                      className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold border border-emerald-500/40 text-emerald-500 hover:bg-emerald-500/10 transition-all"
+                    <button
+                      type="button"
+                      onClick={() => openPreview()}
+                      className="w-full inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl text-xs font-bold border border-brand-cyan/40 text-brand-cyan hover:bg-brand-blue/10 transition-all shadow-sm"
                     >
                       <PlayCircle className="w-4 h-4 shrink-0" />
                       <span>{isRtl ? "مشاهدة الدروس المجانية والمعاينة" : "Watch Free Preview Lessons"}</span>
-                    </Link>
+                    </button>
                   </>
                 )}
 
@@ -827,6 +942,93 @@ export default function CourseDetailsPage({
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Altura GIS Style Course Preview Modal */}
+      {previewModalOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 overflow-y-auto animate-in fade-in duration-200"
+          onClick={() => setPreviewModalOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-4xl bg-[#030A11] border border-white/15 rounded-3xl overflow-hidden shadow-2xl relative space-y-0 animate-in zoom-in-95 duration-200"
+          >
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 flex items-center justify-between border-b border-white/10 bg-[#071B2B]/60">
+              {/* Close Button (Left) */}
+              <button
+                type="button"
+                onClick={() => setPreviewModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-all active:scale-95"
+                title={isRtl ? "إغلاق" : "Close"}
+              >
+                <X className="w-4 h-4" />
+              </button>
+
+              {/* Title & Instructor (Right) */}
+              <div className="flex items-center gap-2.5 text-end" style={{ direction: "rtl" }}>
+                <div className="w-8 h-8 rounded-full bg-brand-blue/30 border border-brand-cyan/40 flex items-center justify-center text-brand-cyan shrink-0 shadow-sm">
+                  <Play className="w-4 h-4 fill-brand-cyan ml-0.5" />
+                </div>
+                <div>
+                  <h3 className="text-sm sm:text-base font-bold text-[#F2EBDD] flex items-center gap-1.5 justify-end">
+                    <span>{isRtl ? "فيديو المعاينة:" : "Preview Video:"}</span>
+                    <span className="text-white">{previewVideoData.lessonTitle || title}</span>
+                  </h3>
+                  <p className="text-[11px] sm:text-xs text-slate-400">
+                    {title} • {isRtl ? "المدرب: Eng: Ahmed Fathy" : "Instructor: Eng: Ahmed Fathy"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Video Player Body */}
+            <div className="p-2 sm:p-4 bg-black">
+              {previewVideoData.videoId ? (
+                <VideoPlayer
+                  provider="youtube"
+                  videoId={previewVideoData.videoId}
+                  title={previewVideoData.lessonTitle || title}
+                  courseName={title}
+                  instructorName="Eng: Ahmed Fathy"
+                  drmLabel="FGC DRM"
+                  isProtected={true}
+                  isPaidCourse={false}
+                />
+              ) : (
+                <div className="aspect-video w-full rounded-2xl bg-slate-900 flex items-center justify-center text-white text-xs">
+                  {isRtl ? "جاري تحميل الفيديو..." : "Loading video..."}
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div
+              className="p-4 sm:p-5 bg-[#071B2B]/80 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-end"
+              style={{ direction: "rtl" }}
+            >
+              <div className="text-xs text-slate-300 flex items-center gap-2">
+                <span className="text-base">💡</span>
+                <span>
+                  {isRtl
+                    ? "هذا الفيديو متاح للمعاينة المجانية. للاطلاع على المنهج الكامل والمشاريع التطبيقية والحصول على الشهادة المعتمدة:"
+                    : "This video is available for free preview. To access the full curriculum, projects, and certificate:"}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setPreviewModalOpen(false);
+                  setRequestModalOpen(true);
+                }}
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-brand-blue hover:bg-blue-600 text-white font-bold text-xs sm:text-sm shadow-lg shadow-brand-blue/30 transition-all shrink-0 active:scale-95"
+              >
+                {isRtl ? "الاشتراك في الدورة" : "Enroll in Course"}
+              </button>
+            </div>
           </div>
         </div>
       )}

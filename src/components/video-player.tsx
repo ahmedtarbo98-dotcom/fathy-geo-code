@@ -14,6 +14,9 @@ import {
   RotateCw,
   Sparkles,
   SlidersHorizontal,
+  Settings,
+  Check,
+  Tv,
   Loader2,
 } from "lucide-react";
 
@@ -26,6 +29,10 @@ interface VideoPlayerProps {
   userId?: string;
   isProtected?: boolean;
   isPaidCourse?: boolean;
+  title?: string;
+  courseName?: string;
+  instructorName?: string;
+  drmLabel?: string;
   onComplete?: () => void;
   onProgress?: (percent: number) => void;
 }
@@ -44,6 +51,10 @@ export default function VideoPlayer({
   userId = "FGC-STUDENT",
   isProtected = true,
   isPaidCourse = false,
+  title,
+  courseName,
+  instructorName = "Eng: Ahmed Fathy",
+  drmLabel = "FGC DRM",
   onComplete,
   onProgress,
 }: VideoPlayerProps) {
@@ -87,6 +98,44 @@ export default function VideoPlayer({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPseudoFullscreen, setIsPseudoFullscreen] = useState(false);
   const [isReady, setIsReady] = useState(false);
+
+  // Quality & Speed Popover states (Altura GIS style)
+  const [isQualityMenuOpen, setIsQualityMenuOpen] = useState(false);
+  const [isSpeedMenuOpen, setIsSpeedMenuOpen] = useState(false);
+
+  // Close menus on outside click
+  useEffect(() => {
+    const handleGlobalClick = () => {
+      setIsQualityMenuOpen(false);
+      setIsSpeedMenuOpen(false);
+    };
+    window.addEventListener("click", handleGlobalClick);
+    return () => window.removeEventListener("click", handleGlobalClick);
+  }, []);
+
+  const getQualityLabel = (q: string) => {
+    switch (q) {
+      case "hd1080": return "1080p HD";
+      case "hd720": return "720p HD";
+      case "large": return "480p SD";
+      case "medium": return "360p SD";
+      case "small": return "240p SD";
+      case "auto":
+      default: return "تلقائي (Auto)";
+    }
+  };
+
+  const getQualityShortLabel = (q: string) => {
+    switch (q) {
+      case "hd1080": return "1080p HD";
+      case "hd720": return "720p HD";
+      case "large": return "480p SD";
+      case "medium": return "360p SD";
+      case "small": return "240p SD";
+      case "auto":
+      default: return "Auto";
+    }
+  };
 
   // Modern UI & Interaction states
   const [showControls, setShowControls] = useState(true);
@@ -320,17 +369,25 @@ export default function VideoPlayer({
   }, [isMuted, volume, triggerFeedback, resetControlsTimeout]);
 
   // 5. Playback Speed
-  const handleSpeedChange = (rate: number) => {
+  const handleSpeedSelect = (rate: number) => {
     setPlaybackRate(rate);
+    setIsSpeedMenuOpen(false);
     if (!playerRef.current) return;
     try {
       playerRef.current.setPlaybackRate(rate);
+      triggerFeedback("volume", `${rate}x`);
     } catch {}
+    resetControlsTimeout();
   };
 
-  // 5.1 Playback Quality
-  const handleQualityChange = (newQuality: string) => {
+  const handleSpeedChange = (rate: number) => {
+    handleSpeedSelect(rate);
+  };
+
+  // 5.1 Playback Quality (Active Stream Switching)
+  const handleQualitySelect = (newQuality: string) => {
     setQuality(newQuality);
+    setIsQualityMenuOpen(false);
     if (!playerRef.current) return;
     try {
       const ytQuality = newQuality === "auto" ? "default" : newQuality;
@@ -339,8 +396,11 @@ export default function VideoPlayer({
       if (typeof playerRef.current.setPlaybackQuality === "function") {
         playerRef.current.setPlaybackQuality(ytQuality);
       }
+      if (typeof playerRef.current.setPlaybackQualityRange === "function") {
+        playerRef.current.setPlaybackQualityRange(ytQuality, ytQuality);
+      }
 
-      // Force YouTube stream switch by reloading at current second with suggestedQuality
+      // Reload at current second with suggestedQuality
       if (typeof playerRef.current.loadVideoById === "function") {
         playerRef.current.loadVideoById({
           videoId: videoId,
@@ -349,10 +409,15 @@ export default function VideoPlayer({
         });
       }
 
-      triggerFeedback("volume", newQuality.toUpperCase());
+      triggerFeedback("volume", getQualityShortLabel(newQuality));
     } catch (err) {
       console.warn("Quality switch error:", err);
     }
+    resetControlsTimeout();
+  };
+
+  const handleQualityChange = (newQuality: string) => {
+    handleQualitySelect(newQuality);
   };
 
   // 6. Fullscreen (with iOS / mobile WebView pseudo-fullscreen fallback)
@@ -849,22 +914,104 @@ export default function VideoPlayer({
         </div>
       )}
 
-      {/* Big Center Play Button when Paused */}
+      {/* TOP OVERLAY BAR: Altura GIS Style (DRM Badge + Title on Right, Quality Pill on Left) */}
+      <div
+        style={{ direction: "ltr" }}
+        className={`absolute top-0 inset-x-0 z-30 p-3 sm:p-4.5 flex items-center justify-between pointer-events-auto bg-gradient-to-b from-black/85 via-black/40 to-transparent transition-all duration-300 ${
+          showControls || !isPlaying
+            ? "opacity-100 translate-y-0"
+            : "opacity-0 -translate-y-2 pointer-events-none"
+        }`}
+      >
+        {/* Left: Quality Quick Button & Popover */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsQualityMenuOpen((prev) => !prev);
+              setIsSpeedMenuOpen(false);
+            }}
+            className="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl bg-black/70 hover:bg-black/90 backdrop-blur-md border border-white/20 text-white text-xs font-bold transition-all shadow-lg active:scale-95"
+            title="جودة الفيديو"
+          >
+            <span>{getQualityShortLabel(quality)}</span>
+            <Settings className="w-3.5 h-3.5 text-brand-cyan" />
+          </button>
+
+          {/* Quality Dropdown Popover (Exact Altura GIS Style) */}
+          {isQualityMenuOpen && (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="absolute top-full start-0 mt-2 w-36 sm:w-40 rounded-2xl bg-[#071322]/95 backdrop-blur-xl border border-white/15 p-2 shadow-2xl z-50 space-y-1 animate-in fade-in zoom-in-95"
+            >
+              <div className="text-[11px] font-semibold text-slate-400 text-center py-1 border-b border-white/10 mb-1">
+                جودة الفيديو
+              </div>
+              {[
+                { key: "auto", label: "تلقائي (Auto)" },
+                { key: "hd1080", label: "1080p HD" },
+                { key: "hd720", label: "720p HD" },
+                { key: "large", label: "480p SD" },
+                { key: "medium", label: "360p SD" },
+                { key: "small", label: "240p SD" },
+              ].map((item) => (
+                <button
+                  key={item.key}
+                  type="button"
+                  onClick={() => handleQualitySelect(item.key)}
+                  className={`w-full flex items-center justify-between px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    quality === item.key
+                      ? "bg-brand-blue text-white shadow-md shadow-brand-blue/30"
+                      : "text-slate-300 hover:bg-white/10 hover:text-white"
+                  }`}
+                >
+                  <span>{item.label}</span>
+                  {quality === item.key && <Check className="w-3.5 h-3.5 text-white" />}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Right: Title & DRM Badge */}
+        <div className="flex items-center gap-2 max-w-[70%] justify-end text-end" style={{ direction: "rtl" }}>
+          <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-brand-blue/30 border border-brand-cyan/40 text-brand-cyan text-[10px] sm:text-[11px] font-bold tracking-wider whitespace-nowrap shadow-sm">
+            <span>{drmLabel}</span>
+            <Tv className="w-3 h-3 text-brand-cyan" />
+          </div>
+          {title && (
+            <span className="text-xs sm:text-sm font-bold text-white drop-shadow truncate max-w-[200px] sm:max-w-[340px]">
+              {title}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Center Play Button & "Video Paused" Pill Badge (Altura GIS Style) */}
       {!isPlaying && !isBuffering && isReady && (
-        <button
-          type="button"
-          onClick={togglePlay}
-          className="absolute inset-0 z-20 m-auto w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-brand-blue/90 hover:bg-brand-blue text-white shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all backdrop-blur-sm group/playbtn border border-white/20"
-          aria-label="Play Video"
-        >
-          <Play className="w-8 h-8 sm:w-10 sm:h-10 ml-1 fill-white drop-shadow" />
-        </button>
+        <div className="absolute inset-0 z-20 m-auto flex flex-col items-center justify-center pointer-events-none">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              togglePlay();
+            }}
+            className="pointer-events-auto w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-brand-blue hover:bg-blue-600 text-white shadow-2xl shadow-brand-blue/50 flex items-center justify-center hover:scale-110 active:scale-95 transition-all backdrop-blur-sm border-2 border-white/30 group/playbtn"
+            aria-label="Play Video"
+          >
+            <Play className="w-8 h-8 sm:w-10 sm:h-10 ml-1 fill-white drop-shadow-md" />
+          </button>
+          <div className="mt-3.5 px-4 py-1.5 rounded-full bg-black/80 backdrop-blur-md border border-white/15 text-brand-cream/90 text-xs sm:text-sm font-medium shadow-xl pointer-events-none select-none animate-in fade-in zoom-in-95">
+            الفيديو موقّف مؤقتاً - انقر للمتابعة
+          </div>
+        </div>
       )}
 
       {/* MODERN GLASS CONTROLS BAR (Auto-fades on inactivity) */}
       <div
         style={{ direction: "ltr" }}
-        className={`relative z-20 w-full bg-gradient-to-t from-black via-black/85 to-transparent px-3 py-2 sm:px-4 sm:py-3 space-y-1.5 sm:space-y-2 transition-all duration-300 ${
+        className={`relative z-30 w-full bg-gradient-to-t from-black via-black/85 to-transparent px-3 py-2 sm:px-4 sm:py-3 space-y-1.5 sm:space-y-2 transition-all duration-300 ${
           showControls || !isPlaying
             ? "opacity-100 translate-y-0 pointer-events-auto"
             : "opacity-0 translate-y-2 pointer-events-none"
@@ -901,10 +1048,10 @@ export default function VideoPlayer({
           )}
 
           {/* Track container */}
-          <div className="relative w-full h-1.5 group-hover/seek:h-2.5 bg-white/20 rounded-full overflow-hidden transition-all duration-200">
-            {/* Played Gradient Fill */}
+          <div className="relative w-full h-1 sm:h-1.5 group-hover/seek:h-2 bg-white/20 rounded-full overflow-hidden transition-all duration-200">
+            {/* Played Solid Blue Fill */}
             <div
-              className="h-full bg-gradient-to-r from-brand-blue via-brand-cyan to-cyan-300 rounded-full transition-[width] duration-75"
+              className="h-full bg-gradient-to-r from-brand-blue to-brand-cyan rounded-full transition-[width] duration-75"
               style={{
                 width: `${Math.min(100, (currentTime / (duration || 1)) * 100)}%`,
               }}
@@ -920,57 +1067,82 @@ export default function VideoPlayer({
           />
         </div>
 
-        {/* Buttons Row */}
-        <div className="flex items-center justify-between gap-1.5 sm:gap-2 text-white text-xs">
-          {/* Start: Play/Pause, Rewind 10s, Forward 10s, Time */}
-          <div className="flex items-center gap-1 sm:gap-2.5 min-w-0">
+        {/* Controls Row (Matching Altura GIS Screenshot Layout) */}
+        <div className="flex items-center justify-between gap-1.5 sm:gap-2.5 text-white text-xs">
+          {/* Left: Fullscreen, Speed, Quality, Volume */}
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+            {/* Fullscreen Button */}
             <button
               type="button"
-              onClick={togglePlay}
-              className="p-1 sm:p-1.5 rounded-lg hover:bg-white/10 active:scale-95 text-white transition-all shrink-0"
-              aria-label={isPlaying ? "Pause" : "Play"}
-              title={isPlaying ? "إيقاف مؤقت (Space)" : "تشغيل (Space)"}
+              onClick={toggleFullscreen}
+              className="p-1.5 rounded-lg hover:bg-white/10 text-white active:scale-95 transition-all shrink-0"
+              aria-label="Fullscreen"
+              title={activeFullscreen ? "تصغير الشاشة (F)" : "تكبير الشاشة (F)"}
             >
-              {isPlaying ? (
-                <Pause className="w-4 h-4 sm:w-5 sm:h-5 fill-white" />
+              {activeFullscreen ? (
+                <Minimize className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
               ) : (
-                <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-white" />
+                <Maximize className="w-4 h-4 sm:w-4.5 sm:h-4.5" />
               )}
             </button>
 
-            {/* Rewind 10s */}
-            <button
-              type="button"
-              onClick={() => handleSeek(currentTime - 10, true, "rewind")}
-              className="p-1 sm:p-1.5 rounded-lg hover:bg-white/10 active:scale-95 text-white/85 hover:text-white transition-all text-[10px] sm:text-[11px] font-mono flex items-center gap-0.5 shrink-0"
-              title="ترجيع 10 ثوانٍ (J)"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">10s</span>
-            </button>
+            {/* Playback Speed Pill Button */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsSpeedMenuOpen((prev) => !prev);
+                  setIsQualityMenuOpen(false);
+                }}
+                className="px-2 py-1 rounded-lg hover:bg-white/10 text-white text-[10px] sm:text-[11px] font-bold font-mono transition-all"
+                title="سرعة التشغيل"
+              >
+                {playbackRate}x
+              </button>
 
-            {/* Forward 10s */}
-            <button
-              type="button"
-              onClick={() => handleSeek(currentTime + 10, true, "forward")}
-              className="p-1 sm:p-1.5 rounded-lg hover:bg-white/10 active:scale-95 text-white/85 hover:text-white transition-all text-[10px] sm:text-[11px] font-mono flex items-center gap-0.5 shrink-0"
-              title="تقديم 10 ثوانٍ (L)"
-            >
-              <span className="hidden sm:inline">10s</span>
-              <RotateCw className="w-3.5 h-3.5" />
-            </button>
+              {/* Speed Popover */}
+              {isSpeedMenuOpen && (
+                <div
+                  onClick={(e) => e.stopPropagation()}
+                  className="absolute bottom-full start-0 mb-2 w-28 rounded-2xl bg-[#071322]/95 backdrop-blur-xl border border-white/15 p-1.5 shadow-2xl z-50 space-y-0.5 animate-in fade-in zoom-in-95"
+                >
+                  {[0.75, 1, 1.25, 1.5, 2].map((rate) => (
+                    <button
+                      key={rate}
+                      type="button"
+                      onClick={() => handleSpeedSelect(rate)}
+                      className={`w-full flex items-center justify-between px-2.5 py-1 rounded-lg text-xs font-bold transition-all ${
+                        playbackRate === rate
+                          ? "bg-brand-blue text-white"
+                          : "text-slate-300 hover:bg-white/10 hover:text-white"
+                      }`}
+                    >
+                      <span>{rate}x</span>
+                      {playbackRate === rate && <Check className="w-3 h-3 text-white" />}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
-            {/* Time Display */}
-            <span
-              className="font-mono text-[10px] sm:text-xs text-white/85 whitespace-nowrap px-1"
-              style={{ direction: "ltr" }}
-            >
-              {formatTime(currentTime)} / {formatTime(duration)}
-            </span>
-          </div>
+            {/* Quality Pill Button (Bottom) */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsQualityMenuOpen((prev) => !prev);
+                  setIsSpeedMenuOpen(false);
+                }}
+                className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-white/10 text-white text-[10px] sm:text-[11px] font-bold transition-all"
+                title="جودة الفيديو"
+              >
+                <span>{getQualityShortLabel(quality)}</span>
+                <Settings className="w-3 h-3 text-brand-cyan" />
+              </button>
+            </div>
 
-          {/* End: Volume, Quality, Speed, Fullscreen */}
-          <div className="flex items-center gap-1 sm:gap-2.5 shrink-0">
             {/* Volume Control */}
             <div className="flex items-center gap-1 group/vol">
               <button
@@ -994,54 +1166,59 @@ export default function VideoPlayer({
                 max="100"
                 value={isMuted ? 0 : volume}
                 onChange={(e) => handleVolumeChange(parseInt(e.target.value))}
-                className="hidden sm:block w-14 md:w-20 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-brand-cyan"
+                className="hidden md:block w-16 lg:w-20 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-brand-blue"
+                style={{
+                  background: `linear-gradient(to right, #1678D3 0%, #1678D3 ${
+                    isMuted ? 0 : volume
+                  }%, rgba(255,255,255,0.2) ${isMuted ? 0 : volume}%, rgba(255,255,255,0.2) 100%)`,
+                }}
                 title={`مستوى الصوت: ${isMuted ? 0 : volume}%`}
               />
             </div>
+          </div>
 
-            {/* Quality Selector */}
-            <div className="flex items-center gap-1">
-              <SlidersHorizontal className="w-3 h-3 text-white/60 hidden md:inline" />
-              <select
-                value={quality}
-                onChange={(e) => handleQualityChange(e.target.value)}
-                className="bg-black/60 border border-white/20 text-white text-[10px] sm:text-[11px] font-bold rounded-lg px-1.5 sm:px-2 py-1 outline-none hover:bg-black/80 transition-colors cursor-pointer"
-                title="جودة الفيديو"
-              >
-                <option value="auto" className="bg-slate-900">Auto (تلقائي)</option>
-                <option value="hd1080" className="bg-slate-900">1080p FHD</option>
-                <option value="hd720" className="bg-slate-900">720p HD</option>
-                <option value="large" className="bg-slate-900">480p SD</option>
-                <option value="medium" className="bg-slate-900">360p</option>
-              </select>
-            </div>
-
-            {/* Playback Speed */}
-            <select
-              value={playbackRate}
-              onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
-              className="bg-black/60 border border-white/20 text-white text-[10px] sm:text-[11px] font-bold rounded-lg px-1.5 sm:px-2 py-1 outline-none hover:bg-black/80 transition-colors cursor-pointer"
-              title="سرعة التشغيل"
+          {/* Right Section: Time, Rewind, Forward, and Big Blue Play/Pause */}
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+            {/* Time Display (LTR isolated) */}
+            <span
+              className="font-mono text-[10px] sm:text-xs text-white/90 whitespace-nowrap px-1 sm:px-2"
+              style={{ direction: "ltr", unicodeBidi: "isolate" }}
             >
-              <option value="0.75" className="bg-slate-900">0.75x</option>
-              <option value="1" className="bg-slate-900">1x</option>
-              <option value="1.25" className="bg-slate-900">1.25x</option>
-              <option value="1.5" className="bg-slate-900">1.5x</option>
-              <option value="2" className="bg-slate-900">2x</option>
-            </select>
+              {formatTime(currentTime)} / {formatTime(duration)}
+            </span>
 
-            {/* Fullscreen Button */}
+            {/* Rewind 10s */}
             <button
               type="button"
-              onClick={toggleFullscreen}
-              className="p-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-white active:scale-95 transition-all shrink-0"
-              aria-label="Fullscreen"
-              title={activeFullscreen ? "تصغير الشاشة (F)" : "تكبير الشاشة (F)"}
+              onClick={() => handleSeek(currentTime - 10, true, "rewind")}
+              className="p-1 sm:p-1.5 rounded-lg hover:bg-white/10 active:scale-95 text-white/90 hover:text-white transition-all shrink-0"
+              title="ترجيع 10 ثوانٍ (J)"
             >
-              {activeFullscreen ? (
-                <Minimize className="w-4 h-4" />
+              <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </button>
+
+            {/* Forward 10s */}
+            <button
+              type="button"
+              onClick={() => handleSeek(currentTime + 10, true, "forward")}
+              className="p-1 sm:p-1.5 rounded-lg hover:bg-white/10 active:scale-95 text-white/90 hover:text-white transition-all shrink-0"
+              title="تقديم 10 ثوانٍ (L)"
+            >
+              <RotateCw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </button>
+
+            {/* Circular Solid Blue Play/Pause Button (Matching Altura GIS) */}
+            <button
+              type="button"
+              onClick={togglePlay}
+              className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-brand-blue hover:bg-blue-600 text-white shadow-lg shadow-brand-blue/40 flex items-center justify-center active:scale-95 transition-all shrink-0 border border-white/20 ms-1"
+              aria-label={isPlaying ? "Pause" : "Play"}
+              title={isPlaying ? "إيقاف مؤقت (Space)" : "تشغيل (Space)"}
+            >
+              {isPlaying ? (
+                <Pause className="w-4 h-4 sm:w-5 sm:h-5 fill-white" />
               ) : (
-                <Maximize className="w-4 h-4" />
+                <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-white ml-0.5" />
               )}
             </button>
           </div>

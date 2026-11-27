@@ -361,6 +361,10 @@ function CoursePlayerContent({
                 userId={videoTokenData.userId}
                 isProtected={true}
                 isPaidCourse={!course?.is_free}
+                title={locale === "ar" ? currentLesson?.title_ar : currentLesson?.title_en}
+                courseName={locale === "ar" ? course?.title_ar : course?.title_en}
+                instructorName="Eng: Ahmed Fathy"
+                drmLabel="FGC DRM"
                 onComplete={() => toggleComplete(currentLesson?.id)}
               />
             ) : (
