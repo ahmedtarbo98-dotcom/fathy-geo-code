@@ -111,19 +111,19 @@ export default function AboutPage({
     );
 
   return (
-    <div className="relative min-h-screen py-12 md:py-20">
+    <div className="relative min-h-screen py-12 md:py-20 bg-brand-primary">
       {/* Background ambient accents */}
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-brand-cyan/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute top-1/2 right-1/4 w-[400px] h-[400px] bg-brand-blue/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="container relative mx-auto px-4 sm:px-6">
         {/* Main Bio Card */}
-        <div className="rounded-3xl glass-panel p-8 sm:p-12 border border-border/70 shadow-2xl shadow-brand-blue/10 mb-16">
+        <div className="rounded-3xl surface-altura p-8 sm:p-12 border border-white/10 shadow-altura mb-16">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
             {/* Photo / Avatar */}
             <div className="lg:col-span-4 flex justify-center">
-              <div className="relative w-56 h-56 sm:w-64 sm:h-64 rounded-3xl overflow-hidden p-1 bg-gradient-to-tr from-brand-navy via-brand-blue to-brand-cyan shadow-2xl">
-                <div className="relative w-full h-full rounded-[22px] overflow-hidden bg-background">
+              <div className="relative w-56 h-56 sm:w-64 sm:h-64 rounded-3xl overflow-hidden p-1 bg-gradient-to-tr from-brand-navy via-brand-blue to-brand-cyan shadow-cyan-glow">
+                <div className="relative w-full h-full rounded-[22px] overflow-hidden bg-brand-primary">
                   {avatarUrl ? (
                     <Image
                       src={avatarUrl}
@@ -133,7 +133,7 @@ export default function AboutPage({
                       priority
                     />
                   ) : (
-                    <div className="w-full h-full animate-pulse bg-muted" />
+                    <div className="w-full h-full animate-pulse bg-white/5" />
                   )}
                 </div>
               </div>
@@ -141,12 +141,12 @@ export default function AboutPage({
 
             {/* Bio Content */}
             <div className="lg:col-span-8 space-y-5 text-center lg:text-start">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-brand-cyan/30 bg-brand-cyan/10 text-xs font-semibold text-brand-cyan">
+              <div className="badge-altura inline-flex items-center gap-2">
                 <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" />
-                <span>{t("badge")}</span>
+                <span className="font-pixel text-[10px]">{t("badge")}</span>
               </div>
 
-              <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-foreground dark:text-[#F2EBDD]">
+              <h1 className="text-3xl sm:text-5xl font-heading font-extrabold tracking-tight text-cream">
                 {t("title")}
               </h1>
 
@@ -155,7 +155,7 @@ export default function AboutPage({
                 <span>{t("subtitle")}</span>
               </div>
 
-              <p className="text-base sm:text-lg text-foreground/90 font-medium leading-relaxed">
+              <p className="text-base sm:text-lg text-cream/90 font-medium leading-relaxed">
                 {t("bioLead")}
               </p>
 
@@ -181,7 +181,7 @@ export default function AboutPage({
                     href="https://t.me/Fathy772"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-3 rounded-xl border border-border bg-card/60 hover:text-[#229ED9] hover:border-[#229ED9]/50 transition-colors"
+                    className="p-3 rounded-xl border border-white/10 bg-[#030A11] text-brand-muted hover:text-[#229ED9] hover:border-[#229ED9]/50 transition-colors"
                   >
                     <Send className="w-4 h-4" />
                   </a>
@@ -189,7 +189,7 @@ export default function AboutPage({
                     href="https://www.youtube.com/channel/UCBrwWaq6E8lg0xEmDCLmekw"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-3 rounded-xl border border-border bg-card/60 hover:text-red-600 hover:border-red-600/50 transition-colors"
+                    className="p-3 rounded-xl border border-white/10 bg-[#030A11] text-brand-muted hover:text-red-500 hover:border-red-500/50 transition-colors"
                   >
                     <Youtube className="w-4 h-4" />
                   </a>
@@ -197,7 +197,7 @@ export default function AboutPage({
                     href="https://www.linkedin.com/in/ahmed-fathy-57b168364"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-3 rounded-xl border border-border bg-card/60 hover:text-[#0A66C2] hover:border-[#0A66C2]/50 transition-colors"
+                    className="p-3 rounded-xl border border-white/10 bg-[#030A11] text-brand-muted hover:text-[#0A66C2] hover:border-[#0A66C2]/50 transition-colors"
                   >
                     <Linkedin className="w-4 h-4" />
                   </a>
@@ -205,7 +205,7 @@ export default function AboutPage({
                     href="https://www.facebook.com/share/1NiKuCvtnM/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-3 rounded-xl border border-border bg-card/60 hover:text-[#1877F2] hover:border-[#1877F2]/50 transition-colors"
+                    className="p-3 rounded-xl border border-white/10 bg-[#030A11] text-brand-muted hover:text-[#1877F2] hover:border-[#1877F2]/50 transition-colors"
                   >
                     <Facebook className="w-4 h-4" />
                   </a>
@@ -218,10 +218,10 @@ export default function AboutPage({
         {/* Skills Grid */}
         <div className="space-y-8 mb-16">
           <div className="text-center max-w-xl mx-auto space-y-2">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground">
+            <h2 className="text-2xl sm:text-3xl font-heading font-extrabold text-cream">
               {t("skillsTitle")}
             </h2>
-            <p className="text-xs sm:text-sm text-muted-foreground">
+            <p className="text-xs sm:text-sm text-brand-muted">
               {locale === "ar"
                 ? "أهم التقنيات والبرمجيات المستخدمة في تنفيذ المشاريع المكانية والتحليلات"
                 : "Key technologies and frameworks applied across commercial spatial projects"}
@@ -236,7 +236,7 @@ export default function AboutPage({
               return (
                 <div
                   key={sIdx}
-                  className="rounded-2xl glass-panel p-6 border border-border/70 space-y-3 card-hover-modern hover:border-brand-blue/40 transition-all duration-300"
+                  className="rounded-2xl surface-altura p-6 border border-white/10 space-y-3 card-hover-modern hover:border-brand-cyan/40 transition-all duration-300"
                 >
                   <div className="flex items-center gap-3">
                     <div
@@ -244,11 +244,11 @@ export default function AboutPage({
                     >
                       <Icon className="w-5 h-5" />
                     </div>
-                    <h3 className="font-bold text-base text-foreground">
+                    <h3 className="font-heading font-bold text-base text-cream">
                       {skill.name}
                     </h3>
                   </div>
-                  <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                  <p className="text-xs sm:text-sm text-brand-muted leading-relaxed">
                     {desc}
                   </p>
                 </div>
@@ -260,7 +260,7 @@ export default function AboutPage({
         {/* Milestones / Education & Experience */}
         <div className="max-w-3xl mx-auto space-y-8">
           <div className="text-center space-y-2">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-foreground">
+            <h2 className="text-2xl sm:text-3xl font-heading font-extrabold text-cream">
               {t("credentialsTitle")}
             </h2>
           </div>
@@ -273,20 +273,20 @@ export default function AboutPage({
               return (
                 <div
                   key={mIdx}
-                  className="rounded-2xl glass-panel p-6 sm:p-7 border border-border/70 space-y-2.5"
+                  className="rounded-2xl surface-altura p-6 sm:p-7 border border-white/10 space-y-2.5 shadow-altura"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                    <h3 className="text-lg font-bold text-foreground">
+                    <h3 className="text-lg font-heading font-bold text-cream">
                       {mTitle}
                     </h3>
-                    <span className="text-xs font-semibold px-2.5 py-1 rounded-md bg-secondary text-brand-blue dark:text-brand-cyan self-start sm:self-auto">
+                    <span className="badge-altura text-[10px] font-mono self-start sm:self-auto">
                       {m.period}
                     </span>
                   </div>
-                  <div className="text-xs font-semibold text-muted-foreground">
+                  <div className="text-xs font-semibold text-brand-cyan">
                     {m.org}
                   </div>
-                  <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed pt-1">
+                  <p className="text-xs sm:text-sm text-brand-muted leading-relaxed pt-1">
                     {mDesc}
                   </p>
                 </div>
