@@ -101,10 +101,10 @@ export default function YouTubeSection({ currentLocale }: { currentLocale: strin
                   <Youtube className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
                   <span>{t("badge")}</span>
                 </div>
-                <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
+                <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground dark:text-[#F2EBDD]">
                   {t("title")}
                 </h2>
-                <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
+                <p className="text-brand-muted text-sm sm:text-base leading-relaxed">
                   {t("subtitle")}
                 </p>
               </div>

@@ -23,11 +23,16 @@ const config: Config = {
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
         brand: {
-          navy: "#0B1F4B",
-          blue: "#1E6FD9",
-          cyan: "#14B8C4",
-          light: "#F5F9FF",
-          darkNavy: "#060E21",
+          primary: "#030A11",
+          secondary: "#071B2B",
+          cyan: "#43C8F4",
+          blue: "#1678D3",
+          cream: "#F2EBDD",
+          muted: "#AAB8C5",
+          // Backward-compatible aliases:
+          navy: "#030A11",
+          darkNavy: "#02070D",
+          light: "#F2EBDD",
         },
         primary: {
           DEFAULT: "hsl(var(--primary))",
@@ -67,6 +72,8 @@ const config: Config = {
         sans: ["var(--font-inter)", "var(--font-cairo)", "system-ui", "sans-serif"],
         arabic: ["var(--font-cairo)", "system-ui", "sans-serif"],
         latin: ["var(--font-inter)", "system-ui", "sans-serif"],
+        heading: ["var(--font-oxanium)", "var(--font-cairo)", "system-ui", "sans-serif"],
+        pixel: ["var(--font-pixel)", "monospace"],
       },
       keyframes: {
         "pulse-glow": {

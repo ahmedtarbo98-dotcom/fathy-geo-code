@@ -78,21 +78,21 @@ export default function FeaturedCourses({
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-14">
           <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-cyan/30 bg-brand-cyan/10 text-xs font-semibold text-brand-navy dark:text-brand-cyan">
-              <Sparkles className="w-3.5 h-3.5 text-brand-cyan" />
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-cyan/30 bg-brand-cyan/10 text-xs font-semibold text-brand-cyan">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" />
               <span>{t("badge")}</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
+            <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground dark:text-[#F2EBDD]">
               {t("title")}
             </h2>
-            <p className="text-muted-foreground text-sm sm:text-base max-w-xl">
+            <p className="text-brand-muted text-sm sm:text-base max-w-xl">
               {t("subtitle")}
             </p>
           </div>
 
           <Link
             href="/courses"
-            className="inline-flex items-center gap-2 text-sm font-bold text-brand-blue dark:text-brand-cyan hover:underline group self-start md:self-end"
+            className="inline-flex items-center gap-2 text-sm font-bold text-brand-cyan hover:underline group self-start md:self-end"
           >
             <span>{t("viewAll")}</span>
             <Arrow className="w-4 h-4 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
@@ -110,7 +110,7 @@ export default function FeaturedCourses({
             return (
               <div
                 key={course.id}
-                className="group relative rounded-3xl glass-panel border border-border/80 overflow-hidden shadow-lg card-hover-modern hover:shadow-2xl hover:border-brand-blue/50 transition-all duration-300 flex flex-col justify-between"
+                className="group relative rounded-2xl bg-card border border-border/80 overflow-hidden shadow-lg card-hover-modern hover:shadow-2xl hover:border-brand-cyan/40 transition-all duration-300 flex flex-col justify-between"
               >
                 {/* Course Thumbnail */}
                 <div className="relative aspect-video w-full overflow-hidden bg-muted">
@@ -122,14 +122,14 @@ export default function FeaturedCourses({
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                   ) : (
-                    <div className="w-full h-full bg-gradient-to-tr from-brand-navy to-brand-blue flex items-center justify-center text-white font-extrabold text-sm">
+                    <div className="w-full h-full bg-gradient-to-tr from-brand-secondary to-brand-primary flex items-center justify-center text-brand-cream font-extrabold text-sm">
                       FATHY GEO CODE
                     </div>
                   )}
 
                   {/* Badges */}
                   <div className="absolute top-3.5 start-3.5 flex items-center gap-2 z-10">
-                    <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-black/60 backdrop-blur-md text-white border border-white/20">
+                    <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-[#030A11]/80 backdrop-blur-md text-[#F2EBDD] border border-white/10">
                       {course.category}
                     </span>
                   </div>
@@ -139,7 +139,7 @@ export default function FeaturedCourses({
                       className={`px-3 py-1 rounded-xl text-xs font-extrabold shadow-lg ${
                         course.is_free
                           ? "bg-emerald-500 text-white"
-                          : "bg-black/80 backdrop-blur-md text-brand-cyan border border-brand-cyan/40"
+                          : "bg-[#030A11]/90 backdrop-blur-md text-brand-cyan border border-brand-cyan/40 font-pixel text-[11px]"
                       }`}
                     >
                       {course.is_free ? t("free") : `${course.price} ${course.currency || "USD"}`}
@@ -150,16 +150,16 @@ export default function FeaturedCourses({
                 {/* Content */}
                 <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground font-semibold">
+                    <div className="flex items-center justify-between text-xs text-brand-muted font-semibold">
                       <span className="capitalize">{course.level}</span>
-                      <span className="text-brand-blue dark:text-brand-cyan">GIS & RS</span>
+                      <span className="text-brand-cyan font-mono text-[11px]">GIS & RS</span>
                     </div>
 
-                    <h3 className="text-lg font-bold text-foreground group-hover:text-brand-blue dark:group-hover:text-brand-cyan transition-colors line-clamp-2">
+                    <h3 className="text-lg font-bold text-foreground dark:text-[#F2EBDD] group-hover:text-brand-cyan transition-colors line-clamp-2">
                       {title}
                     </h3>
 
-                    <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3">
+                    <p className="text-xs text-brand-muted leading-relaxed line-clamp-3">
                       {desc}
                     </p>
                   </div>
@@ -167,7 +167,7 @@ export default function FeaturedCourses({
                   <div className="pt-4 border-t border-border/50 flex items-center justify-between">
                     <Link
                       href={`/courses/${course.slug}`}
-                      className="inline-flex items-center gap-1.5 text-xs font-bold text-foreground group-hover:text-brand-blue dark:group-hover:text-brand-cyan transition-colors"
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-foreground dark:text-[#F2EBDD] group-hover:text-brand-cyan transition-colors"
                     >
                       <span>{t("viewDetails")}</span>
                       <Arrow className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
@@ -175,7 +175,7 @@ export default function FeaturedCourses({
 
                     <Link
                       href={`/courses/${course.slug}`}
-                      className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-brand-navy via-brand-blue to-brand-cyan shadow-sm hover:shadow-md transition-all hover:scale-105"
+                      className="px-3.5 py-1.5 rounded-xl text-xs font-bold text-[#030A11] bg-gradient-to-r from-brand-cyan to-sky-300 shadow-sm hover:shadow-md transition-all hover:scale-105"
                     >
                       {course.is_free ? t("startNow") : t("enroll")}
                     </Link>

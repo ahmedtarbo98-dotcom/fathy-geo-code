@@ -64,8 +64,8 @@ export default function HeroBackground() {
       ctx.clearRect(0, 0, width, height);
 
       const isDark = document.documentElement.classList.contains("dark");
-      const primaryRgb = isDark ? "37, 124, 238" : "30, 111, 217";
-      const cyanRgb = isDark ? "20, 184, 196" : "14, 165, 175";
+      const primaryRgb = isDark ? "22, 120, 211" : "30, 111, 217";
+      const cyanRgb = isDark ? "67, 200, 244" : "14, 165, 175";
 
       // 1. Draw Topographic Elevation Contours (Organic curved lines)
       ctx.save();
@@ -216,13 +216,13 @@ export default function HeroBackground() {
       const satY = orbitB * Math.sin(satelliteAngle);
 
       // Satellite body
-      ctx.fillStyle = isDark ? "#ffffff" : "#0B1F4B";
+      ctx.fillStyle = isDark ? "#F2EBDD" : "#030A11";
       ctx.beginPath();
       ctx.arc(satX, satY, 3.5, 0, Math.PI * 2);
       ctx.fill();
 
       // Satellite solar panels
-      ctx.strokeStyle = "#14B8C4";
+      ctx.strokeStyle = "#43C8F4";
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(satX - 8, satY);
@@ -231,7 +231,7 @@ export default function HeroBackground() {
 
       // Signal beam pulse towards globe
       if (Math.sin(satelliteAngle * 2) > 0.3) {
-        ctx.strokeStyle = `rgba(20, 184, 196, ${isDark ? 0.4 : 0.25})`;
+        ctx.strokeStyle = `rgba(67, 200, 244, ${isDark ? 0.4 : 0.25})`;
         ctx.lineWidth = 0.8;
         ctx.setLineDash([2, 3]);
         ctx.beginPath();

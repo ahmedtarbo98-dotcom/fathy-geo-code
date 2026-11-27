@@ -228,16 +228,16 @@ export default function StudentDashboardPage({
         <div className="rounded-3xl glass-panel p-8 sm:p-10 border border-border/70 shadow-xl shadow-brand-blue/5">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-cyan/30 bg-brand-cyan/10 text-xs font-semibold text-brand-navy dark:text-brand-cyan">
-                <Sparkles className="w-3.5 h-3.5 text-brand-cyan" />
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-cyan/30 bg-brand-cyan/10 text-xs font-semibold text-brand-cyan">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" />
                 <span>{locale === "ar" ? "لوحة الطالب" : "Learner Portal"}</span>
               </div>
-              <h1 className="text-2xl sm:text-4xl font-extrabold text-foreground">
+              <h1 className="text-2xl sm:text-4xl font-extrabold text-foreground dark:text-[#F2EBDD]">
                 {t("welcomeTitle", {
                   name: userName || (locale === "ar" ? "يا مهندس" : "Engineer"),
                 })}
               </h1>
-              <p className="text-xs sm:text-sm text-muted-foreground max-w-xl">
+              <p className="text-xs sm:text-sm text-brand-muted max-w-xl">
                 {t("welcomeSubtitle")}
               </p>
             </div>

@@ -204,11 +204,11 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
             </div>
           </div>
           <div className="flex flex-col shrink-0">
-            <span className="font-extrabold tracking-tight text-sm sm:text-base lg:text-xl whitespace-nowrap bg-gradient-to-r from-brand-navy via-brand-blue to-brand-cyan dark:from-white dark:via-blue-400 dark:to-cyan-400 bg-clip-text text-transparent">
+            <span className="font-extrabold tracking-tight text-sm sm:text-base lg:text-xl whitespace-nowrap text-foreground dark:text-[#F2EBDD]">
               {tBrand("name")}
             </span>
-            <span className="hidden sm:flex text-[10px] sm:text-xs font-medium text-muted-foreground tracking-wide items-center gap-1 truncate">
-              <Sparkles className="w-2.5 h-2.5 text-brand-cyan inline shrink-0" />
+            <span className="hidden sm:flex text-[10px] sm:text-xs font-medium text-brand-muted tracking-wide items-center gap-1.5 truncate">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cyan shadow-sm shadow-cyan-400/50" />
               <span className="truncate">{tBrand("tagline")}</span>
             </span>
           </div>
@@ -225,16 +225,16 @@ export default function Navbar({ currentLocale }: { currentLocale: string }) {
               <Link
                 key={link.href}
                 href={link.href}
-                className={`relative px-3 lg:px-4 py-2 rounded-lg text-xs lg:text-sm font-medium transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap ${
+                className={`relative px-3 lg:px-4 py-2 rounded-xl text-xs lg:text-sm font-medium transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap ${
                   isActive
-                    ? "text-brand-blue dark:text-brand-cyan font-bold bg-brand-blue/10 dark:bg-brand-cyan/10"
+                    ? "text-brand-cyan font-bold bg-brand-cyan/10 border border-brand-cyan/20"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                 }`}
               >
-                <Icon className="w-4 h-4 opacity-70" />
+                <Icon className={`w-4 h-4 ${isActive ? "text-brand-cyan" : "opacity-70"}`} />
                 <span>{link.label}</span>
                 {isActive && (
-                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-gradient-to-r from-brand-blue to-brand-cyan rounded-full" />
+                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-4 h-0.5 bg-brand-cyan rounded-full shadow-[0_0_8px_rgba(67,200,244,0.6)]" />
                 )}
               </Link>
             );

@@ -141,16 +141,16 @@ export default function AboutPage({
 
             {/* Bio Content */}
             <div className="lg:col-span-8 space-y-5 text-center lg:text-start">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-brand-cyan/30 bg-brand-cyan/10 text-xs font-semibold text-brand-navy dark:text-brand-cyan">
-                <Sparkles className="w-3.5 h-3.5 text-brand-cyan" />
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-brand-cyan/30 bg-brand-cyan/10 text-xs font-semibold text-brand-cyan">
+                <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" />
                 <span>{t("badge")}</span>
               </div>
 
-              <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-foreground">
+              <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-foreground dark:text-[#F2EBDD]">
                 {t("title")}
               </h1>
 
-              <div className="text-sm sm:text-base font-semibold text-brand-blue dark:text-cyan-400 flex items-center justify-center lg:justify-start gap-2">
+              <div className="text-sm sm:text-base font-semibold text-brand-cyan flex items-center justify-center lg:justify-start gap-2">
                 <Compass className="w-4 h-4" />
                 <span>{t("subtitle")}</span>
               </div>
@@ -159,7 +159,7 @@ export default function AboutPage({
                 {t("bioLead")}
               </p>
 
-              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+              <p className="text-xs sm:text-sm text-brand-muted leading-relaxed">
                 {t("bioDetails")}
               </p>
 

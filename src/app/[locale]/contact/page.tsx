@@ -121,14 +121,14 @@ export default function ContactPage({
       <div className="container relative mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto space-y-4 mb-14">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-brand-cyan/30 bg-brand-cyan/10 text-xs font-semibold text-brand-navy dark:text-brand-cyan">
-            <Sparkles className="w-3.5 h-3.5 text-brand-cyan" />
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full border border-brand-cyan/30 bg-brand-cyan/10 text-xs font-semibold text-brand-cyan">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" />
             <span>{t("badge")}</span>
           </div>
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-foreground">
+          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-foreground dark:text-[#F2EBDD]">
             {t("title")}
           </h1>
-          <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
+          <p className="text-brand-muted text-sm sm:text-base leading-relaxed">
             {t("subtitle")}
           </p>
         </div>

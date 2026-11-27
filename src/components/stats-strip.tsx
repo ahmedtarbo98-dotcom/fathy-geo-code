@@ -185,13 +185,13 @@ function StatCounter({
       <div className="w-12 h-12 rounded-xl bg-gradient-to-tr from-brand-blue/15 to-brand-cyan/20 border border-brand-cyan/30 flex items-center justify-center text-brand-blue dark:text-brand-cyan mb-3">
         <Icon className="w-6 h-6" />
       </div>
-      <div className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+      <div className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground dark:text-[#F2EBDD]">
         {formatNumberLocale(count, locale)}
         {suffix && (
           <span className="text-brand-cyan ml-0.5 rtl:mr-0.5">{suffix}</span>
         )}
       </div>
-      <div className="text-xs sm:text-sm text-muted-foreground mt-1 font-medium">
+      <div className="text-xs sm:text-sm text-brand-muted mt-1 font-medium">
         {label}
       </div>
     </div>

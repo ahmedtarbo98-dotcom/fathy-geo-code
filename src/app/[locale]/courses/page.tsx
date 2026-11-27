@@ -190,14 +190,14 @@ export default function CoursesPage({
       <div className="container relative mx-auto px-4 sm:px-6">
         {/* Header */}
         <div className="text-center max-w-3xl mx-auto space-y-4 mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-cyan/30 bg-brand-cyan/10 text-xs font-semibold text-brand-navy dark:text-brand-cyan">
-            <Sparkles className="w-3.5 h-3.5 text-brand-cyan" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-cyan/30 bg-brand-cyan/10 text-xs font-semibold text-brand-cyan">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" />
             <span>FATHY GEO CODE</span>
           </div>
-          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-foreground">
+          <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-foreground dark:text-[#F2EBDD]">
             {t("title")}
           </h1>
-          <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
+          <p className="text-brand-muted text-sm sm:text-base leading-relaxed">
             {t("subtitle")}
           </p>
         </div>
@@ -234,7 +234,7 @@ export default function CoursesPage({
                     onClick={() => setSelectedType(type)}
                     className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all ${
                       selectedType === type
-                        ? "bg-brand-blue text-white shadow-sm font-bold"
+                        ? "bg-brand-cyan text-[#030A11] shadow-sm font-bold"
                         : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
@@ -409,7 +409,7 @@ export default function CoursesPage({
                         )}
                       </div>
 
-                      <h3 className="text-lg font-bold text-foreground leading-snug group-hover:text-brand-blue dark:group-hover:text-brand-cyan transition-colors">
+                      <h3 className="text-lg font-bold text-foreground dark:text-[#F2EBDD] leading-snug group-hover:text-brand-cyan transition-colors">
                         {title}
                       </h3>
 

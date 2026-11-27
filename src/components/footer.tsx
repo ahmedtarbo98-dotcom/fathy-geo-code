@@ -73,7 +73,7 @@ export default function Footer({ currentLocale }: { currentLocale: string }) {
                 </div>
               </div>
               <div className="flex flex-col">
-                <span className="font-extrabold text-lg sm:text-xl tracking-tight text-foreground">
+                <span className="font-extrabold text-lg sm:text-xl tracking-tight text-foreground dark:text-[#F2EBDD]">
                   {tBrand("name")}
                 </span>
                 <span className="text-xs text-brand-cyan font-medium">

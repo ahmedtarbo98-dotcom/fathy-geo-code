@@ -106,14 +106,14 @@ export default function TestimonialsSection({
       <div className="container mx-auto px-4 sm:px-6 relative z-10">
         {/* Header */}
         <div className="text-center max-w-2xl mx-auto space-y-4 mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-cyan/30 bg-brand-cyan/10 text-xs font-semibold text-brand-navy dark:text-brand-cyan">
-            <Sparkles className="w-3.5 h-3.5 text-brand-cyan" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brand-cyan/30 bg-brand-cyan/10 text-xs font-semibold text-brand-cyan">
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" />
             <span>{t("badge")}</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">
+          <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground dark:text-[#F2EBDD]">
             {t("title")}
           </h2>
-          <p className="text-muted-foreground text-sm sm:text-base leading-relaxed">
+          <p className="text-brand-muted text-sm sm:text-base leading-relaxed">
             {t("subtitle")}
           </p>
 
@@ -121,7 +121,7 @@ export default function TestimonialsSection({
             <button
               type="button"
               onClick={() => setSubmitModalOpen(true)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-brand-blue hover:bg-brand-blue/90 text-white text-xs sm:text-sm font-bold shadow-lg shadow-brand-blue/20 transition-all hover:-translate-y-0.5"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand-blue to-brand-cyan hover:opacity-95 text-white text-xs sm:text-sm font-bold shadow-lg shadow-brand-blue/20 transition-all hover:-translate-y-0.5"
             >
               <MessageSquarePlus className="w-4 h-4" />
               <span>{t("shareExperience")}</span>

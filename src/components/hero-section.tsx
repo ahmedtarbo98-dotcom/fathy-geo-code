@@ -46,21 +46,21 @@ export default function HeroSection({
           {/* Main Hero Copy */}
           <div className="lg:col-span-8 space-y-6 text-center lg:text-start">
             {/* Tag badge */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-brand-cyan/30 bg-brand-cyan/10 backdrop-blur-md text-xs sm:text-sm font-semibold text-brand-navy dark:text-brand-cyan shadow-sm">
-              <Sparkles className="w-4 h-4 text-brand-cyan animate-pulse" />
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-brand-cyan/30 bg-brand-cyan/10 backdrop-blur-md text-xs sm:text-sm font-semibold text-brand-cyan shadow-sm">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-brand-cyan animate-pulse" />
               <span>{t("badge")}</span>
             </div>
 
             {/* Headline */}
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight leading-[1.18] sm:leading-[1.15]">
-              <span className="block text-foreground">{t("titlePart1")}</span>
-              <span className="block bg-gradient-to-r from-brand-navy via-brand-blue to-brand-cyan dark:from-blue-400 dark:via-cyan-300 dark:to-teal-300 bg-clip-text text-transparent">
+              <span className="block text-foreground dark:text-[#F2EBDD]">{t("titlePart1")}</span>
+              <span className="block bg-gradient-to-r from-brand-blue to-brand-cyan dark:from-sky-300 dark:via-brand-cyan dark:to-cyan-200 bg-clip-text text-transparent">
                 {t("titlePart2")}
               </span>
             </h1>
 
             {/* Subheadline / description */}
-            <p className="text-base sm:text-lg lg:text-xl text-muted-foreground max-w-2xl leading-relaxed mx-auto lg:mx-0">
+            <p className="text-base sm:text-lg lg:text-xl text-brand-muted max-w-2xl leading-relaxed mx-auto lg:mx-0">
               {t("description")}
             </p>
 
@@ -68,9 +68,9 @@ export default function HeroSection({
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-4">
               <Link
                 href="/courses"
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl text-base font-bold text-white shadow-xl shadow-brand-blue/25 bg-gradient-to-r from-brand-navy via-brand-blue to-brand-cyan hover:shadow-brand-cyan/30 hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 group btn-shimmer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-3 px-8 py-4 rounded-xl text-base font-bold text-[#030A11] bg-gradient-to-r from-brand-cyan via-sky-300 to-brand-cyan hover:shadow-lg hover:shadow-cyan-400/25 hover:scale-[1.03] active:scale-[0.98] transition-all duration-300 group btn-shimmer"
               >
-                <Compass className="w-5 h-5 text-brand-cyan transition-transform group-hover:rotate-45" />
+                <Compass className="w-5 h-5 text-[#030A11] transition-transform group-hover:rotate-45" />
                 <span>{t("ctaCourses")}</span>
                 <Arrow className="w-5 h-5 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1" />
               </Link>
