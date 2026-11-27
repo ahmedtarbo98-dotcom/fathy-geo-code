@@ -442,7 +442,7 @@ export default function CourseDetailsPage({
                 )}
               </div>
 
-              <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-tight">
+              <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground dark:text-[#F2EBDD] font-heading leading-tight">
                 {title}
               </h1>
 
@@ -463,26 +463,26 @@ export default function CourseDetailsPage({
             </div>
 
             {/* Course Overview */}
-            <div className="rounded-3xl glass-panel p-6 sm:p-8 border border-border/70 space-y-4">
-              <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+            <div className="rounded-3xl surface-altura p-6 sm:p-8 border border-white/10 shadow-altura space-y-4">
+              <h2 className="text-xl font-bold text-foreground dark:text-[#F2EBDD] font-heading flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-brand-cyan" />
                 <span>{t("overview")}</span>
               </h2>
-              <p className="text-sm sm:text-base text-muted-foreground leading-relaxed whitespace-pre-line">
+              <p className="text-sm sm:text-base text-brand-muted leading-relaxed whitespace-pre-line">
                 {description}
               </p>
             </div>
 
             {/* What you'll learn */}
             {whatYouLearn && whatYouLearn.length > 0 && (
-              <div className="rounded-3xl glass-panel p-6 sm:p-8 border border-border/70 space-y-4">
-                <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+              <div className="rounded-3xl surface-altura p-6 sm:p-8 border border-white/10 shadow-altura space-y-4">
+                <h2 className="text-xl font-bold text-foreground dark:text-[#F2EBDD] font-heading flex items-center gap-2">
                   <CheckCircle2 className="w-5 h-5 text-emerald-500" />
                   <span>{t("whatYouWillLearn")}</span>
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                   {whatYouLearn.map((item, idx) => (
-                    <div key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-muted-foreground">
+                    <div key={idx} className="flex items-start gap-2.5 text-xs sm:text-sm text-brand-muted">
                       <span className="w-5 h-5 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center shrink-0 mt-0.5 font-bold text-xs">
                         ✓
                       </span>
@@ -496,11 +496,11 @@ export default function CourseDetailsPage({
             {/* Curriculum Sections & Lessons */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+                <h2 className="text-xl font-bold text-foreground dark:text-[#F2EBDD] font-heading flex items-center gap-2">
                   <Layers className="w-5 h-5 text-brand-blue dark:text-brand-cyan" />
                   <span>{t("curriculum")}</span>
                 </h2>
-                <span className="text-xs text-muted-foreground">
+                <span className="text-xs text-brand-muted">
                   {course.sections.length} {locale === "ar" ? "فصول" : "Sections"} • {totalLessons} {locale === "ar" ? "دروس" : "Lessons"}
                 </span>
               </div>
@@ -519,7 +519,7 @@ export default function CourseDetailsPage({
                     return (
                       <div
                         key={section.id || sIdx}
-                        className="rounded-2xl border border-border/70 bg-card/60 overflow-hidden shadow-sm transition-all"
+                        className="rounded-2xl border border-white/10 surface-altura overflow-hidden shadow-sm transition-all"
                       >
                         <button
                           onClick={() => toggleSection(section.id)}
@@ -630,7 +630,7 @@ export default function CourseDetailsPage({
             </div>
 
             {/* Instructor Box */}
-            <div className="rounded-3xl glass-panel p-6 sm:p-8 border border-border/70">
+            <div className="rounded-3xl surface-altura p-6 sm:p-8 border border-white/10 shadow-altura">
               <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
                 <div className="relative w-20 h-20 rounded-2xl overflow-hidden p-0.5 bg-gradient-to-tr from-brand-navy to-brand-cyan shadow-lg shrink-0">
                   <div className="relative w-full h-full rounded-[14px] overflow-hidden bg-background">
@@ -645,13 +645,13 @@ export default function CourseDetailsPage({
                   <div className="text-xs font-semibold text-brand-cyan uppercase tracking-wider">
                     {t("instructorTitle")}
                   </div>
-                  <h3 className="text-lg font-extrabold text-foreground">
+                  <h3 className="text-lg font-extrabold text-foreground dark:text-[#F2EBDD] font-heading">
                     {tBrand("owner")}
                   </h3>
                   <p className="text-xs font-medium text-brand-blue dark:text-cyan-400">
                     {tBrand("ownerTitle")}
                   </p>
-                  <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed pt-1">
+                  <p className="text-xs sm:text-sm text-brand-muted leading-relaxed pt-1">
                     {locale === "ar"
                       ? "مهندس ومطور نظم معلومات جغرافية معتمد، متخصص في تحليلات نظم المعلومات الجغرافية المتقدمة والاستشعار عن بعد وبرمجة التطبيقات المكانية."
                       : "Certified GIS Engineer & Spatial Data Analyst specializing in remote sensing, spatial programming, and GIS workflows."}
@@ -663,7 +663,7 @@ export default function CourseDetailsPage({
 
           {/* Sticky Sidebar Action Card */}
           <div className="order-1 lg:order-2 lg:col-span-4 lg:sticky lg:top-28 space-y-6">
-            <div className="rounded-3xl glass-panel p-5 sm:p-7 border border-border/70 shadow-2xl shadow-brand-blue/10 backdrop-blur-2xl space-y-5 sm:space-y-6">
+            <div className="rounded-3xl surface-altura p-5 sm:p-7 border border-white/10 shadow-altura backdrop-blur-2xl space-y-5 sm:space-y-6">
               {/* Thumbnail Banner with Interactive Altura-style Preview Trigger */}
               <div
                 onClick={() => openPreview()}
@@ -713,16 +713,18 @@ export default function CourseDetailsPage({
                 </div>
               ) : (
                 <div className="flex items-baseline justify-between pt-1">
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-xs text-brand-muted">
                     {locale === "ar" ? "قيمة الاشتراك:" : "Enrollment Fee:"}
                   </span>
-                  <span className="text-2xl sm:text-3xl font-extrabold text-foreground">
+                  <span className="text-xl sm:text-2xl font-extrabold text-foreground dark:text-[#F2EBDD]">
                     {course.is_free ? (
-                      <span className="text-emerald-500">
+                      <span className="text-emerald-500 font-bold">
                         {locale === "ar" ? "مجاناً" : "Free"}
                       </span>
                     ) : (
-                      <span>{course.price} {course.currency}</span>
+                      <span className="font-pixel text-lg sm:text-xl text-brand-cyan">
+                        {course.price} {course.currency}
+                      </span>
                     )}
                   </span>
                 </div>
