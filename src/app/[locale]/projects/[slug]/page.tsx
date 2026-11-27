@@ -100,7 +100,7 @@ export default async function ProjectDetailPage({
   };
 
   return (
-    <div className="min-h-screen py-10 md:py-16 relative">
+    <div className="min-h-screen py-10 md:py-16 relative bg-brand-primary">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -111,7 +111,7 @@ export default async function ProjectDetailPage({
         <div>
           <Link
             href="/projects"
-            className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-muted-foreground hover:text-brand-cyan transition-colors"
+            className="inline-flex items-center gap-2 text-xs sm:text-sm font-bold text-brand-muted hover:text-brand-cyan transition-colors"
           >
             <BackArrow className="w-4 h-4" />
             <span>{isRtl ? "العودة إلى جميع المشاريع" : "Back to All Projects"}</span>
@@ -119,9 +119,9 @@ export default async function ProjectDetailPage({
         </div>
 
         {/* Hero Card */}
-        <div className="rounded-3xl glass-panel overflow-hidden border border-border/70 shadow-2xl">
+        <div className="rounded-3xl surface-altura overflow-hidden border border-white/10 shadow-altura">
           {project.cover_image_url ? (
-            <div className="relative h-64 sm:h-96 w-full bg-slate-900">
+            <div className="relative h-64 sm:h-96 w-full bg-[#030A11]">
               <Image
                 src={project.cover_image_url}
                 alt={title}
@@ -130,45 +130,45 @@ export default async function ProjectDetailPage({
                 sizes="(max-width: 1024px) 100vw, 1024px"
                 className="object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#071B2B] via-transparent to-transparent" />
             </div>
           ) : (
-            <div className="h-40 w-full bg-gradient-to-br from-brand-navy via-brand-blue to-slate-900 flex items-center justify-center">
+            <div className="h-40 w-full bg-gradient-to-br from-brand-navy via-brand-blue to-[#030A11] flex items-center justify-center">
               <Layers className="w-12 h-12 text-white/30" />
             </div>
           )}
 
           <div className="p-6 sm:p-10 space-y-6">
             <div className="flex flex-wrap items-center gap-2.5">
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-brand-cyan/15 text-brand-cyan border border-brand-cyan/30">
+              <span className="badge-altura text-xs font-bold">
                 {categoryLabel}
               </span>
               {project.location && (
-                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-muted text-foreground flex items-center gap-1.5">
+                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#030A11] border border-white/5 text-brand-muted flex items-center gap-1.5">
                   <MapPin className="w-3.5 h-3.5 text-brand-cyan" />
                   <span>{project.location}</span>
                 </span>
               )}
               {project.project_date && (
-                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-muted text-foreground flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-brand-blue dark:text-brand-cyan" />
+                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#030A11] border border-white/5 text-brand-muted flex items-center gap-1.5 font-mono">
+                  <Calendar className="w-3.5 h-3.5 text-brand-cyan" />
                   <span>{project.project_date}</span>
                 </span>
               )}
               {project.client_name && (
-                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-muted text-foreground flex items-center gap-1.5">
-                  <Building2 className="w-3.5 h-3.5 text-emerald-500" />
+                <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#030A11] border border-white/5 text-brand-muted flex items-center gap-1.5">
+                  <Building2 className="w-3.5 h-3.5 text-emerald-400" />
                   <span>{project.client_name}</span>
                 </span>
               )}
             </div>
 
             <div className="space-y-3">
-              <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-foreground leading-tight">
+              <h1 className="text-2xl sm:text-4xl font-heading font-extrabold tracking-tight text-cream leading-tight">
                 {title}
               </h1>
               {shortDesc && (
-                <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+                <p className="text-sm sm:text-base text-brand-muted leading-relaxed">
                   {shortDesc}
                 </p>
               )}
@@ -176,7 +176,7 @@ export default async function ProjectDetailPage({
 
             {project.tools && project.tools.length > 0 && (
               <div className="pt-2 space-y-2">
-                <div className="text-xs font-bold text-muted-foreground flex items-center gap-1.5">
+                <div className="text-xs font-bold text-brand-muted flex items-center gap-1.5">
                   <Wrench className="w-3.5 h-3.5 text-brand-cyan" />
                   <span>{isRtl ? "الأدوات والبرمجيات المستخدمة" : "Tools & Technologies"}</span>
                 </div>
@@ -184,7 +184,7 @@ export default async function ProjectDetailPage({
                   {project.tools.map((tool) => (
                     <span
                       key={tool}
-                      className="px-3 py-1 rounded-xl text-xs font-bold bg-brand-blue/10 text-brand-blue dark:text-brand-cyan border border-brand-blue/20"
+                      className="px-3 py-1 rounded-xl text-xs font-bold bg-[#030A11] text-brand-cyan border border-brand-cyan/20"
                     >
                       {tool}
                     </span>
@@ -194,8 +194,8 @@ export default async function ProjectDetailPage({
             )}
 
             {/* Request Similar Project WhatsApp CTA */}
-            <div className="pt-4 border-t border-border/50 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <p className="text-xs text-muted-foreground">
+            <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <p className="text-xs text-brand-muted">
                 {isRtl
                   ? "هل لديك مشروع هندسي أو تحليلي مشابه وتحتاج لتنفيذه؟"
                   : "Have a similar GIS or spatial engineering requirement?"}
@@ -217,11 +217,11 @@ export default async function ProjectDetailPage({
 
         {/* Full Details Section */}
         {details && (
-          <section className="rounded-3xl glass-panel p-6 sm:p-10 border border-border/70 space-y-4">
-            <h2 className="text-xl font-extrabold text-foreground">
+          <section className="rounded-3xl surface-altura p-6 sm:p-10 border border-white/10 shadow-altura space-y-4">
+            <h2 className="text-xl font-heading font-extrabold text-cream">
               {isRtl ? "تفاصيل المشروع والمنهجية" : "Project Overview & Methodology"}
             </h2>
-            <div className="text-sm sm:text-base text-foreground/90 leading-relaxed whitespace-pre-wrap">
+            <div className="text-sm sm:text-base text-cream/90 leading-relaxed whitespace-pre-wrap">
               {details}
             </div>
           </section>
